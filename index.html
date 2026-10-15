@@ -875,7 +875,7 @@ function showLogin(){
    '<div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="'+(!stf)+'" data-act="lgrole" data-r="aluno">Aluno</button><button type="button" role="tab" aria-selected="'+stf+'" data-act="lgrole" data-r="staff">Instrutor ou hípica</button></div>'+
    fld(stf?'Usuário':'E-mail ou usuário','lg-e','','text','autocomplete="username" autocapitalize="none"')+fld('Senha','lg-p','','password','autocomplete="current-password"')+
    '<div class="err" id="lg-err" role="alert"></div><button class="btn pri" type="submit">Entrar</button>'+
-   '<div class="demo">Versão de demonstração: o login é simulado e não protege dados de verdade.<br>'+(stf?'Hípica (TCO): <code>'+esc(G.hips[0].login)+'</code> e <code>'+esc(G.hips[0].pass)+'</code><br>Instrutor: <code>instrutorteste</code> e <code>123456</code><br>Administrador da plataforma: <code>'+esc(G.owner.email)+'</code> e <code>'+esc(G.owner.pass)+'</code>':'Use <code>leonardoteste</code> e <code>123456</code> (aluno com o cavalo Raven) ou <code>lucas@aluno.demo</code> e <code>aluno123</code> (sem cavalo)')+'</div></form></div>';
+   '</form></div>';
 }
 function doLogin(){
   const em=V('lg-e').trim().toLowerCase(),pw=V('lg-p');let u=null;
