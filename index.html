@@ -174,8 +174,8 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .rep h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .lg{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:var(--side);position:relative;overflow:hidden}
 .lgbg{position:absolute;inset:0;z-index:0}.lgbg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,18,38,.55),rgba(11,18,38,.72))}
-.lgs{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.6s ease;text-decoration:none}.lgs.on{opacity:1}
-.lgs .pcap{position:absolute;left:20px;bottom:16px;z-index:2;color:#fff;font-size:12px;letter-spacing:.06em;opacity:.85;text-shadow:0 1px 6px #000a}.lgs .pcap::before{content:"Parceiro · "}
+.lgsl{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.6s ease;text-decoration:none}.lgsl.on{opacity:1}
+.lgsl .pcap{position:absolute;left:20px;bottom:16px;z-index:2;color:#fff;font-size:12px;letter-spacing:.06em;opacity:.85;text-shadow:0 1px 6px #000a}.lgsl .pcap::before{content:"Parceiro · "}
 .lgc{position:relative;z-index:1}
 .pstrip{position:relative;margin-top:22px;border-radius:12px;overflow:hidden;opacity:.92}
 .pstrip{margin-left:auto;margin-right:auto}.pslides{position:relative;border-radius:12px;overflow:hidden;background:var(--surface2)}.pbdg{font-size:11px;color:var(--muted)}
@@ -870,7 +870,7 @@ function logout(){UI.user=null;UI.cq=null;UI.logoState=null;saveSession();render
 function showLogin(){
   $('#view').innerHTML='';$('#nav').innerHTML='';$('#app').hidden=true;const L=$('#login');L.hidden=false;
   const stf=UI.lgRole==='staff';
-  const pb=parcAtivas('img').length?'<div class="lgbg" aria-hidden="true">'+parcSlides('lgs',false)+'</div>':'';
+  const pb=parcAtivas('img').length?'<div class="lgbg" aria-hidden="true">'+parcSlides('lgsl',false)+'</div>':'';
   L.innerHTML='<div class="lg">'+pb+'<form class="lgc" id="lf" autocomplete="on"><div class="lgl"><img src="'+LOGO+'" alt="Equialtares, desde 2026"></div>'+
    '<div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="'+(!stf)+'" data-act="lgrole" data-r="aluno">Aluno</button><button type="button" role="tab" aria-selected="'+stf+'" data-act="lgrole" data-r="staff">Instrutor ou hípica</button></div>'+
    fld(stf?'Usuário':'E-mail ou usuário','lg-e','','text','autocomplete="username" autocapitalize="none"')+fld('Senha','lg-p','','password','autocomplete="current-password"')+
