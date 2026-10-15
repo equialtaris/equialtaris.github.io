@@ -386,7 +386,7 @@ function seed(){
 }
 const GKEY='equialtaris.g1';
 let S=null,G=null;
-const PLN={lite:'Lite',standard:'Standard',full:'Full',personalizado:'Personalizado'};
+const PLN={lite:'Light',standard:'Standard',full:'Full',personalizado:'Personalizado'};
 const DEMO_INSTRS=()=>[{id:'i1',name:'Instrutor Demo',email:'instrutorteste',pass:'123456'},{id:'i2',name:'Carla Mendes',email:'carla',pass:'123456'}];
 function blankTenant(h){return {horses:[],croquis:[],treinos:[],provas:[],fin:[],seq:1,students:[],aulas:[],vagas:[],remarc:[],msgs:[],insc:[],inscPed:[],pag:[],files:{},pix:'',staff:{email:h.login,pass:h.pass,name:'Administrador'},instrs:[]}}
 function normT(T,demo){T.msgs=T.msgs||[];T.insc=T.insc||[];T.inscPed=T.inscPed||[];T.files=T.files||{};T.pag=T.pag||[];if(!T.instrs)T.instrs=demo?DEMO_INSTRS():[];return T}
@@ -408,7 +408,7 @@ function seedG(){
   const pbn=(a,b,t)=>'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+a+'"/><stop offset="1" stop-color="'+b+'"/></linearGradient></defs><rect width="1600" height="900" fill="url(#g)"/><circle cx="1250" cy="260" r="380" fill="#fff" opacity=".07"/><circle cx="300" cy="780" r="300" fill="#fff" opacity=".06"/><text x="800" y="470" text-anchor="middle" font-family="Georgia,serif" font-size="96" fill="#fff" opacity=".92">'+t+'</text></svg>');
   const parc=[{id:'pc1',nome:'Agro Cavalo Center',link:'',ativa:true,img:pbn('#14532d','#3f6212','Agro Cavalo Center')},{id:'pc2',nome:'Clínica Vet Horizonte',link:'',ativa:true,img:pbn('#0c4a6e','#155e75','Clínica Vet Horizonte')},{id:'pc3',nome:'Ferrador Lima',link:'',ativa:true,img:pbn('#78350f','#92400e','Ferrador Lima')}];
   const NWc=Date.now(),chat=[{id:uid(),hip:'h4',from:'owner',txt:'Olá! Identificamos a mensalidade em aberto. Consegue informar o pagamento hoje?',at:NWc-30*3600000,read:true},{id:uid(),hip:'h4',from:'hip',txt:'Bom dia! Vou pagar amanhã e envio o comprovante pelo sistema.',at:NWc-5*3600000,read:false},{id:uid(),hip:'h2',from:'hip',txt:'Enviei o comprovante de outubro. Podem conferir?',at:NWc-2*3600000,read:false}];
-  return {v:1,parc,chat,owner:{email:'adminteste',pass:'123456',nome:'EquiAltaris',tel:'(61) 99999-0000',pix:'pagamentos@equialtaris.demo'},planos:{lite:{n:'Lite',v:99},standard:{n:'Standard',v:199},full:{n:'Full',v:349}},hips,cob,files,tenants};
+  return {v:1,parc,chat,owner:{email:'adminteste',pass:'123456',nome:'EquiAltaris',tel:'(61) 99999-0000',pix:'pagamentos@equialtaris.demo'},planos:{lite:{n:'Light',v:99},standard:{n:'Standard',v:199},full:{n:'Full',v:349}},hips,cob,files,tenants};
 }
 function loadG(){
   try{const r=localStorage.getItem(GKEY);if(r){const o=JSON.parse(r);if(o&&o.hips&&o.tenants)return o}}catch(e){}
@@ -1090,7 +1090,7 @@ function hipModal(h){
   const isNew=!h;const o=h||{fantasia:'',cnpj:'',plano:'standard',valor:G.planos.standard.v,venc:10,login:'',pass:''};
   modal({title:isNew?'Nova hípica':'Editar hípica',wide:true,
    body:'<div class="fg">'+fld('Nome fantasia','hp-n',o.fantasia,'text',null,'full')+fld('CNPJ','hp-c',o.cnpj,'text','inputmode="numeric" placeholder="00.000.000/0000-00"')+
-    fld('Plano contratado','hp-pl',o.plano,'select',[['lite','Lite'],['standard','Standard'],['full','Full'],['personalizado','Personalizado']])+fld('Valor mensal (R$)','hp-v',o.valor,'number','min="0" step="1"')+fld('Dia do vencimento','hp-d',o.venc,'number','min="1" max="28" step="1"')+
+    fld('Plano contratado','hp-pl',o.plano,'select',[['lite','Plano Light'],['standard','Plano Standard'],['full','Plano Full'],['personalizado','Plano Personalizado']])+fld('Valor mensal (R$)','hp-v',o.valor,'number','min="0" step="1"')+fld('Dia do vencimento','hp-d',o.venc,'number','min="1" max="28" step="1"')+
     fld('Celular / WhatsApp','hp-t',o.tel||'','tel','inputmode="tel" placeholder="(61) 99999-9999"')+fld('Usuário do administrador da hípica','hp-l',o.login,'text','autocapitalize="none"')+fld('Senha inicial (demonstração)','hp-p',o.pass,'text')+'</div><div class="fg" id="hp-lim" style="margin-top:6px;'+(o.plano==='personalizado'?'':'display:none')+'">'+fld('Máximo de alunos (plano personalizado)','hp-la',o.limA||100,'number','min="1" step="1"')+fld('Máximo de cavalos (plano personalizado)','hp-lc',o.limC||100,'number','min="1" step="1"')+'</div><p class="muted sm" id="hp-limtx" style="margin:6px 0 0"></p>'+
     '<p class="muted sm" style="margin-top:8px">O administrador da hípica entra com esse usuário e cria os instrutores e alunos, que ficam vinculados só a esta hípica.</p><div class="err" id="hp-err" role="alert"></div>',
    save:()=>{
@@ -1125,7 +1125,7 @@ views.o_cob=function(){
 views.o_cfg=function(){
   return '<div class="grid g2"><div class="card"><h3>Chave PIX da plataforma</h3><p class="muted">Aparece para as hípicas na área Meu plano.</p><input id="ow-pix" value="'+esc(G.owner.pix)+'" aria-label="Chave PIX"><label class="f" style="margin-top:10px">Seu celular / WhatsApp (as hípicas veem no Suporte)<input id="ow-tel" type="tel" value="'+esc(G.owner.tel)+'" placeholder="(61) 99999-9999"></label></div>'+
    '<div class="card"><h3>Valores padrão dos planos</h3><p class="muted">Usados como sugestão ao cadastrar uma hípica. O valor de cada cliente pode ser ajustado na ficha dele.</p>'+
-   Object.keys(G.planos).map(k=>'<label class="f">'+esc(G.planos[k].n)+' (R$ por mês)<input id="pl-'+k+'" type="number" min="0" step="1" value="'+G.planos[k].v+'"></label>').join('')+'<p class="muted sm">Personalizado: valor e limites de alunos e cavalos combinados caso a caso.</p><p class="muted sm">Limites: Lite 30 · Standard 60 · Full 80 alunos e cavalos.</p></div>'+
+   Object.keys(G.planos).map(k=>'<label class="f">'+esc(G.planos[k].n)+' (R$ por mês)<input id="pl-'+k+'" type="number" min="0" step="1" value="'+G.planos[k].v+'"></label>').join('')+'<p class="muted sm">Personalizado: valor e limites de alunos e cavalos combinados caso a caso.</p><p class="muted sm">Limites: Light 30 · Standard 60 · Full 80 alunos e cavalos.</p></div>'+
    '<div class="card"><h3>Dados deste navegador</h3><p class="muted">Tudo fica salvo apenas neste navegador.</p><button class="btn danger" data-act="reset">Restaurar dados de exemplo</button></div></div>';
 };
 /* ---------- área da hípica: plano e pagamento do sistema ---------- */
@@ -1373,7 +1373,7 @@ function rpModal(o){
 let PI=0,PCF=null,PCB=null,PCC=null,PBA='',PBC='',PRA=0,PRC=0;
 const PSZ={p:['Pequeno','6/1',520],m:['Médio','4/1',760],g:['Grande','3/1',960]};
 const pIdeal=k=>{const z=PSZ[G.pcfg[k]]||PSZ.m,r=+z[1].split('/')[0];return {w:z[2]*2,h:Math.round(z[2]*2/r),r:z[1].replace('/',':'),nome:z[0]}};
-G.pcfg={aluno:'m',cavalo:'m'};
+G.pcfg={aluno:'m',cavalo:'m'};if(G.planos&&G.planos.lite)G.planos.lite.n='Light';
 (G.parc||[]).forEach(q=>{if(q.ba===undefined&&q.bc===undefined){const b=q.banner||q.img||'';q.ba=b;q.bc=b;q.bga=q.bgc='#0f1424'}});
 const parcAtivas=slot=>(G.parc||[]).filter(p=>p.ativa!==false&&p[slot||'img']);
 const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
