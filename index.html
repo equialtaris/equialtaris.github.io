@@ -433,6 +433,9 @@ const hipCobs=id=>G.cob.filter(c=>c.hip===id);
 const hipDebt=id=>hipCobs(id).filter(cobOver);
 const hipOwe=id=>hipDebt(id).reduce((t,c)=>t+(+c.valor||0),0);
 const hipOf=id=>G.hips.find(h=>h.id===id)||{fantasia:'—'};
+const PLIM={lite:30,standard:60,full:80};
+const hipLim=h=>h.plano==='personalizado'?{a:Math.max(1,+h.limA||100),c:Math.max(1,+h.limC||100)}:{a:PLIM[h.plano]||30,c:PLIM[h.plano]||30};
+const limChip=(n,l)=>'<span class="pill '+(n>=l?'bad':n>=l*.9?'warn':'ok')+'" style="margin-right:8px">'+n+' de '+l+'</span>';
 const planTxt=h=>(PLN[h.plano]||'Personalizado')+' · '+brl(h.valor)+'/mês';
 function hipPill(h){return h.status==='bloqueada'?'<span class="pill bad">Bloqueada</span>':hipDebt(h.id).length?'<span class="pill warn">Inadimplente</span>':hipCobs(h.id).some(c=>c.status==='enviado')?'<span class="pill warn">Pagamento a conferir</span>':'<span class="pill ok">Em dia</span>'}
 function cobPill(c){return c.status==='pago'?'<span class="pill ok">Paga</span>':c.status==='enviado'?'<span class="pill warn">A conferir</span>':c.status==='recusado'?'<span class="pill bad">Recusada</span>'+(cobOver(c)?' <span class="pill bad">Vencida</span>':''):cobOver(c)?'<span class="pill bad">Vencida</span>':'<span class="pill">Aberta</span>'}
@@ -543,7 +546,7 @@ const views={};
 const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
 const topActs={
   prog:()=>'<button class="btn" data-act="relTreinos">Relatório de treinos</button><button class="btn brass" data-act="amanha">Programação para amanhã</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>',
-  cavalos:()=>'<button class="btn pri" data-act="hnew">Novo cavalo</button>',
+  cavalos:()=>{const h=UI.user.hid&&HIP();return (h?limChip(S.horses.length,hipLim(h).c):'')+'<button class="btn pri" data-act="hnew">Novo cavalo</button>'},
   croquis:()=>UI.cq?'<button class="btn" data-act="cqBack">Voltar à biblioteca</button>':'<button class="btn pri" data-act="cqnew">Novo croqui de salto</button>',
   provas:()=>'<button class="btn pri" data-act="pnew">Nova prova</button>',
   fin:()=>'<button class="btn brass" data-act="cobPick">Gerar cobrança</button><button class="btn pri" data-act="fnew">Novo lançamento</button>',
@@ -551,7 +554,7 @@ const topActs={
   o_hip:()=>'<button class="btn pri" data-act="hpnew">Nova hípica</button>',
   o_parc:()=>'<button class="btn pri" data-act="pcnew">Novo parceiro</button>',
   o_cob:()=>'<button class="btn" data-act="cblock">Bloquear inadimplentes</button><button class="btn pri" data-act="cgen">Gerar cobranças do mês</button>',
-  alunos:()=>UI.user.role==='staff'?'<button class="btn pri" data-act="snew">Novo aluno</button>':'',
+  alunos:()=>UI.user.role==='staff'?limChip(S.students.length,hipLim(HIP()).a)+'<button class="btn pri" data-act="snew">Novo aluno</button>':'',
   aulas:()=>'<button class="btn pri" data-act="anew">Nova aula</button>',
   remarc:()=>'<button class="btn pri" data-act="vnew">Liberar horário</button>',
   pagto:()=>'<button class="btn brass" data-act="gerMens">Gerar mensalidades do mês</button>'};
@@ -1088,10 +1091,10 @@ function hipModal(h){
   modal({title:isNew?'Nova hípica':'Editar hípica',wide:true,
    body:'<div class="fg">'+fld('Nome fantasia','hp-n',o.fantasia,'text',null,'full')+fld('CNPJ','hp-c',o.cnpj,'text','inputmode="numeric" placeholder="00.000.000/0000-00"')+
     fld('Plano contratado','hp-pl',o.plano,'select',[['lite','Lite'],['standard','Standard'],['full','Full'],['personalizado','Personalizado']])+fld('Valor mensal (R$)','hp-v',o.valor,'number','min="0" step="1"')+fld('Dia do vencimento','hp-d',o.venc,'number','min="1" max="28" step="1"')+
-    fld('Celular / WhatsApp','hp-t',o.tel||'','tel','inputmode="tel" placeholder="(61) 99999-9999"')+fld('Usuário do administrador da hípica','hp-l',o.login,'text','autocapitalize="none"')+fld('Senha inicial (demonstração)','hp-p',o.pass,'text')+'</div>'+
+    fld('Celular / WhatsApp','hp-t',o.tel||'','tel','inputmode="tel" placeholder="(61) 99999-9999"')+fld('Usuário do administrador da hípica','hp-l',o.login,'text','autocapitalize="none"')+fld('Senha inicial (demonstração)','hp-p',o.pass,'text')+'</div><div class="fg" id="hp-lim" style="margin-top:6px;'+(o.plano==='personalizado'?'':'display:none')+'">'+fld('Máximo de alunos (plano personalizado)','hp-la',o.limA||100,'number','min="1" step="1"')+fld('Máximo de cavalos (plano personalizado)','hp-lc',o.limC||100,'number','min="1" step="1"')+'</div><p class="muted sm" id="hp-limtx" style="margin:6px 0 0"></p>'+
     '<p class="muted sm" style="margin-top:8px">O administrador da hípica entra com esse usuário e cria os instrutores e alunos, que ficam vinculados só a esta hípica.</p><div class="err" id="hp-err" role="alert"></div>',
    save:()=>{
-     const v={fantasia:V('hp-n').trim(),cnpj:V('hp-c').replace(/\D/g,''),tel:telFmt(V('hp-t').trim()),plano:V('hp-pl'),valor:+V('hp-v')||0,venc:Math.min(28,Math.max(1,+V('hp-d')||10)),login:V('hp-l').trim(),pass:V('hp-p')};
+     const v={fantasia:V('hp-n').trim(),cnpj:V('hp-c').replace(/\D/g,''),tel:telFmt(V('hp-t').trim()),plano:V('hp-pl'),valor:+V('hp-v')||0,limA:Math.max(1,Math.round(+V('hp-la')||100)),limC:Math.max(1,Math.round(+V('hp-lc')||100)),venc:Math.min(28,Math.max(1,+V('hp-d')||10)),login:V('hp-l').trim(),pass:V('hp-p')};
      const err=m=>{$('#hp-err').textContent=m;return false};
      if(!v.fantasia)return err('Informe o nome fantasia.');
      if(v.cnpj.length!==14)return err('O CNPJ precisa ter 14 números.');
@@ -1102,7 +1105,9 @@ function hipModal(h){
      v.cnpj=v.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');
      if(isNew){const n=Object.assign({id:uid(),status:'ativa',criada:TODAY},v);G.hips.push(n);G.tenants[n.id]=normT(blankTenant(n))}
      else{Object.assign(h,v);G.tenants[h.id].staff={email:v.login,pass:v.pass,name:'Administrador'}}}});
+hpLimUi();
 }
+function hpLimUi(){const pl=V('hp-pl'),box=$('#hp-lim'),tx=$('#hp-limtx');if(!box)return;box.style.display=pl==='personalizado'?'':'none';tx.textContent=pl==='personalizado'?'':'Limite do plano: até '+PLIM[pl]+' alunos e '+PLIM[pl]+' cavalos.'}
 function cobMsg(c){const h=hipOf(c.hip);return 'Olá, '+h.fantasia+'! A mensalidade do EquiAltaris (plano '+(PLN[h.plano]||'Personalizado')+') referente a '+monthLabel(c.ref)+', no valor de '+brl(c.valor)+', '+(c.venc<TODAY?'venceu':'vence')+' em '+fmtD(c.venc)+'.\nChave PIX: '+G.owner.pix+'\nDepois de pagar, entre no sistema, abra "Meu plano" e informe o pagamento anexando o comprovante.'}
 views.o_cob=function(){
   const tabs=[['aberto','Em aberto',G.cob.filter(c=>c.status==='pendente'||c.status==='recusado')],['conf','A conferir',G.cob.filter(c=>c.status==='enviado')],['pagas','Pagas',G.cob.filter(c=>c.status==='pago')],['todas','Todas',G.cob]];
@@ -1120,14 +1125,14 @@ views.o_cob=function(){
 views.o_cfg=function(){
   return '<div class="grid g2"><div class="card"><h3>Chave PIX da plataforma</h3><p class="muted">Aparece para as hípicas na área Meu plano.</p><input id="ow-pix" value="'+esc(G.owner.pix)+'" aria-label="Chave PIX"><label class="f" style="margin-top:10px">Seu celular / WhatsApp (as hípicas veem no Suporte)<input id="ow-tel" type="tel" value="'+esc(G.owner.tel)+'" placeholder="(61) 99999-9999"></label></div>'+
    '<div class="card"><h3>Valores padrão dos planos</h3><p class="muted">Usados como sugestão ao cadastrar uma hípica. O valor de cada cliente pode ser ajustado na ficha dele.</p>'+
-   Object.keys(G.planos).map(k=>'<label class="f">'+esc(G.planos[k].n)+' (R$ por mês)<input id="pl-'+k+'" type="number" min="0" step="1" value="'+G.planos[k].v+'"></label>').join('')+'<p class="muted sm">Personalizado: valor combinado caso a caso.</p></div>'+
+   Object.keys(G.planos).map(k=>'<label class="f">'+esc(G.planos[k].n)+' (R$ por mês)<input id="pl-'+k+'" type="number" min="0" step="1" value="'+G.planos[k].v+'"></label>').join('')+'<p class="muted sm">Personalizado: valor e limites de alunos e cavalos combinados caso a caso.</p><p class="muted sm">Limites: Lite 30 · Standard 60 · Full 80 alunos e cavalos.</p></div>'+
    '<div class="card"><h3>Dados deste navegador</h3><p class="muted">Tudo fica salvo apenas neste navegador.</p><button class="btn danger" data-act="reset">Restaurar dados de exemplo</button></div></div>';
 };
 /* ---------- área da hípica: plano e pagamento do sistema ---------- */
 views.plano=function(){
   const h=HIP(),cs=hipCobs(h.id).slice().sort((a,b)=>b.venc.localeCompare(a.venc)),blk=h.status==='bloqueada';
   const banner=blk?'<div class="note bad" style="margin-bottom:16px"><b>Acesso bloqueado por falta de pagamento.</b> Pague pela chave PIX abaixo e informe o pagamento com o comprovante. O sistema volta a funcionar assim que o pagamento for informado.</div>':hipDebt(h.id).length?'<div class="note bad" style="margin-bottom:16px">Há mensalidade vencida. Informe o pagamento para evitar o bloqueio do sistema.</div>':'';
-  return banner+'<div class="grid g2" style="margin-bottom:16px"><div class="card"><h3>Plano contratado</h3><p style="font-size:20px;margin:4px 0"><b>'+esc(PLN[h.plano]||'Personalizado')+'</b></p><p>'+brl(h.valor)+' por mês · vence todo dia '+h.venc+'</p><p>'+hipPill(h)+'</p><p class="muted sm">'+esc(h.fantasia)+' · CNPJ '+esc(h.cnpj)+'</p></div>'+
+  return banner+'<div class="grid g2" style="margin-bottom:16px"><div class="card"><h3>Plano contratado</h3><p style="font-size:20px;margin:4px 0"><b>'+esc(PLN[h.plano]||'Personalizado')+'</b></p><p>'+brl(h.valor)+' por mês · vence todo dia '+h.venc+'</p><p>'+hipPill(h)+'</p><p class="muted sm">'+esc(h.fantasia)+' · CNPJ '+esc(h.cnpj)+'</p><p class="muted sm" style="margin-top:10px">Uso do plano</p><p>Alunos '+limChip(S.students.length,hipLim(h).a)+' Cavalos '+limChip(S.horses.length,hipLim(h).c)+'</p></div>'+
    '<div class="card"><h3>Pagar por PIX</h3><div class="pixbox"><div><span>Chave PIX do EquiAltaris</span><br><code>'+esc(G.owner.pix)+'</code></div><button class="btn brass" data-act="opixcopy">Copiar chave</button></div></div></div>'+
    '<h3 style="margin:8px 0">Cobranças</h3>'+(cs.length?'<div class="tw"><table><thead><tr><th>Referência</th><th class="n">Valor</th><th>Vencimento</th><th>Situação</th><th></th></tr></thead><tbody>'+cs.map(c=>'<tr><td>'+monthLabel(c.ref)+'</td><td class="n">'+brl(c.valor)+'</td><td>'+fmtD(c.venc)+'</td><td>'+cobPill(c)+(c.status==='recusado'&&c.motivo?'<br><span class="muted sm">'+esc(c.motivo)+'</span>':'')+'</td><td class="n" style="white-space:nowrap">'+(c.status==='pendente'||c.status==='recusado'?'<button class="btn sm pri" data-act="hinfo" data-id="'+c.id+'">Informar pagamento</button>':(c.fileId?'<button class="btn sm" data-act="viewfile" data-id="'+c.fileId+'">Comprovante</button>':''))+'</td></tr>').join('')+'</tbody></table></div>':empty('Nenhuma cobrança gerada ainda.'));
 };
@@ -1576,10 +1581,11 @@ function alunoModal(a){
   const cur=a?(S.horses.find(h=>h.studentId===a.id)||{}).id||'':'';
   modal({title:isNew?'Novo aluno':'Editar aluno',wide:true,
    body:'<div class="fg">'+fld('Nome','s-n',o.name,'text',null,'full')+fld('E-mail de acesso','s-e',o.email,'email')+fld('Senha de acesso (demonstração)','s-p',o.pass,'text')+fld('Telefone','s-t',o.tel,'text')+fld('Altura de trabalho','s-n2',o.nivel||'','text')+fld('Plano','s-pl',o.plano,'text')+fld('Mensalidade (R$)','s-v',o.valor,'number','min="0" step="1"')+
-    fld('Cavalo próprio (libera o painel do cavalo)','s-h',cur,'select',[['','Sem cavalo próprio']].concat(S.horses.filter(h=>!h.studentId||h.studentId===(a&&a.id)).map(h=>[h.id,h.name])),'full')+'</div>',
+    fld('Cavalo próprio (libera o painel do cavalo)','s-h',cur,'select',[['','Sem cavalo próprio']].concat(S.horses.filter(h=>!h.studentId||h.studentId===(a&&a.id)).map(h=>[h.id,h.name])),'full')+'</div><div class="err" id="lm-err" role="alert"></div>',
    del:isNew?null:()=>{S.horses.forEach(h=>{if(h.studentId===a.id)delete h.studentId});S.students=S.students.filter(x=>x!==a);S.aulas=S.aulas.filter(x=>x.student!==a.id);S.pag=S.pag.filter(x=>x.student!==a.id)},
    save:()=>{const v={name:V('s-n').trim(),email:V('s-e').trim(),pass:V('s-p'),tel:V('s-t'),nivel:V('s-n2'),plano:V('s-pl'),valor:+V('s-v')||0};if(!v.name||!v.email||!v.pass)return false;
      if(emailTaken(v.email,a))return false;
+     if(isNew){const L=hipLim(HIP());if(S.students.length>=L.a){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.a+' alunos. Fale com o EquiAltaris para ampliar.';return false}}
      let st=a;if(isNew){st=Object.assign({id:uid()},v);S.students.push(st)}else Object.assign(st,v);
      S.horses.forEach(h=>{if(h.studentId===st.id)delete h.studentId});
      const hid=V('s-h');if(hid){const h=H(hid);h.studentId=st.id;h.owner=st.name}}});
@@ -1726,8 +1732,8 @@ const act={
   reset:()=>modal({title:'Restaurar dados de exemplo?',body:'<p>Todas as hípicas, cobranças e cadastros da plataforma voltam aos dados de exemplo e você sai do sistema.</p>',label:'Restaurar',save:()=>{G=seedG();G.hips.forEach(h=>normT(G.tenants[h.id],h.id==='h1'));S=null;UI.user=null;UI.cq=null;saveSession()}})
 };
 function horseModal(h){const isNew=!h;const o=h||{name:'',owner:''};
-  modal({title:isNew?'Novo cavalo':'Editar cavalo',body:'<div class="fg">'+fld('Nome','h-n',o.name,'text',null,'full')+fld('Proprietário','h-o',o.owner,'list',owners(),'full')+'</div>',del:isNew?null:()=>{S.horses=S.horses.filter(x=>x!==h);S.treinos=S.treinos.filter(t=>t.horse!==h.id)},
-   save:()=>{const n=V('h-n').trim();if(!n)return false;if(isNew)S.horses.push({id:uid(),name:n,owner:V('h-o').trim(),peso:[],ferr:[]});else{h.name=n;h.owner=V('h-o').trim()}}})}
+  modal({title:isNew?'Novo cavalo':'Editar cavalo',body:'<div class="fg">'+fld('Nome','h-n',o.name,'text',null,'full')+fld('Proprietário','h-o',o.owner,'list',owners(),'full')+'</div><div class="err" id="lm-err" role="alert"></div>',del:isNew?null:()=>{S.horses=S.horses.filter(x=>x!==h);S.treinos=S.treinos.filter(t=>t.horse!==h.id)},
+   save:()=>{const n=V('h-n').trim();if(!n)return false;if(isNew){const L=hipLim(HIP());if(S.horses.length>=L.c){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.c+' cavalos. Fale com o EquiAltaris para ampliar.';return false}}if(isNew)S.horses.push({id:uid(),name:n,owner:V('h-o').trim(),peso:[],ferr:[]});else{h.name=n;h.owner=V('h-o').trim()}}})}
 
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');
@@ -1762,7 +1768,7 @@ document.addEventListener('change',e=>{
   if(t.id==='ow-tel'){G.owner.tel=telFmt(t.value.trim());save();return}
   if(t.id==='ow-pix'){G.owner.pix=t.value.trim();save();return}
   if(t.id&&t.id.indexOf('pl-')===0&&G.planos[t.id.slice(3)]){G.planos[t.id.slice(3)].v=+t.value||0;save();return}
-  if(t.id==='hp-pl'){const p=G.planos[t.value];if(p)$('#hp-v').value=p.v;return}
+  if(t.id==='hp-pl'){const p=G.planos[t.value];if(p)$('#hp-v').value=p.v;hpLimUi();return}
   if(t.id==='ip-f'){const f=t.files[0];if(!f)return;readImage(f).then(d=>{IPF={name:f.name,data:d};$('#ip-prev').innerHTML='<img class="rcp" style="max-height:240px" src="'+d+'" alt="Pré-visualização do comprovante">';$('#ip-err').textContent=''}).catch(m=>{IPF=null;$('#ip-prev').innerHTML='';$('#ip-err').textContent=m});return}
   if(t.dataset&&t.dataset.chg){UI[t.dataset.chg]=t.value;render();return}
   if(UI.view==='croquis'&&UI.cq){const c=CQ(UI.cq);if(!c)return;
