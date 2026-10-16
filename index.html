@@ -397,8 +397,10 @@ snapReset();
 function papel(){return (AUTH.perfil&&AUTH.perfil.papel)||''}
 function ehDono(){return papel()==='owner'}
 function minhaHip(){return (AUTH.perfil&&AUTH.perfil.hipica_id)||null}
+function ehAluno(){return papel()==='aluno'}
 function podeEscrever(t){
   if(ehDono())return true;
+  if(ehAluno())return false;
   return t==='tenant_data'||t==='cobrancas'||t==='plat_files'||t==='chat_plataforma';
 }
 function emptyG(){return {v:1,parc:[],chat:[],owner:{email:'',nome:'EquiAltaris',tel:'',pix:''},
@@ -436,10 +438,42 @@ async function fetchAll(){
   TBL.forEach(t=>{(m[t[0]]||[]).forEach(r=>{SNAP[t[0]][r[t[1]]]=JSON.stringify(r.data)})});
   return {g:g,vazio:!(m.hipicas||[]).length};
 }
+/* aluno: recebe do servidor apenas a fatia dele */
+async function fetchAluno(){
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/rpc/meu_tenant',{method:'POST',headers:sbH(),body:'{}'});
+    if(!r.ok)return null;
+    const t=await r.json();
+    if(!t||typeof t!=='object')return null;
+    const g=emptyG();
+    const hp=t._hip||{id:minhaHip(),fantasia:'Hípica',status:'ativa',plano:'standard',venc:10,valor:0,cnpj:'',tel:'',login:'',criada:TODAY};
+    delete t._hip;
+    g.hips=[hp];g.tenants[hp.id]=t;
+    try{const p=await fetch(SB_URL+'/rest/v1/plataforma?select=*&id=eq.cfg',{headers:sbH()});
+      if(p.ok){const rows=await p.json(),cfg=rows[0];
+        if(cfg&&cfg.data){if(cfg.data.owner)g.owner=cfg.data.owner;if(cfg.data.planos)g.planos=cfg.data.planos}}}catch(e){}
+    try{const pc=await fetch(SB_URL+'/rest/v1/parcerias?select=*',{headers:sbH()});
+      if(pc.ok)g.parc=(await pc.json()).map(x=>x.data).filter(Boolean)}catch(e){}
+    snapReset();
+    return {g:g,vazio:false};
+  }catch(e){return null}
+}
+async function pushAluno(){
+  const T=(G.tenants||{})[minhaHip()];
+  if(!T)return false;
+  const patch={pag:T.pag||[],remarc:T.remarc||[],msgs:T.msgs||[],inscPed:T.inscPed||[],files:T.files||{}};
+  const js=JSON.stringify(patch);
+  if(SNAP.__aluno===js)return true;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/rpc/aluno_merge',{method:'POST',headers:sbH(),body:JSON.stringify({patch:patch})});
+    if(!r.ok)return false;
+    SNAP.__aluno=js;return true;
+  }catch(e){return false}
+}
 async function syncPull(){
   if(SYNC.busy)return false;if(!await authOk())return false;SYNC.busy=true;
   try{
-    const r=await fetchAll();
+    const r=ehAluno()?await fetchAluno():await fetchAll();
     if(!r)return false;
     SYNC.ready=true;
     if(r.vazio&&ehDono()){ /* primeiro uso: sobe a base inicial */ G=seedG();normAll();await pushDirty();return true}
@@ -453,6 +487,7 @@ async function syncPull(){
 }
 async function pushDirty(){
   if(!SYNC.ready)return false;if(!await authOk())return false;
+  if(ehAluno())return await pushAluno();
   const agora=Date.now();let erro=false;
   for(const [t,chave] of TBL){
     if(!podeEscrever(t))continue;
