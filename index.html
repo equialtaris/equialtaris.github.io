@@ -296,6 +296,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
+const APPV='20261016-1439';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -1031,6 +1032,20 @@ async function logout(){
   try{localStorage.removeItem(GKEY)}catch(e){}
   G=emptyG();normAll();S=null;snapReset();ACC=[];UI.user=null;UI.cq=null;UI.logoState=null;render();
 }
+async function checarVersao(){
+  try{
+    const base=location.pathname.replace(/[^/]*$/,'');
+    const r=await fetch(base+'versao.txt?x='+Date.now(),{cache:'no-store'});
+    if(!r.ok)return;
+    const v=(await r.text()).trim();
+    if(!v)return;
+    if(v===APPV){try{sessionStorage.removeItem('equi.rl')}catch(e){}return}
+    let j=0;try{j=+(sessionStorage.getItem('equi.rl')||0)}catch(e){}
+    if(j>=2)return;
+    try{sessionStorage.setItem('equi.rl',String(j+1))}catch(e){}
+    location.reload(true);
+  }catch(e){}
+}
 async function boot(){
   UI.user=null;
   if(await authOk()){
@@ -1039,6 +1054,7 @@ async function boot(){
     if(!UI.user)authClear();
   }
   render();
+  checarVersao();
 }
 function showLogin(){
   $('#view').innerHTML='';$('#nav').innerHTML='';$('#app').hidden=true;const L=$('#login');L.hidden=false;
@@ -1058,9 +1074,12 @@ async function doLogin(){
   const p=await loadPerfil();
   if(!p){authClear();er.textContent='Esta conta ainda não está liberada. Fale com o EquiAltaris.';return}
   AUTH.perfil=p;
-  await syncPull();await loadACC();
+  const okPull=await syncPull();await loadACC();
   const u=userFromPerfil(p);
-  if(!u){authClear();er.textContent='Seu cadastro não foi encontrado na hípica. Fale com o EquiAltaris.';return}
+  if(!u){authClear();
+    er.textContent=okPull?'Seu cadastro não foi encontrado na hípica. Fale com o EquiAltaris.'
+                         :'Não consegui carregar seus dados agora. Atualize a página com Ctrl+Shift+R e tente de novo.';
+    return}
   UI.logoState=null;UI.user=u;UI.view=homeView(u);UI.cq=null;render();
 }
 
