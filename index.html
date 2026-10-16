@@ -368,33 +368,122 @@ async function authRefresh(){
 }
 async function authOk(){if(!AUTH.tok||!AUTH.ref)return false;if(Date.now()>AUTH.exp-60000)return await authRefresh();return true}
 async function authOut(){try{if(AUTH.tok)await fetch(SB_URL+'/auth/v1/logout',{method:'POST',headers:sbH()})}catch(e){}authClear()}
+let ACC=[];
+async function loadACC(){
+  try{const r=await fetch(SB_URL+'/rest/v1/perfis?select=id,email,nome,papel,hipica_id,ref_id',{headers:sbH()});
+    ACC=r.ok?await r.json():[]}catch(e){ACC=[]}
+  return ACC;
+}
+const acessoDe=em=>{em=String(em||'').trim().toLowerCase();return ACC.find(p=>String(p.email||'').toLowerCase()===em)||null};
+async function chamarAcessos(corpo){
+  try{
+    const r=await fetch(SB_URL+'/functions/v1/acessos',{method:'POST',headers:sbH(),body:JSON.stringify(corpo)});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)return {erro:d.erro||'Não foi possível concluir.'};
+    await loadACC();return d;
+  }catch(e){return {erro:'Sem conexão com o servidor.'}}
+}
 async function loadPerfil(){
   if(!AUTH.user||!AUTH.user.id)return null;
   try{const r=await fetch(SB_URL+'/rest/v1/perfis?select=*&id=eq.'+encodeURIComponent(AUTH.user.id),{headers:sbH()});
     if(!r.ok)return null;const rows=await r.json();return rows[0]||null}catch(e){return null}
 }
-function syncPushSoon(){if(!SYNC.ready)return;clearTimeout(SYNC.t);SYNC.t=setTimeout(syncPush,1500)}
-async function syncPush(){
-  if(!await authOk())return false;
-  try{const r=await fetch(SB_URL+'/rest/v1/equi_state?on_conflict=id',{method:'POST',headers:Object.assign({Prefer:'resolution=merge-duplicates,return=minimal'},sbH()),body:JSON.stringify({id:'g',rev:G.rev||Date.now(),data:G})});return r.ok}catch(e){return false}
+function syncPushSoon(){if(!SYNC.ready)return;clearTimeout(SYNC.t);SYNC.t=setTimeout(pushDirty,1500)}
+/* ---------- sincronização por tabela (um registro por hípica) ---------- */
+const TBL=[['plataforma','id'],['hipicas','id'],['tenant_data','hipica_id'],['cobrancas','id'],['plat_files','id'],['parcerias','id'],['chat_plataforma','id']];
+let SNAP={};
+function snapReset(){SNAP={};TBL.forEach(t=>SNAP[t[0]]={})}
+snapReset();
+function papel(){return (AUTH.perfil&&AUTH.perfil.papel)||''}
+function ehDono(){return papel()==='owner'}
+function minhaHip(){return (AUTH.perfil&&AUTH.perfil.hipica_id)||null}
+function podeEscrever(t){
+  if(ehDono())return true;
+  return t==='tenant_data'||t==='cobrancas'||t==='plat_files'||t==='chat_plataforma';
+}
+function emptyG(){return {v:1,parc:[],chat:[],owner:{email:'',nome:'EquiAltaris',tel:'',pix:''},
+  planos:{lite:{n:'Light',v:99},standard:{n:'Standard',v:199},full:{n:'Full',v:349}},hips:[],cob:[],files:{},tenants:{}}}
+/* monta as linhas que esta máquina quer gravar, por tabela */
+function linhasLocais(t){
+  const mh=minhaHip();
+  if(t==='plataforma')return [{id:'cfg',data:{owner:G.owner,planos:G.planos}}];
+  if(t==='hipicas')return (G.hips||[]).map(h=>({id:h.id,data:h}));
+  if(t==='tenant_data')return Object.keys(G.tenants||{}).map(k=>({hipica_id:k,data:G.tenants[k]}));
+  if(t==='cobrancas')return (G.cob||[]).filter(c=>c.hip).map(c=>({id:c.id,hipica_id:c.hip,data:c}));
+  if(t==='parcerias')return (G.parc||[]).map(p=>({id:p.id,data:p}));
+  if(t==='chat_plataforma')return (G.chat||[]).filter(m=>m.hip).map(m=>({id:m.id,hipica_id:m.hip,data:m}));
+  if(t==='plat_files')return Object.keys(G.files||{}).map(k=>{
+    const c=(G.cob||[]).find(x=>x.fileId===k);
+    return {id:k,hipica_id:(c&&c.hip)||mh||null,data:G.files[k]};
+  });
+  return [];
+}
+async function fetchAll(){
+  const q=async t=>{try{const r=await fetch(SB_URL+'/rest/v1/'+t+'?select=*',{headers:sbH()});if(!r.ok)return null;return await r.json()}catch(e){return null}};
+  const res=await Promise.all(TBL.map(t=>q(t[0])));
+  if(res.some(x=>x===null))return null;
+  const m={};TBL.forEach((t,i)=>m[t[0]]=res[i]);
+  const g=emptyG();
+  const cfg=(m.plataforma||[]).find(r=>r.id==='cfg');
+  if(cfg&&cfg.data){if(cfg.data.owner)g.owner=cfg.data.owner;if(cfg.data.planos)g.planos=cfg.data.planos}
+  g.hips=(m.hipicas||[]).map(r=>r.data).filter(Boolean);
+  (m.tenant_data||[]).forEach(r=>{g.tenants[r.hipica_id]=r.data});
+  g.cob=(m.cobrancas||[]).map(r=>r.data).filter(Boolean);
+  (m.plat_files||[]).forEach(r=>{g.files[r.id]=r.data});
+  g.parc=(m.parcerias||[]).map(r=>r.data).filter(Boolean);
+  g.chat=(m.chat_plataforma||[]).map(r=>r.data).filter(Boolean);
+  snapReset();
+  TBL.forEach(t=>{(m[t[0]]||[]).forEach(r=>{SNAP[t[0]][r[t[1]]]=JSON.stringify(r.data)})});
+  return {g:g,vazio:!(m.hipicas||[]).length};
 }
 async function syncPull(){
   if(SYNC.busy)return false;if(!await authOk())return false;SYNC.busy=true;
   try{
-    const r=await fetch(SB_URL+'/rest/v1/equi_state?id=eq.g&select=rev,data',{headers:sbH()});
-    if(!r.ok)return false;
-    const rows=await r.json();
-    if(!rows.length){SYNC.ready=true;if(!G.rev)G.rev=Date.now();await syncPush();return true}
-    const row=rows[0];SYNC.ready=true;
-    if(+row.rev>(G.rev||0)&&row.data&&row.data.hips&&row.data.tenants){
-      G=row.data;normAll();try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}
-      S=UI.user&&UI.user.hid?(G.tenants[UI.user.hid]||null):null;
-      const typing=document.querySelector('#modal .md')||/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');
-      if(!typing)render();
-    }else if(+row.rev<(G.rev||0)){await syncPush()}
+    const r=await fetchAll();
+    if(!r)return false;
+    SYNC.ready=true;
+    if(r.vazio&&ehDono()){ /* primeiro uso: sobe a base inicial */ G=seedG();normAll();await pushDirty();return true}
+    G=r.g;normAll();
+    try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}
+    S=UI.user&&UI.user.hid?(G.tenants[UI.user.hid]||null):null;
+    const mexendo=document.querySelector('#modal .md')||/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');
+    if(!mexendo&&UI.user)render();
     return true;
   }catch(e){return false}finally{SYNC.busy=false}
 }
+async function pushDirty(){
+  if(!SYNC.ready)return false;if(!await authOk())return false;
+  const agora=Date.now();let erro=false;
+  for(const [t,chave] of TBL){
+    if(!podeEscrever(t))continue;
+    const locais=linhasLocais(t),vistos={};
+    const mandar=[];
+    locais.forEach(r=>{
+      const k=r[chave];vistos[k]=1;
+      const js=JSON.stringify(r.data);
+      if(SNAP[t][k]!==js)mandar.push({r:r,js:js,k:k});
+    });
+    for(let i=0;i<mandar.length;i+=20){
+      const lote=mandar.slice(i,i+20);
+      try{
+        const resp=await fetch(SB_URL+'/rest/v1/'+t+'?on_conflict='+chave,{method:'POST',
+          headers:Object.assign({Prefer:'resolution=merge-duplicates,return=minimal'},sbH()),
+          body:JSON.stringify(lote.map(x=>Object.assign({rev:agora},x.r)))});
+        if(resp.ok)lote.forEach(x=>{SNAP[t][x.k]=x.js});else erro=true;
+      }catch(e){erro=true}
+    }
+    /* apagar o que sumiu daqui */
+    const sumiram=Object.keys(SNAP[t]).filter(k=>!vistos[k]);
+    for(const k of sumiram){
+      try{
+        const resp=await fetch(SB_URL+'/rest/v1/'+t+'?'+chave+'=eq.'+encodeURIComponent(k),{method:'DELETE',headers:sbH()});
+        if(resp.ok)delete SNAP[t][k];else erro=true;
+      }catch(e){erro=true}
+    }
+  }
+  return !erro;
+}
+
 const emailTaken=(em,ex)=>{em=String(em).toLowerCase();if(G.owner.email.toLowerCase()===em)return true;return G.hips.some(h=>h!==ex&&h.login.toLowerCase()===em)||Object.keys(G.tenants).some(k=>{const T=G.tenants[k];return T.instrs.some(x=>x!==ex&&x.email.toLowerCase()===em)||T.students.some(x=>x!==ex&&x.email.toLowerCase()===em)})};
 /* cobrança da plataforma */
 const cobOver=c=>(c.status==='pendente'||c.status==='recusado')&&c.venc<TODAY;
@@ -902,16 +991,16 @@ function userFromPerfil(p){
   return null;
 }
 async function logout(){
-  try{if(SYNC.ready)await syncPush()}catch(e){}
+  try{if(SYNC.ready)await pushDirty()}catch(e){}
   await authOut();
   try{localStorage.removeItem(GKEY)}catch(e){}
-  G=seedG();normAll();S=null;UI.user=null;UI.cq=null;UI.logoState=null;render();
+  G=emptyG();normAll();S=null;snapReset();ACC=[];UI.user=null;UI.cq=null;UI.logoState=null;render();
 }
 async function boot(){
   UI.user=null;
   if(await authOk()){
     const p=await loadPerfil();
-    if(p){await syncPull();const u=userFromPerfil(p);if(u){AUTH.perfil=p;UI.user=u;UI.view=homeView(u)}}
+    if(p){AUTH.perfil=p;await syncPull();await loadACC();const u=userFromPerfil(p);if(u){UI.user=u;UI.view=homeView(u)}}
     if(!UI.user)authClear();
   }
   render();
@@ -933,10 +1022,11 @@ async function doLogin(){
   if(r.err){er.textContent=r.err==='rede'?'Sem conexão com o servidor. Tente de novo.':'E-mail ou senha incorretos.';return}
   const p=await loadPerfil();
   if(!p){authClear();er.textContent='Esta conta ainda não está liberada. Fale com o EquiAltaris.';return}
-  await syncPull();
+  AUTH.perfil=p;
+  await syncPull();await loadACC();
   const u=userFromPerfil(p);
   if(!u){authClear();er.textContent='Seu cadastro não foi encontrado na hípica. Fale com o EquiAltaris.';return}
-  AUTH.perfil=p;UI.logoState=null;UI.user=u;UI.view=homeView(u);UI.cq=null;render();
+  UI.logoState=null;UI.user=u;UI.view=homeView(u);UI.cq=null;render();
 }
 
 /* ---------- arquivos (comprovantes e exames) ---------- */
@@ -1483,9 +1573,41 @@ function readSlot(f){return new Promise((res,rej)=>{
 /* ---------- instrutores (área da hípica) ---------- */
 views.instrs=function(){
   return '<div class="tw"><table><thead><tr><th>Instrutor</th><th>Usuário de acesso</th><th>Aulas agendadas</th><th class="n"></th></tr></thead><tbody>'+
-   S.instrs.map(i=>'<tr><td><b>'+esc(i.name)+'</b></td><td><code>'+esc(i.email)+'</code></td><td>'+S.aulas.filter(a=>a.instrutor===i.name&&a.status==='agendada').length+'</td><td class="n"><button class="btn sm" data-act="xedit" data-id="'+i.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div>'+
-   '<p class="muted sm" style="margin-top:10px">Cada instrutor entra com o próprio usuário, vê alunos, aulas, remarcações e as mensagens que os alunos enviam para ele. Não tem acesso ao financeiro.</p>';
+   S.instrs.map(i=>'<tr><td><b>'+esc(i.name)+'</b></td><td><code>'+esc(i.email)+'</code></td><td>'+S.aulas.filter(a=>a.instrutor===i.name&&a.status==='agendada').length+'</td><td class="n">'+chipAcesso(i.email)+' <button class="btn sm" data-act="acesso" data-e="'+esc(i.email)+'" data-n="'+esc(i.name)+'" data-p="instrutor" data-r="'+i.id+'">Acesso</button> <button class="btn sm" data-act="xedit" data-id="'+i.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div>'+
+   '<p class="muted sm" style="margin-top:10px">Cada instrutor entra com o próprio e-mail, vê alunos, aulas, remarcações e as mensagens que os alunos enviam para ele. Não tem acesso ao financeiro. Use o botão Acesso para liberar ou tirar a entrada no sistema.</p>';
 };
+function chipAcesso(em){return acessoDe(em)?'<span class="pill ok">com acesso</span>':'<span class="pill">sem acesso</span>'}
+function senhaForte(){const a='abcdefghijkmnopqrstuvwxyz',A='ABCDEFGHJKLMNPQRSTUVWXYZ',n='23456789',t=a+A+n;let r=A[Math.floor(Math.random()*A.length)]+a[Math.floor(Math.random()*a.length)]+n[Math.floor(Math.random()*n.length)];
+  for(let i=0;i<7;i++)r+=t[Math.floor(Math.random()*t.length)];return r.split('').sort(()=>Math.random()-.5).join('')}
+function acessoModal(em,nome,papelAlvo,refId){
+  const tem=acessoDe(em);
+  const campo=fld('Senha'+(tem?' nova':' inicial'),'ac-s',senhaForte(),'text','autocapitalize="none"')+
+    '<p class="muted sm">Anote e entregue esta senha para a pessoa. Ela não fica guardada no sistema e não dá para consultar depois.</p>';
+  modal({title:(tem?'Acesso de ':'Liberar acesso para ')+nome,
+   body:'<p class="muted" style="margin-bottom:10px">E-mail de entrada: <code>'+esc(em)+'</code></p>'+
+     (tem?'<p class="pill ok" style="display:inline-block;margin-bottom:10px">Esta pessoa já entra no sistema</p>':'')+
+     '<div class="fg" style="grid-template-columns:1fr">'+campo+'</div><div class="err" id="ac-err" role="alert"></div>',
+   label:tem?'Trocar a senha':'Liberar acesso',
+   extra:tem?'<button class="btn danger" id="ac-del">Tirar o acesso</button>':'',
+   noFocus:true,
+   after:()=>{const d=document.getElementById('ac-del');if(d)d.onclick=async()=>{
+     d.disabled=true;d.textContent='Tirando…';
+     const r=await chamarAcessos({acao:'remover',email:em});
+     if(r.erro){$('#ac-err').textContent=r.erro;d.disabled=false;d.textContent='Tirar o acesso';return}
+     $('#modal').innerHTML='';render()}},
+   save:()=>{
+     const senha=V('ac-s'),err=m=>{const e=$('#ac-err');if(e)e.textContent=m;return false};
+     if(senha.length<8)return err('A senha precisa de pelo menos 8 caracteres.');
+     const ok=$('#m-ok');if(ok){ok.disabled=true;ok.textContent='Salvando…'}
+     chamarAcessos(tem?{acao:'senha',email:em,senha:senha}:{acao:'criar',email:em,senha:senha,nome:nome,papel:papelAlvo,ref_id:refId})
+      .then(r=>{
+        if(r.erro){err(r.erro);if(ok){ok.disabled=false;ok.textContent=tem?'Trocar a senha':'Liberar acesso'}return}
+        $('#modal').innerHTML='';render();
+        modal({title:'Pronto',body:'<p>'+(tem?'Senha trocada.':'Acesso liberado.')+'</p><p>Entregue estes dados para '+esc(nome)+':</p><p><b>E-mail:</b> <code>'+esc(em)+'</code><br><b>Senha:</b> <code>'+esc(senha)+'</code></p>'});
+      });
+     return false;
+   }});
+}
 function instrModal(i){
   const isNew=!i;const o=i||{name:'',email:''};
   modal({title:isNew?'Novo instrutor':'Editar instrutor',
@@ -1618,7 +1740,7 @@ function pagCard(st){
 views.alunos=function(){
   const fin=UI.user.role==='staff';
   const rows=S.students.length?S.students.map(a=>{const hr=S.horses.find(h=>h.studentId===a.id);const pg=S.pag.find(p=>p.student===a.id&&p.ref===TODAY.slice(0,7));
-    return '<tr><td><b>'+esc(a.name)+'</b><br><span class="muted sm">'+esc(a.tel||'')+'</span></td><td>'+esc(a.nivel||'—')+'</td>'+(fin?'<td class="sm">'+esc(a.email)+'</td><td>'+esc(a.plano)+'<br><span class="muted sm">'+brl(a.valor)+'/mês</span></td>':'')+'<td>'+(hr?esc(hr.name):'<span class="muted">—</span>')+'</td><td class="n">'+S.aulas.filter(x=>x.student===a.id&&x.date.slice(0,7)===TODAY.slice(0,7)&&x.status!=='cancelada').length+'</td><td class="n">'+S.provas.filter(p=>p.rider===a.id&&p.done).length+'</td>'+(fin?'<td>'+(pg?payPill(pg):'<span class="muted">Não gerada</span>')+'</td><td class="n"><button class="btn sm" data-act="sedit" data-id="'+a.id+'">Editar</button></td>':'')+'</tr>'}).join(''):'<tr><td colspan="9">'+empty('Nenhum aluno cadastrado.')+'</td></tr>';
+    return '<tr><td><b>'+esc(a.name)+'</b><br><span class="muted sm">'+esc(a.tel||'')+'</span></td><td>'+esc(a.nivel||'—')+'</td>'+(fin?'<td class="sm">'+esc(a.email)+'</td><td>'+esc(a.plano)+'<br><span class="muted sm">'+brl(a.valor)+'/mês</span></td>':'')+'<td>'+(hr?esc(hr.name):'<span class="muted">—</span>')+'</td><td class="n">'+S.aulas.filter(x=>x.student===a.id&&x.date.slice(0,7)===TODAY.slice(0,7)&&x.status!=='cancelada').length+'</td><td class="n">'+S.provas.filter(p=>p.rider===a.id&&p.done).length+'</td>'+(fin?'<td>'+(pg?payPill(pg):'<span class="muted">Não gerada</span>')+'</td><td class="n">'+chipAcesso(a.email)+' <button class="btn sm" data-act="acesso" data-e="'+esc(a.email)+'" data-n="'+esc(a.name)+'" data-p="aluno" data-r="'+a.id+'">Acesso</button> <button class="btn sm" data-act="sedit" data-id="'+a.id+'">Editar</button></td>':'')+'</tr>'}).join(''):'<tr><td colspan="9">'+empty('Nenhum aluno cadastrado.')+'</td></tr>';
   return '<div class="tw"><table><thead><tr><th>Aluno</th><th>Altura</th>'+(fin?'<th>Acesso</th><th>Plano</th>':'')+'<th>Cavalo próprio</th><th class="n">Aulas no mês</th><th class="n">Provas</th>'+(fin?'<th>Mensalidade atual</th><th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
 };
 function alunoModal(a){
@@ -1746,6 +1868,7 @@ const act={
   acancel:d=>{const a=S.aulas.find(x=>x.id===d.id);modal({title:'Cancelar aula?',body:'<p>'+esc(a.tipo)+' em '+whenTxt(a)+'. A hípica será avisada pela agenda.</p>',label:'Cancelar aula',save:()=>{a.status='cancelada'}})},
   enviar:d=>enviarModal(S.pag.find(x=>x.id===d.id)),
   viewfile:d=>viewFile(d.id),
+  acesso:d=>{if(!d.e||d.e.indexOf('@')<0){modal({title:'Sem e-mail',body:'<p>Cadastre um e-mail válido para esta pessoa antes de liberar o acesso.</p>'});return}acessoModal(d.e,d.n||d.e,d.p,d.r)},
   pixcopy:(d,b)=>{try{navigator.clipboard.writeText(S.pix).then(()=>{b.textContent='Chave copiada'},()=>{b.textContent='Copie a chave acima'})}catch(e){b.textContent='Copie a chave acima'}},
   snew:()=>alunoModal(),sedit:d=>alunoModal(S.students.find(x=>x.id===d.id)),
   anew:()=>aulaModal(),aedit:d=>aulaModal(S.aulas.find(x=>x.id===d.id)),
