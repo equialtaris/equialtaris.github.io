@@ -296,7 +296,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261016-1744';
+const APPV='20261016-1800';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -337,6 +337,8 @@ function normAll(){
   G.hips=G.hips||[];G.tenants=G.tenants||{};G.owner=G.owner||{};
   G.hips.forEach(h=>{const T=G.tenants[h.id]||(G.tenants[h.id]=blankTenant(h));normT(T);T.staff={email:h.login,name:'Administrador'}});
   G.files=G.files||{};G.cob=G.cob||[];G.chat=G.chat||[];G.parc=G.parc||[];G.owner.tel=G.owner.tel||'';
+  G.pcfg=G.pcfg||{};if(!G.pcfg.aluno)G.pcfg.aluno='m';if(!G.pcfg.cavalo)G.pcfg.cavalo='m';
+  if(G.planos&&G.planos.lite&&!G.planos.lite.n)G.planos.lite.n='Light';
   G.parc.forEach(q=>{if(q.ba===undefined&&q.bc===undefined){const b=q.banner||q.img||'';q.ba=b;q.bc=b;q.bga=q.bgc='#0f1424'}});
   scrubPass();
 }
@@ -826,6 +828,7 @@ views.cavalos=function(){
     const f=h.ferr.slice().sort((a,b)=>a.d.localeCompare(b.d)).pop();
     return '<div class="card horse"><h3>'+esc(h.name)+'<button class="btn sm" data-act="hedit" data-id="'+h.id+'">Editar</button></h3>'+
       '<div class="muted">Proprietário: '+esc(h.owner||'—')+(h.studentId?' · aluno com acesso ao portal':'')+'</div>'+
+      '<div class="muted sm" style="margin-bottom:6px">'+[idadeDe(h)!==null?idadeDe(h)+' anos':'',h.salto?'salta '+esc(h.salto):'',h.cm?esc(h.cm)+' cm':''].filter(Boolean).join(' · ')+'</div>'+
       '<div class="stat"><div><small>Peso</small><b>'+(p.length?p[p.length-1].kg+' kg':'—')+'</b></div><div><small>Último ferrageamento</small><b>'+(f?fmtS(f.d):'—')+'</b></div><div><small>Vencimento</small>'+pillFer(h)+'</div><div><small>Saúde</small>'+tratPill(h)+'</div></div>'+sp+
       '<div class="row"><button class="btn sm" data-act="hpeso" data-id="'+h.id+'">Registrar peso</button><button class="btn sm" data-act="hferr" data-id="'+h.id+'">Registrar ferrageamento</button><button class="btn sm brass" data-act="hhub" data-id="'+h.id+'">Saúde e alimentação</button></div></div>';
   }).join('')+'</div>';
@@ -1645,21 +1648,21 @@ function rpModal(o){
 /* ---------- parcerias ---------- */
 let PI=0,PCF=null,PCB=null,PCC=null,PBA='',PBC='',PRA=0,PRC=0;
 const PSZ={p:['Pequeno','6/1',520],m:['Médio','4/1',760],g:['Grande','3/1',960]};
-const pIdeal=k=>{const z=PSZ[G.pcfg[k]]||PSZ.m,r=+z[1].split('/')[0];return {w:z[2]*2,h:Math.round(z[2]*2/r),r:z[1].replace('/',':'),nome:z[0]}};
-G.pcfg={aluno:'m',cavalo:'m'};if(G.planos&&G.planos.lite)G.planos.lite.n='Light';
+const pIdeal=k=>{const z=PSZ[(G.pcfg||{})[k]]||PSZ.m,r=+z[1].split('/')[0];return {w:z[2]*2,h:Math.round(z[2]*2/r),r:z[1].replace('/',':'),nome:z[0]}};
+
 const parcAtivas=slot=>(G.parc||[]).filter(p=>p.ativa!==false&&p[slot||'img']);
 const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
 function parcSlides(cls,withLink,slot){
   slot=slot||'img';const l=parcAtivas(slot);
   return l.map((p,i)=>{const on=i===PI%l.length?' on':'',lk=withLink?safeUrl(p.link):'',strip=cls==='ps',src=p[slot],bg=slot==='ba'?p.bga:slot==='bc'?p.bgc:'';
-    const rt=slot==='ba'?p.ra:slot==='bc'?p.rc:0,pr=(+(PSZ[G.pcfg[slot==='ba'?'aluno':'cavalo']]||PSZ.m)[1].split('/')[0]),fit=rt&&Math.abs(rt/pr-1)<.2?'cover':'contain';
+    const rt=slot==='ba'?p.ra:slot==='bc'?p.rc:0,pr=(+(PSZ[(G.pcfg||{})[slot==='ba'?'aluno':'cavalo']]||PSZ.m)[1].split('/')[0]),fit=rt&&Math.abs(rt/pr-1)<.2?'cover':'contain';
     const st='style="background-image:url('+"'"+src+"'"+')'+(strip?';background-size:'+fit+';background-repeat:no-repeat;background-color:'+(/^#[0-9a-f]{6}$|^rgb\(/i.test(bg||'')?bg:'#0f1424'):'')+'"';
     const cap=strip?'':'<span class="pcap">'+esc(p.nome)+'</span>';
     return lk?'<a class="'+cls+on+'" '+st+' href="'+esc(lk)+'" target="_blank" rel="noopener noreferrer" aria-label="Parceiro: '+esc(p.nome)+'">'+cap+'</a>':'<div class="'+cls+on+'" '+st+' role="img" aria-label="Parceiro: '+esc(p.nome)+'">'+cap+'</div>'}).join('');
 }
 function parcStrip(slot){
   if(!parcAtivas(slot).length)return '';
-  const z=PSZ[G.pcfg[slot==='ba'?'aluno':'cavalo']]||PSZ.m;
+  const z=PSZ[(G.pcfg||{})[slot==='ba'?'aluno':'cavalo']]||PSZ.m;
   return '<div class="pstrip" style="max-width:'+z[2]+'px" aria-label="Parceiros"><span class="ptag">Parceiros</span><div class="pslides" style="aspect-ratio:'+z[1]+'">'+parcSlides('ps',true,slot)+'</div></div>';
 }
 setInterval(()=>{PI++;document.querySelectorAll('.pslides,.lgbg').forEach(box=>{const c=box.children,n=c.length;if(n<2)return;for(let i=0;i<n;i++)c[i].classList.toggle('on',i===PI%n)})},5500);
@@ -1667,7 +1670,7 @@ setInterval(()=>{PI++;document.querySelectorAll('.pslides,.lgbg').forEach(box=>{
 views.o_parc=function(){
   const l=G.parc||[];
   const drop='<label class="card pdrop"><input type="file" id="pc-multi" accept="image/*" multiple><b>+ Adicionar fotos do carrossel</b><span class="muted sm">Toque aqui e selecione uma ou várias fotos de uma vez ('+l.length+' de 12 usadas). Depois edite o nome e o link de cada parceiro.</span><span id="pc-merr" class="sm" style="color:var(--bad,#f87171)"></span></label>';
-  const szo=k=>Object.keys(PSZ).map(x=>'<option value="'+x+'"'+(G.pcfg[k]===x?' selected':'')+'>'+PSZ[x][0]+' (proporção '+PSZ[x][1].replace('/',':')+' · imagem ideal '+PSZ[x][2]*2+' × '+Math.round(PSZ[x][2]*2/+PSZ[x][1].split('/')[0])+' px)</option>').join('');
+  const szo=k=>Object.keys(PSZ).map(x=>'<option value="'+x+'"'+((G.pcfg||{})[k]===x?' selected':'')+'>'+PSZ[x][0]+' (proporção '+PSZ[x][1].replace('/',':')+' · imagem ideal '+PSZ[x][2]*2+' × '+Math.round(PSZ[x][2]*2/+PSZ[x][1].split('/')[0])+' px)</option>').join('');
   const cfg='<div class="card" style="margin-bottom:16px"><h3 style="margin-top:0">Tamanho dos painéis menores</h3><div class="fg"><label class="f">Painel na área do aluno (Início)<select id="pcsz-a">'+szo('aluno')+'</select></label><label class="f">Painel na área dos cavalos<select id="pcsz-c">'+szo('cavalo')+'</select></label></div><p class="muted sm" style="margin:8px 0 0">Em cada parceiro você escolhe quais fotos usar e onde cada uma aparece: login, área do aluno e/ou área dos cavalos.</p></div>';
   const head=drop+'<div class="card" style="margin-bottom:16px"><p class="muted" style="margin:0">As fotos viram um carrossel no fundo da tela de login e, de forma discreta, nas áreas de cavalos e do aluno. Só parceiros ativos aparecem.</p><ul class="muted sm" style="margin:8px 0 0;padding-left:18px;line-height:1.6"><li><b>Formato:</b> JPG ou PNG, horizontal (paisagem).</li><li><b>Tamanho ideal:</b> 1600 × 900 px (16:9). Mínimo 1000 px de largura.</li><li><b>Peso:</b> até 8 MB (o sistema reduz automaticamente).</li><li>Evite texto nas bordas: a imagem é cortada para preencher a tela.</li></ul></div>';
   if(!l.length)return head;
@@ -2075,9 +2078,22 @@ const act={
   cobCopy:(d,b)=>copyText(cobText(),b),
   reset:()=>modal({title:'Restaurar dados iniciais?',body:'<p>Hípicas, cobranças e cadastros voltam ao estado inicial. Os logins continuam os mesmos.</p>',label:'Restaurar',save:()=>{G=seedG();normAll();S=null;UI.cq=null}})
 };
-function horseModal(h){const isNew=!h;const o=h||{name:'',owner:''};
-  modal({title:isNew?'Novo cavalo':'Editar cavalo',body:'<div class="fg">'+fld('Nome','h-n',o.name,'text',null,'full')+fld('Proprietário','h-o',o.owner,'list',owners(),'full')+'</div><div class="err" id="lm-err" role="alert"></div>',del:isNew?null:()=>{S.horses=S.horses.filter(x=>x!==h);S.treinos=S.treinos.filter(t=>t.horse!==h.id)},
-   save:()=>{const n=V('h-n').trim();if(!n)return false;if(isNew){const L=hipLim(HIP());if(S.horses.length>=L.c){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.c+' cavalos. Fale com o EquiAltaris para ampliar.';return false}}if(isNew)S.horses.push({id:uid(),name:n,owner:V('h-o').trim(),peso:[],ferr:[]});else{h.name=n;h.owner=V('h-o').trim()}}})}
+function idadeDe(h){const a=+(h&&h.nasc);if(!a||a<1950)return null;const i=new Date().getFullYear()-a;return (i>=0&&i<60)?i:null}
+function pesoAtual(h){const p=(h&&h.peso||[]).slice().sort((a,b)=>a.d.localeCompare(b.d)).pop();return p?p.kg:''}
+function horseModal(h){const isNew=!h;const o=h||{name:'',owner:'',nasc:'',salto:'',cm:''};
+  modal({title:isNew?'Novo cavalo':'Editar cavalo',wide:true,
+   body:'<div class="fg">'+fld('Nome','h-n',o.name,'text',null,'full')+fld('Proprietário','h-o',o.owner,'list',owners(),'full')+
+    fld('Ano de nascimento','h-an',o.nasc||'','number','min="1950" max="'+new Date().getFullYear()+'" step="1" placeholder="2017"')+
+    fld('Altura que salta','h-s',o.salto||'','text','placeholder="1,20 m"')+
+    fld('Altura do cavalo (cm)','h-a',o.cm||'','number','min="80" max="200" step="1" placeholder="168"')+
+    fld('Peso (kg)','h-p',pesoAtual(o),'number','min="100" max="1200" step="1" placeholder="520"')+
+    '</div><p class="muted sm">A idade é calculada pelo ano de nascimento, então não envelhece errado com o tempo. O peso entra no histórico com a data de hoje; para acompanhar a evolução, use Registrar peso na ficha.</p><div class="err" id="lm-err" role="alert"></div>',del:isNew?null:()=>{S.horses=S.horses.filter(x=>x!==h);S.treinos=S.treinos.filter(t=>t.horse!==h.id)},
+   save:()=>{const n=V('h-n').trim();if(!n)return false;if(isNew){const L=hipLim(HIP());if(S.horses.length>=L.c){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.c+' cavalos. Fale com o EquiAltaris para ampliar.';return false}}const dados={name:n,owner:V('h-o').trim(),nasc:+V('h-an')||'',salto:V('h-s').trim(),cm:+V('h-a')||''};
+     let alvo=h;
+     if(isNew){alvo=Object.assign({id:uid(),peso:[],ferr:[]},dados);S.horses.push(alvo)}else Object.assign(alvo,dados);
+     const kg=+V('h-p')||0;
+     if(kg&&kg!==pesoAtual(alvo)){alvo.peso=alvo.peso||[];alvo.peso.push({id:uid(),d:TODAY,kg:kg})}
+   }})}
 
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');
@@ -2115,7 +2131,7 @@ document.addEventListener('change',e=>{
       try{const d=await readPhoto(f,1600);G.parc.push({id:uid(),nome:f.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').slice(0,40)||'Parceiro',link:'',ativa:true,img:d})}catch(m){errs.push(f.name+': '+m)}}
       save();render();if(errs.length){const e=$('#pc-merr');if(e)e.textContent=errs.join(' · ')}})();return}
   if(t.id==='pc-b'||t.id==='pc-c'){const f=t.files[0];if(!f)return;const al=t.id==='pc-b';readSlot(f).then(r=>{if(al){PCB=r.d;PBA=r.bg;PRA=r.r}else{PCC=r.d;PBC=r.bg;PRC=r.r}$(al?'#pc-bprev':'#pc-cprev').innerHTML='<img src="'+r.d+'" alt="Pré-visualização">';$('#pc-err').textContent=''}).catch(m=>{$('#pc-err').textContent=m});return}
-  if(t.id==='pcsz-a'||t.id==='pcsz-c'){G.pcfg[t.id==='pcsz-a'?'aluno':'cavalo']=t.value;save();render();return}
+  if(t.id==='pcsz-a'||t.id==='pcsz-c'){G.pcfg=G.pcfg||{};G.pcfg[t.id==='pcsz-a'?'aluno':'cavalo']=t.value;save();render();return}
   if(t.id==='pc-f'){const f=t.files[0];if(!f)return;readPhoto(f,1600).then(d=>{PCF=d;$('#pc-prev').innerHTML='<img src="'+d+'" alt="Pré-visualização">';$('#pc-err').textContent=''}).catch(m=>{$('#pc-err').textContent=m});return}
   if(t.id==='ow-tel'){G.owner.tel=telFmt(t.value.trim());save();return}
   if(t.id==='ow-pix'){G.owner.pix=t.value.trim();save();return}
