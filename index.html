@@ -117,21 +117,36 @@ textarea{min-height:76px;resize:vertical}
 .act .sp{margin-right:auto}
 pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:14px;white-space:pre-wrap;font-family:var(--f-body);font-size:13.5px;margin:0;max-height:48vh;overflow:auto}
 /* programação */
-.wk{min-width:980px}
-.wk th.hd{text-align:center}
+.wk{min-width:1000px;border-collapse:separate;border-spacing:0}
+.wk thead th{position:sticky;top:0;z-index:3;background:var(--surface2);border-bottom:1px solid var(--line)}
+.wk th.hd{text-align:center;padding:9px 6px;line-height:1.3;font-size:12.5px;letter-spacing:.3px}
+.wk th.hd i{display:block;font-style:normal;font-weight:400;font-size:12px;color:var(--muted);margin-top:1px}
+.wk th.hd u{display:block;text-decoration:none;font-weight:600;font-size:11px;color:var(--primary);margin-top:2px}
 .wk th.today{background:var(--accent);color:#1a1405}
-.wk td{vertical-align:top;min-width:128px;padding:6px}
-.wk td.hz{min-width:90px;background:var(--surface2)}
-.wk td.hz b{display:block;font-size:14px}
-.wk td.tdy{background:color-mix(in srgb,var(--accent) 9%,var(--surface))}
+.wk th.today i,.wk th.today u{color:#4a3a06}
+.wk th.fech{color:var(--muted)}
+.wk td{vertical-align:top;min-width:132px;padding:5px;border-bottom:1px solid var(--line)}
+.wk td.hz{position:sticky;left:0;z-index:2;min-width:86px;background:var(--surface2);white-space:nowrap;border-right:1px solid var(--line)}
+.wk td.hz b{display:block;font-size:13.5px;font-variant-numeric:tabular-nums}
+.wk td.tdy{background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.wk td.fech{background:repeating-linear-gradient(135deg,transparent,transparent 7px,color-mix(in srgb,var(--line) 45%,transparent) 7px,color-mix(in srgb,var(--line) 45%,transparent) 14px)}
+.wk tbody tr:last-child td{border-bottom:0}
 .tr{display:flex;align-items:flex-start;gap:6px;padding:5px 6px;border:1px solid var(--line);border-radius:7px;margin-bottom:5px;background:var(--surface);font-size:12.5px}
 .tr.done{background:var(--ok-bg);border-color:transparent}
 .tr input{width:auto;margin-top:2px;accent-color:var(--ok)}
 .tr button{background:none;border:0;text-align:left;cursor:pointer;padding:0;line-height:1.3}
 .tr b{display:block}
 .tr em{font-style:normal;color:var(--jump);font-size:11.5px;font-weight:600}
-.addt{width:100%;border:1px dashed var(--line);background:none;border-radius:7px;padding:4px;color:var(--muted);cursor:pointer;font-size:12px}
-.addt:hover{border-color:var(--primary);color:var(--primary)}
+.tr.au{border-left:3px solid var(--primary);background:color-mix(in srgb,var(--primary) 7%,var(--surface))}
+.tr.au.done{background:var(--ok-bg);border-left-color:var(--ok)}
+.tr em{display:block}
+.wk th.hd u.off{color:var(--muted);font-weight:400}
+.addw{display:flex;gap:4px}
+.addw .addt{font-size:11px;padding:4px 2px}
+.addt{width:100%;border:1px dashed transparent;background:none;border-radius:7px;padding:5px;color:color-mix(in srgb,var(--muted) 60%,transparent);cursor:pointer;font-size:12px;transition:.12s}
+.wk td:hover .addt{border-color:var(--line);color:var(--muted)}
+.addt:hover{border-color:var(--primary);color:var(--primary);background:color-mix(in srgb,var(--primary) 7%,transparent)}
+.addt:focus-visible{border-color:var(--primary);color:var(--primary)}
 /* croquis */
 .pista{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:10px;touch-action:none;background:var(--sand)}
 .cq{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
@@ -296,13 +311,39 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261016-1800';
+const APPV='20261016-1845';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
 const PLN={lite:'Light',standard:'Standard',full:'Full',personalizado:'Personalizado'};
 const DEMO_INSTRS=()=>[];
 function blankTenant(h){return {horses:[],croquis:[],treinos:[],provas:[],fin:[],seq:1,students:[],aulas:[],vagas:[],remarc:[],msgs:[],insc:[],inscPed:[],pag:[],files:{},pix:'',staff:{email:h.login,name:'Administrador'},instrs:[]}}
+function expCfg(T){
+  const e=(T||S||{}).exp||{};
+  const ini=Math.min(23,Math.max(0,isFinite(+e.ini)?+e.ini:9));
+  let fim=Math.min(23,Math.max(1,isFinite(+e.fim)?+e.fim:18));
+  if(fim<=ini)fim=Math.min(23,ini+1);
+  return {ini:ini,fim:fim,passo:(+e.passo===30?30:60),
+          dias:(Array.isArray(e.dias)&&e.dias.length===7)?e.dias:[1,1,1,1,1,1,1]};
+}
+function expModal(){
+  const c=expCfg();
+  const horas=Array.from({length:24},(_,i)=>[String(i),pad(i)+':00']);
+  modal({title:'Horário de funcionamento',wide:true,
+   body:'<div class="fg">'+fld('Abre às','ex-i',String(c.ini),'select',horas)+fld('Fecha às','ex-f',String(c.fim),'select',horas)+
+     fld('Intervalo da grade','ex-p',String(c.passo),'select',[['60','De 1 em 1 hora'],['30','De 30 em 30 minutos']])+'</div>'+
+     '<p class="f" style="margin:12px 0 4px">Dias de funcionamento</p><div class="row">'+
+     DOW.map((d,i)=>'<label class="row sm" style="gap:5px;align-items:center"><input type="checkbox" style="width:auto" id="ex-d'+i+'" '+(c.dias[i]?'checked':'')+'>'+d+'</label>').join('')+'</div>'+
+     '<p class="muted sm" style="margin-top:10px">A grade da Programação passa a mostrar só esse período. Treinos fora do horário continuam aparecendo, em linhas separadas no topo e no fim.</p>'+
+     '<div class="err" id="ex-err" role="alert"></div>',
+   save:()=>{
+     const i=+V('ex-i'),f=+V('ex-f');
+     if(f<=i){$('#ex-err').textContent='O horário de fechar precisa ser depois do de abrir.';return false}
+     const ds=DOW.map((_,k)=>$('#ex-d'+k).checked?1:0);
+     if(!ds.some(Boolean)){$('#ex-err').textContent='Marque pelo menos um dia.';return false}
+     S.exp={ini:i,fim:f,passo:(+V('ex-p')===30?30:60),dias:ds};
+   }});
+}
 function normT(T,demo){
   ['horses','croquis','treinos','provas','fin','students','aulas','vagas','remarc','msgs','insc','inscPed','pag'].forEach(k=>{if(!Array.isArray(T[k]))T[k]=[]});
   if(!T.files||typeof T.files!=='object')T.files={};
@@ -310,6 +351,7 @@ function normT(T,demo){
   if(typeof T.seq!=='number')T.seq=1;
   if(!T.staff||typeof T.staff!=='object')T.staff={name:'Administrador'};
   if(!Array.isArray(T.instrs))T.instrs=demo?DEMO_INSTRS():[];
+  T.exp=expCfg(T);
   return T;
 }
 function gfile(txt){return {name:'comprovante.svg',at:TODAY,data:'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="420" height="220"><rect width="420" height="220" fill="#fff" stroke="#ccc"/><text x="24" y="52" font-family="Arial" font-size="20" font-weight="700" fill="#0f766e">PIX enviado</text><text x="24" y="100" font-family="Arial" font-size="16" fill="#333">'+txt+'</text><text x="24" y="190" font-family="Arial" font-size="12" fill="#888">Comprovante de exemplo</text></svg>')}}
@@ -552,7 +594,7 @@ const hn=id=>H(id).name;
 const total=f=>(+f.unit||0)*(+f.qtd||0);
 const owners=()=>[...new Set(S.horses.map(h=>h.owner).filter(Boolean))];
 
-const UI={ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'lista',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
+const UI={ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'grade',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
   cobOwner:'',cobMonth:TODAY.slice(0,7),repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true,zoom:1};
 
 /* ---------- ícones ---------- */
@@ -567,9 +609,9 @@ const IC={
  prop:'<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/>',
  chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.2A8 8 0 1 1 21 12z"/>',
  conta:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
-const NAV=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['aulas','Aulas','prog'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietário','prop'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
+const NAV=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietário','prop'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
 const NAV_S=[['feed','Comunidade','chat'],['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav']];
-const NAV_I=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['aulas','Aulas','prog'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova']];
+const NAV_I=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova']];
 const VKEY={painel:'painel',prog:'prog',cavalos:'cavalos',cavaleiros:'cavaleiros',croquis:'croquis',provas:'provas',fin:'fin',prop:'prop',conta:'conta'};
 
 /* ---------- modal ---------- */
@@ -678,7 +720,7 @@ function croquiSVG(c,o){
 const views={};
 const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
 const topActs={
-  prog:()=>'<button class="btn" data-act="relTreinos">Relatório de treinos</button><button class="btn brass" data-act="amanha">Programação para amanhã</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>',
+  prog:()=>(UI.alTab==='lista'?'<button class="btn pri" data-act="anew">Nova aula</button>':(UI.user.role==='staff'?'<button class="btn" data-act="expcfg">Horário de funcionamento</button>':'')+'<button class="btn" data-act="relTreinos">Relatório de treinos</button><button class="btn brass" data-act="amanha">Programação para amanhã</button><button class="btn" data-act="anew">Nova aula</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>'),
   cavalos:()=>{const h=UI.user.hid&&HIP();return (h?limChip(S.horses.length,hipLim(h).c):'')+'<button class="btn pri" data-act="hnew">Novo cavalo</button>'},
   croquis:()=>UI.cq?'<button class="btn" data-act="cqBack">Voltar à biblioteca</button>':'<button class="btn pri" data-act="cqnew">Novo croqui de salto</button>',
   provas:()=>'<button class="btn pri" data-act="pnew">Nova prova</button>',
@@ -688,7 +730,6 @@ const topActs={
   o_parc:()=>'<button class="btn pri" data-act="pcnew">Novo parceiro</button>',
   o_cob:()=>'<button class="btn" data-act="cblock">Bloquear inadimplentes</button><button class="btn pri" data-act="cgen">Gerar cobranças do mês</button>',
   alunos:()=>UI.user.role==='staff'?limChip(S.students.length,hipLim(HIP()).a)+'<button class="btn pri" data-act="snew">Novo aluno</button>':'',
-  aulas:()=>'<button class="btn pri" data-act="anew">Nova aula</button>',
   remarc:()=>'<button class="btn pri" data-act="vnew">Liberar horário</button>',
   pagto:()=>'<button class="btn brass" data-act="gerMens">Gerar mensalidades do mês</button>'};
 
@@ -770,25 +811,58 @@ views.painel=function(){
 };
 
 views.prog=function(){
+  const tabs='<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(UI.alTab!=='lista')+'" data-act="altab" data-t="grade">Semana</button><button role="tab" aria-selected="'+(UI.alTab==='lista')+'" data-act="altab" data-t="lista">Lista de aulas</button></div>';
+  return tabs+(UI.alTab==='lista'?aulasLista():semanaHTML());
+};
+function agItens(d){
+  const out=[];
+  S.treinos.forEach(t=>{if(t.date===d)out.push({k:'t',o:t,time:t.time||'00:00'})});
+  S.aulas.forEach(a=>{if(a.date===d&&a.status!=='cancelada')out.push({k:'a',o:a,time:a.time||'00:00'})});
+  return out.sort((x,y)=>x.time.localeCompare(y.time));
+}
+function agCard(it){
+  if(it.k==='t'){const t=it.o;
+    return '<div class="tr'+(t.done?' done':'')+'"><input type="checkbox" data-act="tdone" data-id="'+t.id+'" '+(t.done?'checked':'')+' aria-label="Realizado"><button data-act="tedit" data-id="'+t.id+'"><b>'+t.time+' \u00b7 '+esc(hn(t.horse))+'</b><span class="muted">'+esc(t.tipo)+(R(t.rider)?' \u00b7 '+esc(R(t.rider).name.split(' ')[0]):'')+'</span></button></div>'+
+      (t.croqui&&CQ(t.croqui)?'<button class="pill" style="margin:-2px 0 5px" data-act="cqview" data-id="'+t.croqui+'">croqui: '+esc(CQ(t.croqui).name.slice(0,18))+'</button>':'');
+  }
+  const a=it.o;
+  return '<div class="tr au'+(a.status==='realizada'?' done':'')+'"><input type="checkbox" data-act="adone" data-id="'+a.id+'" '+(a.status==='realizada'?'checked':'')+' aria-label="Aula realizada"><button data-act="aedit" data-id="'+a.id+'"><b>'+a.time+' \u00b7 '+esc(stName(a.student).split(' ')[0])+'</b><span class="muted">'+esc(a.tipo)+' \u00b7 '+esc(hn(a.horse))+'</span>'+(a.orig?'<em>remarcada</em>':'')+'</button></div>';
+}
+function semanaHTML(){
   const days=[0,1,2,3,4,5,6].map(i=>addDays(UI.wk,i));
-  let h='<div class="row" style="margin-bottom:12px"><button class="btn" data-act="wk" data-n="-7" aria-label="Semana anterior">‹</button><button class="btn" data-act="wk" data-n="0">Hoje</button><button class="btn" data-act="wk" data-n="7" aria-label="Próxima semana">›</button><b style="margin-left:8px">Semana de '+fmtS(days[0])+' a '+fmtD(days[6])+'</b></div>';
-  const hrs=[];for(let i=9;i<=18;i++)hrs.push((i<10?'0':'')+i+':00');
-  const hr=t=>{const x=+t.time.slice(0,2);return x<9?'cedo':x>18?'tarde':(x<10?'0':'')+x+':00'};
-  const wkT=S.treinos.filter(t=>t.date>=days[0]&&t.date<=days[6]);
-  const rows=[];if(wkT.some(t=>hr(t)==='cedo'))rows.push(['cedo','Antes das 09:00','06:30']);
-  hrs.forEach(x=>rows.push([x,x,x]));if(wkT.some(t=>hr(t)==='tarde'))rows.push(['tarde','Após 18:00','19:00']);
-  h+='<div class="tw nolim"><table class="wk"><thead><tr><th>Horário</th>'+days.map((d,i)=>'<th class="hd'+(d===TODAY?' today':'')+'">'+DOW[i]+'<br>'+fmtS(d)+'</th>').join('')+'</tr></thead><tbody>';
+  let h='<div class="row" style="margin-bottom:12px"><button class="btn" data-act="wk" data-n="-7" aria-label="Semana anterior">\u2039</button><button class="btn" data-act="wk" data-n="0">Hoje</button><button class="btn" data-act="wk" data-n="7" aria-label="Pr\u00f3xima semana">\u203a</button><b style="margin-left:8px">Semana de '+fmtS(days[0])+' a '+fmtD(days[6])+'</b></div>';
+  const c=expCfg();
+  const rot=m=>pad(Math.floor(m/60))+':'+pad(m%60);
+  const hrs=[];for(let m=c.ini*60;m<=c.fim*60;m+=c.passo)hrs.push(rot(m));
+  const hr=tm=>{const q=String(tm||'00:00').split(':');const m=(+q[0])*60+(+q[1]||0);
+    if(m<c.ini*60)return 'cedo';
+    if(m>c.fim*60+c.passo-1)return 'tarde';
+    return rot(Math.floor((m-c.ini*60)/c.passo)*c.passo+c.ini*60)};
+  const nt=days.map(d=>agItens(d));
+  const wkI=[].concat.apply([],nt);
+  const rows=[];
+  if(wkI.some(x=>hr(x.time)==='cedo'))rows.push(['cedo','Antes das '+pad(c.ini)+':00',rot(Math.max(0,c.ini*60-60))]);
+  hrs.forEach(x=>rows.push([x,x,x]));
+  if(wkI.some(x=>hr(x.time)==='tarde'))rows.push(['tarde','Ap\u00f3s '+pad(c.fim)+':00',rot(Math.min(23*60+30,c.fim*60+60))]);
+  const lbl=i=>{if(!c.dias[i])return '<u class="off">fechado</u>';
+    const a=nt[i].filter(x=>x.k==='a').length,t=nt[i].filter(x=>x.k==='t').length;
+    if(!a&&!t)return '<u class="off">livre</u>';
+    return '<u>'+[a?a+(a>1?' aulas':' aula'):'',t?t+(t>1?' treinos':' treino'):''].filter(Boolean).join(' \u00b7 ')+'</u>'};
+  h+='<div class="tw nolim"><table class="wk"><thead><tr><th>Hor\u00e1rio</th>'+days.map((d,i)=>
+      '<th class="hd'+(d===TODAY?' today':'')+(c.dias[i]?'':' fech')+'">'+DOW[i].toUpperCase()+
+      '<i>'+fmtS(d)+'</i>'+lbl(i)+'</th>').join('')+'</tr></thead><tbody>';
   rows.forEach(r=>{
     h+='<tr><td class="hz"><b>'+r[1]+'</b></td>';
-    days.forEach(d=>{
-      const tr=wkT.filter(t=>t.date===d&&hr(t)===r[0]).sort(byTime);
-      h+='<td class="cell'+(d===TODAY?' tdy':'')+'">'+tr.map(t=>'<div class="tr'+(t.done?' done':'')+'"><input type="checkbox" data-act="tdone" data-id="'+t.id+'" '+(t.done?'checked':'')+' aria-label="Realizado"><button data-act="tedit" data-id="'+t.id+'"><b>'+t.time+' · '+esc(hn(t.horse))+'</b><span class="muted">'+esc(t.tipo)+(R(t.rider)?' · '+esc(R(t.rider).name.split(' ')[0]):'')+'</span></button></div>'+(t.croqui&&CQ(t.croqui)?'<button class="pill" style="margin:-2px 0 5px" data-act="cqview" data-id="'+t.croqui+'">croqui: '+esc(CQ(t.croqui).name.slice(0,18))+'</button>':'')).join('')+
-        '<button class="addt" data-act="tnew" data-t="'+r[2]+'" data-d="'+d+'">+ treino</button></td>';
+    days.forEach((d,i)=>{
+      const its=nt[i].filter(x=>hr(x.time)===r[0]);
+      const aberto=c.dias[i]!==0;
+      h+='<td class="cell'+(d===TODAY?' tdy':'')+(aberto?'':' fech')+'">'+its.map(agCard).join('')+
+        (aberto||its.length?'<div class="addw"><button class="addt" data-act="tnew" data-t="'+r[2]+'" data-d="'+d+'">+ treino</button><button class="addt" data-act="anew" data-t="'+r[2]+'" data-d="'+d+'">+ aula</button></div>':'')+'</td>';
     });
     h+='</tr>';
   });
   return h+'</tbody></table></div>';
-};
+}
 
 function treinoModal(t){
   const isNew=!t.id;
@@ -1878,10 +1952,6 @@ function gradeHTML(){
   });
   return h;
 }
-views.aulas=function(){
-  const tabs='<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(UI.alTab==='lista')+'" data-act="altab" data-t="lista">Lista</button><button role="tab" aria-selected="'+(UI.alTab==='grade')+'" data-act="altab" data-t="grade">Grade semanal</button></div>';
-  return tabs+(UI.alTab==='grade'?gradeHTML():aulasLista());
-};
 views.remarc=function(){
   const pend=S.remarc.filter(r=>r.status==='pendente');
   const vs=S.vagas.slice().sort(byTime).filter(v=>v.date>=addDays(TODAY,-1));
@@ -1889,7 +1959,8 @@ views.remarc=function(){
   return '<div class="grid g4" style="margin-bottom:16px"><div class="card kpi"><span>Pedidos para analisar</span><b>'+pend.length+'</b><small>remarcações pendentes</small></div><div class="card kpi"><span>Horários liberados</span><b>'+vagasAbertas().length+'</b><small>com vaga livre</small></div></div>'+
    '<h3 style="margin:0 0 10px">Pedidos dos alunos</h3>'+(rs.length?'<div class="tw" style="margin-bottom:22px"><table><thead><tr><th>Aluno</th><th>Aula original</th><th>Novo horário</th><th>Motivo</th><th>Situação</th><th></th></tr></thead><tbody>'+rs.map(r=>{const a=S.aulas.find(x=>x.id===r.aula),v=S.vagas.find(x=>x.id===r.vaga);
     return '<tr><td><b>'+esc(stName(r.student))+'</b></td><td>'+(a?(a.orig&&r.status!=='recusada'?dowOf(a.orig.date)+' '+fmtS(a.orig.date)+' · '+a.orig.time:whenTxt(a)):'—')+'</td><td><b>'+(v?vagaTxt(v):'—')+'</b></td><td class="sm">'+esc(r.motivo||'—')+'</td><td>'+rmPill(r)+'</td><td class="n" style="white-space:nowrap">'+(r.status==='pendente'?'<button class="btn sm danger" data-act="rmno" data-id="'+r.id+'">Recusar</button> <button class="btn sm pri" data-act="rmok" data-id="'+r.id+'">Aprovar</button>':'')+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="empty">Nenhum pedido de remarcação.</div>')+
-   '<h3 style="margin:0 0 10px">Horários liberados</h3>'+(vs.length?'<div class="tw"><table><thead><tr><th>Data</th><th>Horário</th><th>Cavalo</th><th>Vagas livres</th><th>Observação</th><th></th></tr></thead><tbody>'+vs.map(v=>'<tr><td>'+dowOf(v.date)+' '+fmtD(v.date)+'</td><td><b>'+v.time+'</b></td><td>'+esc(hn(v.horse))+'</td><td>'+(vagaFree(v)>0?'<span class="pill ok">'+vagaFree(v)+' de '+v.qtd+'</span>':'<span class="pill">Preenchida</span>')+'</td><td class="sm">'+esc(v.obs||'—')+'</td><td class="n"><button class="btn sm" data-act="vedit" data-id="'+v.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div>':empty('Nenhum horário liberado. Use “Liberar horário” ou a grade semanal em Aulas.'));
+   '<h3 style="margin:0 0 10px">Horários liberados</h3>'+(vs.length?'<div class="tw"><table><thead><tr><th>Data</th><th>Horário</th><th>Cavalo</th><th>Vagas livres</th><th>Observação</th><th></th></tr></thead><tbody>'+vs.map(v=>'<tr><td>'+dowOf(v.date)+' '+fmtD(v.date)+'</td><td><b>'+v.time+'</b></td><td>'+esc(hn(v.horse))+'</td><td>'+(vagaFree(v)>0?'<span class="pill ok">'+vagaFree(v)+' de '+v.qtd+'</span>':'<span class="pill">Preenchida</span>')+'</td><td class="sm">'+esc(v.obs||'—')+'</td><td class="n"><button class="btn sm" data-act="vedit" data-id="'+v.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div>':empty('Nenhum horário liberado. Use “Liberar horário” ou a grade de vagas abaixo.'))+
+   '<h3 style="margin:26px 0 10px">Grade de vagas</h3><p class="muted sm" style="margin:-6px 0 8px">Clique num horário para liberar vaga de remarcação ou marcar aula direto na grade de cavalos.</p>'+gradeHTML();
 };
 
 /* ---------- comprovante do mês (aluno) ---------- */
@@ -1933,8 +2004,8 @@ function aulasLista(){
   return sel+(list.length?'<div class="tw"><table><thead><tr><th>Quando</th><th>Aluno</th><th>Aula</th><th>Cavalo</th><th>Instrutor</th><th>Situação</th><th></th></tr></thead><tbody>'+
    list.map(a=>'<tr><td><b>'+whenTxt(a)+'</b>'+(a.orig?' <span class="pill yl">remarcada</span>':'')+'</td><td>'+esc(nm(a.student))+'</td><td>'+esc(a.tipo)+(a.nota?'<div class="note">'+esc(a.nota)+'</div>':'')+'</td><td>'+esc(hn(a.horse))+'</td><td>'+esc(a.instrutor)+'</td><td>'+aulaPill(a)+'</td><td class="n"><button class="btn sm" data-act="aedit" data-id="'+a.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div><p class="muted sm">Mostrando de 14 dias atrás até 21 dias à frente.</p>':empty('Nenhuma aula neste período.'));
 };
-function aulaModal(a){
-  const isNew=!a;const o=a||{student:S.students[0]&&S.students[0].id,horse:S.horses[0]&&S.horses[0].id,date:TODAY,time:'18:00',instrutor:'Instrutor Demo',tipo:'Aula de salto',valor:80,status:'agendada'};
+function aulaModal(a,pre){
+  const isNew=!a;const q=pre||{};const o=a||{student:S.students[0]&&S.students[0].id,horse:S.horses[0]&&S.horses[0].id,date:q.date||TODAY,time:q.time||'18:00',instrutor:'Instrutor Demo',tipo:'Aula de salto',valor:80,status:'agendada'};
   modal({title:isNew?'Nova aula':'Editar aula',wide:true,
    body:'<div class="fg">'+fld('Aluno','a-s',o.student,'select',S.students.map(x=>[x.id,x.name]))+fld('Cavalo','a-h',o.horse,'select',S.horses.map(x=>[x.id,x.name]))+fld('Data','a-d',o.date,'date')+fld('Horário','a-t',o.time,'time')+fld('Tipo de aula','a-k',o.tipo,'list',['Aula de salto','Aula de ginástica','Aula de adestramento','Aula de iniciação'])+fld('Instrutor','a-i',o.instrutor,'select',S.instrs.map(x=>x.name).concat(S.instrs.some(x=>x.name===o.instrutor)?[]:[o.instrutor]).map(n=>[n,n]))+(UI.user.role==='staff'?fld('Valor (R$)','a-v',o.valor,'number','min="0" step="1"'):'')+fld('Situação','a-st',o.status,'select',[['agendada','Agendada'],['realizada','Realizada'],['cancelada','Cancelada']])+fld('Observação sobre a aula (o aluno vê no portal)','a-no',o.nota||'','textarea',null,'full')+'</div>',
    del:isNew?null:()=>{S.aulas=S.aulas.filter(x=>x!==a)},
@@ -1994,6 +2065,7 @@ function hubModal(h){
 const act={
   lgrole:d=>{UI.lgRole=d.r;showLogin()},
   nav:d=>{if(d.v==='logout'){logout();return}if(d.v==='senha'){senhaModal();return}
+    if(d.v==='aulas'){UI.view='prog';UI.alTab='lista';render();return}
     if(d.v==='feed'){UI.view='feed';render();loadFeed().then(function(){if(UI.view==='feed')render()});return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
   inew:()=>inscEventModal(),iedit:d=>inscEventModal(S.insc.find(x=>x.id===d.id)),
   itoggle:d=>{const e=S.insc.find(x=>x.id===d.id);e.status=e.status==='aberta'?'encerrada':'aberta';save();render()},
@@ -2047,13 +2119,15 @@ const act={
   acesso:d=>{if(!d.e||d.e.indexOf('@')<0){modal({title:'Falta o e-mail',body:'<p>Para liberar o acesso, primeiro cadastre um e-mail válido em Editar.</p>'});return}acessoModal(d.e,d.n||d.e,d.p,d.r,d.h)},
   pixcopy:(d,b)=>{try{navigator.clipboard.writeText(S.pix).then(()=>{b.textContent='Chave copiada'},()=>{b.textContent='Copie a chave acima'})}catch(e){b.textContent='Copie a chave acima'}},
   snew:()=>alunoModal(),sedit:d=>alunoModal(S.students.find(x=>x.id===d.id)),
-  anew:()=>aulaModal(),aedit:d=>aulaModal(S.aulas.find(x=>x.id===d.id)),
+  anew:d=>aulaModal(null,(d&&d.d)?{date:d.d,time:d.t}:null),aedit:d=>aulaModal(S.aulas.find(x=>x.id===d.id)),
+  adone:(d,b)=>{const a=S.aulas.find(x=>x.id===d.id);if(a){a.status=b.checked?'realizada':'agendada';save();render()}},
   conferir:d=>conferirModal(S.pag.find(x=>x.id===d.id)),
   hhub:d=>hubModal(H(d.id)),
   gerMens:()=>{const cm=TODAY.slice(0,7);let n=0;S.students.forEach(a=>{if(!S.pag.some(p=>p.student===a.id&&p.ref===cm)){S.pag.push({id:uid(),student:a.id,ref:cm,desc:'Mensalidade',valor:a.valor,venc:cm+'-20',status:'pendente',fileId:'',paidAt:'',nota:'',motivo:''});n++}});save();modal({title:'Mensalidades do mês',body:'<p>'+(n?n+' mensalidade(s) gerada(s) para '+monthLabel(cm)+'. Os alunos já podem enviar o comprovante.':'Todos os alunos já têm mensalidade em '+monthLabel(cm)+'.')+'</p>'});render()},
   wk:d=>{UI.wk=+d.n===0?monOf(TODAY):addDays(UI.wk,+d.n);render()},
   tdone:(d,b)=>{const t=S.treinos.find(x=>x.id===d.id);if(t){t.done=b.checked;save();render()}},
   tedit:d=>treinoModal(S.treinos.find(x=>x.id===d.id)),
+  expcfg:()=>expModal(),
   tnew:d=>treinoModal({horse:d.h||(S.horses[0]&&S.horses[0].id),rider:'',date:d.d||TODAY,time:d.t||'09:00',tipo:'Trabalho Plano',croqui:'',obs:''}),
   amanha:()=>{const t=amanhaText();modal({title:'Programação para amanhã',wide:true,body:'<pre class="zap">'+esc(t)+'</pre><p class="muted sm">Pronta para colar no WhatsApp da equipe, dos tratadores e dos proprietários.</p>',extra:'<button class="btn brass" id="cp">Copiar mensagem</button>',after:()=>{$('#cp').onclick=e=>copyText(t,e.target)}})},
   relTreinos:()=>{const t=relTreinosText();modal({title:'Relatório de treinos da semana',wide:true,body:'<pre class="zap">'+esc(t)+'</pre>',extra:'<button class="btn brass" id="cp">Copiar</button>',after:()=>{$('#cp').onclick=e=>copyText(t,e.target)}})},
