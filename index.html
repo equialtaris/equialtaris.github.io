@@ -146,6 +146,7 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .s-ob{fill:var(--jump)} .s-post{fill:var(--ink)} .s-cav{fill:var(--muted)}
 .s-sel{stroke:var(--primary);stroke-width:.25;fill:none;stroke-dasharray:.6 .4}
 .s-lbl{font-size:1.5px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--sand);stroke-width:.5px;font-family:var(--f-body)}
+.s-no{font-size:1.5px;font-weight:700;fill:#fff;font-family:var(--f-body);pointer-events:none}
 .s-dst{font-size:1.3px;fill:var(--muted);paint-order:stroke;stroke:var(--sand);stroke-width:.5px;font-family:var(--f-body)}
 /* gráficos */
 .bars{display:flex;flex-direction:column;gap:7px}
@@ -529,6 +530,7 @@ function modal(o){
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape')$('#modal').innerHTML='';
   if((e.key==='Delete'||e.key==='Backspace')&&UI.view==='croquis'&&UI.cq&&UI.sel&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)&&!$('#modal').innerHTML){delSel();e.preventDefault()}
+  if(UI.view==='croquis'&&UI.cq&&UI.tool==='path'&&UI.tmp.length&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){if(e.key==='Enter'){finishPath();e.preventDefault()}else if(e.key==='Escape'){UI.tmp=[];UI.hover=null;redraw()}}
 });
 function copyText(txt,btn){
   const ok=()=>{if(btn){const o=btn.textContent;btn.textContent='Copiado';setTimeout(()=>btn.textContent=o,1400)}};
@@ -548,11 +550,20 @@ function shape(it){
 }
 function qlen(l){let L=0,p=l.a;for(let i=1;i<=40;i++){const t=i/40,u=1-t;const q={x:u*u*l.a.x+2*u*t*l.c.x+t*t*l.b.x,y:u*u*l.a.y+2*u*t*l.c.y+t*t*l.b.y};L+=Math.hypot(q.x-p.x,q.y-p.y);p=q}return L}
 function llen(l){return l.k==='curve'?qlen(l):Math.hypot(l.b.x-l.a.x,l.b.y-l.a.y)}
-function numbered(c){return c.items.filter(i=>i.t!=='cav')}
+function fixNums(c){const its=c.items.filter(i=>i.t!=='cav');let mx=0;its.forEach(i=>{if(i.n>mx)mx=i.n});its.forEach(i=>{if(!i.n)i.n=++mx});
+  const o=its.slice().sort((a,b)=>a.n-b.n);o.forEach((i,k)=>{i.n=k+1})}
+function numbered(c){fixNums(c);return c.items.filter(i=>i.t!=='cav').sort((a,b)=>a.n-b.n)}
+function smoothD(P){if(P.length<2)return '';let d='M'+P[0].x+' '+P[0].y;if(P.length===2)return d+' L'+P[1].x+' '+P[1].y;
+  for(let i=0;i<P.length-1;i++){const p0=P[i-1]||P[i],p1=P[i],p2=P[i+1],p3=P[i+2]||P[i+1];
+    d+=' C'+(p1.x+(p2.x-p0.x)/6)+' '+(p1.y+(p2.y-p0.y)/6)+' '+(p2.x-(p3.x-p1.x)/6)+' '+(p2.y-(p3.y-p1.y)/6)+' '+p2.x+' '+p2.y}return d}
+function plen(P){let L=0;for(let i=0;i<P.length-1;i++){const p0=P[i-1]||P[i],p1=P[i],p2=P[i+1],p3=P[i+2]||P[i+1];
+  const c1={x:p1.x+(p2.x-p0.x)/6,y:p1.y+(p2.y-p0.y)/6},c2={x:p2.x-(p3.x-p1.x)/6,y:p2.y-(p3.y-p1.y)/6};let q=p1;
+  for(let k=1;k<=16;k++){const t=k/16,u=1-t;const r={x:u*u*u*p1.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*p2.x,y:u*u*u*p1.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*p2.y};L+=Math.hypot(r.x-q.x,r.y-q.y);q=r}}return L}
+const PCOL='#c2410c';
 function dists(c){const n=numbered(c),o=[];for(let i=1;i<n.length;i++)o.push({a:i,b:i+1,d:Math.hypot(n[i].x-n[i-1].x,n[i].y-n[i-1].y),p:[n[i-1],n[i]]});return o}
 function croquiSVG(c,o){
-  o=o||{};const W=c.W,Hh=c.H;let s='<svg class="pista" viewBox="0 0 '+W+' '+Hh+'" '+(o.id?'id="'+o.id+'"':'')+' role="img" aria-label="Croqui '+esc(c.name)+'">'+
-   '<defs><pattern id="g5" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M5 0H0V5" fill="none" stroke="var(--grid)" stroke-width=".08"/></pattern></defs>'+
+  o=o||{};fixNums(c);const W=c.W,Hh=c.H;let s='<svg class="pista" viewBox="0 0 '+W+' '+Hh+'" '+(o.id?'id="'+o.id+'"':'')+' role="img" aria-label="Croqui '+esc(c.name)+'">'+
+   '<defs><marker id="arw" viewBox="0 0 6 6" refX="4.5" refY="3" markerWidth="2.4" markerHeight="2.4" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L6 3L0 6z" fill="'+PCOL+'"/></marker><pattern id="g5" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M5 0H0V5" fill="none" stroke="var(--grid)" stroke-width=".08"/></pattern></defs>'+
    '<rect width="'+W+'" height="'+Hh+'" fill="var(--sand)"/><rect width="'+W+'" height="'+Hh+'" fill="url(#g5)"/><rect x=".1" y=".1" width="'+(W-.2)+'" height="'+(Hh-.2)+'" fill="none" stroke="var(--ink)" stroke-width=".3"/>';
   if(o.showDist!==false)dists(c).forEach(d=>{s+='<line x1="'+d.p[0].x+'" y1="'+d.p[0].y+'" x2="'+d.p[1].x+'" y2="'+d.p[1].y+'" stroke="var(--muted)" stroke-width=".12" stroke-dasharray=".6 .5"/><text class="s-dst" text-anchor="middle" x="'+((d.p[0].x+d.p[1].x)/2)+'" y="'+((d.p[0].y+d.p[1].y)/2-.5)+'">'+num(d.d)+' m</text>'});
   c.lines.forEach(l=>{
@@ -563,15 +574,18 @@ function croquiSVG(c,o){
       '<circle cx="'+l.a.x+'" cy="'+l.a.y+'" r=".45" fill="var(--curve)"/><circle cx="'+l.b.x+'" cy="'+l.b.y+'" r=".45" fill="var(--curve)"/>'+
       '<text class="s-lbl" text-anchor="middle" x="'+mid.x+'" y="'+(mid.y-.8)+'">'+num(llen(l))+' m</text></g>';
   });
-  let n=0;
+  (c.paths||[]).forEach(pa=>{const d=smoothD(pa.pts),sel=o.sel===pa.id;
+    s+='<g data-id="'+pa.id+'" style="cursor:'+(o.sel!==undefined?'move':'default')+'"><path d="'+d+'" fill="none" stroke="transparent" stroke-width="2"/><path d="'+d+'" fill="none" stroke="'+(sel?'var(--primary)':PCOL)+'" stroke-width="'+(sel?.42:.34)+'" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arw)" opacity=".9"/></g>'});
   c.items.forEach(it=>{
-    const num_=it.t==='cav'?0:++n;
+    const num_=it.t==='cav'?0:it.n;
     s+='<g data-id="'+it.id+'" style="cursor:'+(o.sel!==undefined?'move':'default')+'"><g transform="translate('+it.x+' '+it.y+') rotate('+it.r+')">'+shape(it)+
       '<rect x="-2.3" y="-1.5" width="4.6" height="3" fill="transparent"/>'+(o.sel===it.id?'<rect class="s-sel" x="-2.4" y="-1.5" width="4.8" height="3"/>':'')+'</g>'+
-      (num_?'<text class="s-lbl" text-anchor="middle" x="'+it.x+'" y="'+(it.y-2.4)+'">'+num_+'</text>':'')+'</g>';
+      (num_?'<circle cx="'+it.x+'" cy="'+(it.y-2.9)+'" r="1.25" fill="var(--ink)" stroke="#fff" stroke-width=".18"/><text class="s-no" text-anchor="middle" x="'+it.x+'" y="'+(it.y-2.4)+'">'+num_+'</text>':'')+'</g>';
   });
+  if(o.sel!==undefined)(c.paths||[]).filter(pa=>pa.id===o.sel).forEach(pa=>{pa.pts.forEach((q,i)=>{s+='<g data-id="'+pa.id+'" style="cursor:grab"><circle data-pt="'+i+'" cx="'+q.x+'" cy="'+q.y+'" r=".75" fill="#fff" stroke="var(--primary)" stroke-width=".25"/></g>'})});
   (o.tmp||[]).forEach(p=>{s+='<circle cx="'+p.x+'" cy="'+p.y+'" r=".5" fill="var(--primary)"/>'});
-  if(o.tmp&&o.tmp.length&&o.hover){const t=o.tmp.concat([o.hover]);s+='<polyline points="'+t.map(p=>p.x+','+p.y).join(' ')+'" fill="none" stroke="var(--primary)" stroke-width=".18" stroke-dasharray=".5 .4"/>'}
+  if(o.tool==='path'&&o.tmp&&o.tmp.length){const t=o.hover?o.tmp.concat([o.hover]):o.tmp;s+='<path d="'+smoothD(t.length>1?t:t.concat(t))+'" fill="none" stroke="'+PCOL+'" stroke-width=".3" stroke-dasharray=".6 .4" stroke-linecap="round"/>'}
+  else if(o.tmp&&o.tmp.length&&o.hover){const t=o.tmp.concat([o.hover]);s+='<polyline points="'+t.map(p=>p.x+','+p.y).join(' ')+'" fill="none" stroke="var(--primary)" stroke-width=".18" stroke-dasharray=".5 .4"/>'}
   return s+'</svg>';
 }
 
@@ -729,49 +743,67 @@ views.croquis=function(){
 };
 function editorHTML(){
   const c=CQ(UI.cq);if(!c)return empty('Croqui não encontrado.');
-  const T=[['sel','Selecionar'],['vert','Vertical'],['oxer','Parelha'],['triplo','Triplo'],['cav','Cavalete'],['line','Linha reta'],['curve','Linha curva']];
-  return '<div class="ed"><div><div id="stage">'+croquiSVG(c,{id:'stg',sel:UI.sel,tmp:UI.tmp,hover:UI.hover,showDist:UI.showDist})+'</div>'+
+  const T=[['sel','Selecionar'],['vert','Vertical'],['oxer','Parelha'],['triplo','Triplo'],['cav','Cavalete'],['line','Medir reta'],['curve','Medir curva'],['path','Traçado']];
+  return '<div class="ed"><div><div id="stage">'+croquiSVG(c,{id:'stg',sel:UI.sel,tmp:UI.tmp,hover:UI.hover,showDist:UI.showDist,tool:UI.tool})+'</div>'+
    '<p class="muted sm" id="hint" style="margin:8px 2px 0">'+hint()+'</p></div>'+
    '<div class="grid"><div class="card"><div class="fg" style="grid-template-columns:1fr">'+fld('Nome do treino','cq-n',c.name)+fld('Descrição do exercício','cq-d',c.desc,'textarea')+
    '<div class="fg">'+fld('Largura (m)','cq-w',c.W,'number','min="10" max="120" step="1"')+fld('Comprimento (m)','cq-h',c.H,'number','min="10" max="120" step="1"')+'</div></div></div>'+
    '<div class="card"><h3>Ferramentas</h3><div class="tools" id="tools">'+T.map(t=>'<button class="btn sm" data-act="tool" data-t="'+t[0]+'" aria-pressed="'+(UI.tool===t[0])+'">'+t[1]+'</button>').join('')+'</div>'+
-   '<div class="row" style="margin-top:10px"><button class="btn sm" data-act="rot" data-n="-15">↺ 15°</button><button class="btn sm" data-act="rot" data-n="15">↻ 15°</button><button class="btn sm" data-act="rot" data-n="90">90°</button><button class="btn sm" data-act="ord" data-n="-1">Nº −</button><button class="btn sm" data-act="ord" data-n="1">Nº +</button><button class="btn sm danger" data-act="delsel">Excluir</button></div>'+
+   '<div class="row" style="margin-top:10px"><button class="btn sm" data-act="rot" data-n="-15">↺ 15°</button><button class="btn sm" data-act="rot" data-n="15">↻ 15°</button><button class="btn sm" data-act="rot" data-n="90">90°</button><button class="btn sm" data-act="ord" data-n="-1">Nº ↓</button><button class="btn sm" data-act="ord" data-n="1">Nº ↑</button><button class="btn sm danger" data-act="delsel">Excluir</button></div>'+
+   '<div class="row" style="margin-top:8px"><button class="btn sm" data-act="pathend">Concluir traçado</button><button class="btn sm" data-act="autopath">Traçado pelos obstáculos</button></div>'+
    '<label class="row sm" style="margin-top:10px"><input type="checkbox" style="width:auto" id="cq-sd" '+(UI.showDist?'checked':'')+'> Mostrar distâncias entre obstáculos</label></div>'+
    '<div class="card"><h3>Distâncias</h3><ul class="dist" id="dl">'+distList(c)+'</ul></div>'+
    '<button class="btn danger" data-act="cqdel">Excluir croqui</button></div></div>';
 }
-function hint(){const t=UI.tool;return t==='sel'?'Arraste os obstáculos para posicionar. Delete remove o selecionado.':t==='line'?'Clique em dois pontos para medir uma linha reta.':t==='curve'?'Clique no início, no fim e depois no ponto que define a curvatura.':'Clique na pista para colocar o obstáculo. Os números seguem a ordem de colocação.'}
+function hint(){const t=UI.tool;return t==='sel'?'Arraste qualquer obstáculo ou traçado para mover. Delete remove o selecionado.':t==='path'?'Clique para marcar os pontos do traçado; dois cliques no último ponto (ou Enter) concluem. Depois arraste os pontos para ajustar.':t==='line'?'Clique em dois pontos para medir uma linha reta.':t==='curve'?'Clique no início, no fim e depois no ponto que define a curvatura.':'Clique na pista para colocar. Para mover um obstáculo já colocado, arraste ele. Use Nº ↓/↑ para mudar a numeração.'}
 function distList(c){const d=dists(c);let s=d.map(x=>'<li><span>'+x.a+' → '+x.b+'</span><b>'+num(x.d)+' m</b></li>').join('');
-  c.lines.forEach((l,i)=>{s+='<li><span>'+(l.k==='curve'?'Curva':'Reta')+' '+(i+1)+'</span><b>'+num(llen(l))+' m</b></li>'});return s||'<li class="muted">Coloque dois obstáculos para ver a distância.</li>'}
-function redraw(){const c=CQ(UI.cq);if(!c)return;$('#stage').innerHTML=croquiSVG(c,{id:'stg',sel:UI.sel,tmp:UI.tmp,hover:UI.hover,showDist:UI.showDist});$('#dl').innerHTML=distList(c);$('#hint').textContent=hint();bindStage()}
+  c.lines.forEach((l,i)=>{s+='<li><span>'+(l.k==='curve'?'Curva':'Reta')+' '+(i+1)+'</span><b>'+num(llen(l))+' m</b></li>'});
+  (c.paths||[]).forEach((pa,i)=>{s+='<li><span>Traçado '+(i+1)+'</span><b>'+num(plen(pa.pts))+' m</b></li>'});return s||'<li class="muted">Coloque dois obstáculos para ver a distância.</li>'}
+function redraw(){const c=CQ(UI.cq);if(!c)return;$('#stage').innerHTML=croquiSVG(c,{id:'stg',sel:UI.sel,tmp:UI.tmp,hover:UI.hover,showDist:UI.showDist,tool:UI.tool});$('#dl').innerHTML=distList(c);$('#hint').textContent=hint();bindStage()}
 function snap(v){return Math.round(v*2)/2}
+let CQD=null;
+function cqPt(e){const svg=$('#stg'),c=CQ(UI.cq);const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse());return {x:Math.max(0,Math.min(c.W,snap(q.x))),y:Math.max(0,Math.min(c.H,snap(q.y)))}}
+function cqFind(c,id){return c.items.find(i=>i.id===id)||c.lines.find(l=>l.id===id)||(c.paths||[]).find(l=>l.id===id)}
+window.addEventListener('pointermove',e=>{
+  if(!UI.cq||UI.view!=='croquis'||!$('#stg'))return;const c=CQ(UI.cq);if(!c)return;
+  if(CQD){const p=cqPt(e),o=cqFind(c,CQD.id);if(!o){CQD=null;return}const dx=p.x-CQD.p0.x,dy=p.y-CQD.p0.y;
+    if(o.t){o.x=CQD.orig.x+dx;o.y=CQD.orig.y+dy}
+    else if(o.pts){if(CQD.pt!=null)o.pts[CQD.pt]={x:p.x,y:p.y};else o.pts=CQD.orig.pts.map(q=>({x:q.x+dx,y:q.y+dy}))}
+    else{['a','b','c'].forEach(k=>{if(o[k]){o[k]={x:CQD.orig[k].x+dx,y:CQD.orig[k].y+dy}}})}
+    redraw()}
+  else if(UI.tmp.length&&e.target.closest&&e.target.closest('#stg')){UI.hover=cqPt(e);redraw()}
+});
+const cqUp=()=>{if(CQD){CQD=null;save()}};
+window.addEventListener('pointerup',cqUp);window.addEventListener('pointercancel',cqUp);
 function bindStage(){
-  const svg=$('#stg');if(!svg)return;const c=CQ(UI.cq);let drag=null;
-  const pt=e=>{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse());return {x:Math.max(0,Math.min(c.W,snap(q.x))),y:Math.max(0,Math.min(c.H,snap(q.y)))}};
-  const find=id=>c.items.find(i=>i.id===id)||c.lines.find(l=>l.id===id);
+  const svg=$('#stg');if(!svg)return;const c=CQ(UI.cq);
+  const pt=e=>cqPt(e);
+  c.paths=c.paths||[];
+  const find=id=>cqFind(c,id);
   svg.addEventListener('pointerdown',e=>{
-    const p=pt(e),g=e.target.closest('[data-id]'),t=UI.tool;
-    if(t==='sel'){
-      if(g){UI.sel=g.dataset.id;const o=find(UI.sel);drag={p0:p,orig:JSON.parse(JSON.stringify(o)),id:UI.sel};try{svg.setPointerCapture(e.pointerId)}catch(_){}}else UI.sel=null;
-      redraw();
-    }else if(t==='line'||t==='curve'){
+    const p=pt(e),g=e.target.closest('[data-id]'),t=UI.tool,drawing=UI.tmp.length>0;
+    if(g&&!drawing){
+      UI.sel=g.dataset.id;const o=find(UI.sel),pe=e.target.closest('[data-pt]');
+      CQD={p0:p,orig:JSON.parse(JSON.stringify(o)),id:UI.sel,pt:pe?+pe.dataset.pt:null};
+      redraw();return}
+    if(t==='sel'){UI.sel=null;redraw();return}
+    if(t==='line'||t==='curve'){
       UI.tmp.push(p);
       if(t==='line'&&UI.tmp.length===2){const l={id:uid(),k:'line',a:UI.tmp[0],b:UI.tmp[1]};c.lines.push(l);UI.tmp=[];UI.sel=l.id;save()}
       if(t==='curve'&&UI.tmp.length===3){const l={id:uid(),k:'curve',a:UI.tmp[0],b:UI.tmp[1],c:UI.tmp[2]};c.lines.push(l);UI.tmp=[];UI.sel=l.id;save()}
       redraw();
-    }else{const it={id:uid(),t:t==='cav'?'cav':t,x:p.x,y:p.y,r:t==='cav'?90:90};c.items.push(it);UI.sel=it.id;save();redraw()}
+    }else if(t==='path'){
+      const last=UI.tmp[UI.tmp.length-1];
+      if(last&&last.x===p.x&&last.y===p.y){finishPath();return}
+      UI.tmp.push(p);redraw();
+    }else{
+      const mx=Math.max(0,...c.items.map(i=>i.n||0));
+      const it={id:uid(),t:t==='cav'?'cav':t,x:p.x,y:p.y,r:90};if(it.t!=='cav')it.n=mx+1;c.items.push(it);UI.sel=it.id;save();redraw()}
   });
-  svg.addEventListener('pointermove',e=>{
-    const p=pt(e);
-    if(drag){const o=find(drag.id),dx=p.x-drag.p0.x,dy=p.y-drag.p0.y;
-      if(o.t){o.x=drag.orig.x+dx;o.y=drag.orig.y+dy}else{['a','b','c'].forEach(k=>{if(o[k]){o[k]={x:drag.orig[k].x+dx,y:drag.orig[k].y+dy}}})}
-      redraw()}
-    else if(UI.tmp.length){UI.hover=p;redraw()}
-  });
-  const up=()=>{if(drag){drag=null;save()}};
-  svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);
 }
-function delSel(){const c=CQ(UI.cq);if(!c||!UI.sel)return;c.items=c.items.filter(i=>i.id!==UI.sel);c.lines=c.lines.filter(l=>l.id!==UI.sel);UI.sel=null;save();redraw()}
+function delSel(){const c=CQ(UI.cq);if(!c||!UI.sel)return;c.items=c.items.filter(i=>i.id!==UI.sel);c.lines=c.lines.filter(l=>l.id!==UI.sel);c.paths=(c.paths||[]).filter(l=>l.id!==UI.sel);fixNums(c);UI.sel=null;save();redraw()}
+function finishPath(){const c=CQ(UI.cq);if(!c)return;c.paths=c.paths||[];if(UI.tmp.length>=2){const l={id:uid(),pts:UI.tmp.slice()};c.paths.push(l);UI.sel=l.id;save()}UI.tmp=[];UI.hover=null;redraw()}
+function autoPath(){const c=CQ(UI.cq);if(!c)return;const n=numbered(c);if(n.length<2)return;c.paths=c.paths||[];const l={id:uid(),pts:n.map(i=>({x:i.x,y:i.y}))};c.paths.push(l);UI.sel=l.id;save();redraw()}
 
 views.provas=function(){
   const tabs='<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(UI.provTab==='cal')+'" data-act="ptab" data-t="cal">Calendário</button><button role="tab" aria-selected="'+(UI.provTab==='ana')+'" data-act="ptab" data-t="ana">Análises</button><button role="tab" aria-selected="'+(UI.provTab==='insc')+'" data-act="ptab" data-t="insc">Inscrições'+(S.inscPed.some(x=>x.status==='pendente')&&UI.user.role!=='aluno'?' <span class="badge" style="margin-left:6px">'+S.inscPed.filter(x=>x.status==='pendente').length+'</span>':'')+'</button></div>';
@@ -1758,12 +1790,13 @@ const act={
   hnew:()=>horseModal(),hedit:d=>horseModal(H(d.id)),
   hpeso:d=>{const h=H(d.id);modal({title:'Registrar peso · '+h.name,body:'<div class="fg">'+fld('Data','w-d',TODAY,'date')+fld('Peso (kg)','w-k','','number','min="100" max="1000" step="1"')+'</div>',save:()=>{const k=+V('w-k');if(!k||!V('w-d'))return false;h.peso.push({d:V('w-d'),kg:k})}})},
   hferr:d=>{const h=H(d.id);modal({title:'Registrar ferrageamento · '+h.name,body:'<div class="fg">'+fld('Data realizada','e-d',TODAY,'date')+fld('Próximo ferrageamento','e-p',addDays(TODAY,35),'date')+fld('Ferrador','e-f','Ferrador Lima','text',null,'full')+'</div>',save:()=>{if(!V('e-d'))return false;h.ferr.push({d:V('e-d'),prox:V('e-p')||addDays(V('e-d'),35),ferrador:V('e-f')})}})},
-  cqnew:()=>{modal({title:'Novo croqui de salto',body:'<div class="fg">'+fld('Nome do treino','n-n','','text',null,'full')+fld('Largura da pista (m)','n-w',50,'number','min="10" max="120"')+fld('Comprimento da pista (m)','n-h',30,'number','min="10" max="120"')+'</div>',label:'Criar e editar',save:()=>{const c={id:uid(),name:V('n-n').trim()||'Croqui sem nome',desc:'',W:+V('n-w')||50,H:+V('n-h')||30,items:[],lines:[]};S.croquis.push(c);UI.cq=c.id;UI.sel=null;UI.tool='vert';UI.tmp=[]}})},
+  cqnew:()=>{modal({title:'Novo croqui de salto',body:'<div class="fg">'+fld('Nome do treino','n-n','','text',null,'full')+fld('Largura da pista (m)','n-w',50,'number','min="10" max="120"')+fld('Comprimento da pista (m)','n-h',30,'number','min="10" max="120"')+'</div>',label:'Criar e editar',save:()=>{const c={id:uid(),name:V('n-n').trim()||'Croqui sem nome',desc:'',W:+V('n-w')||50,H:+V('n-h')||30,items:[],lines:[],paths:[]};S.croquis.push(c);UI.cq=c.id;UI.sel=null;UI.tool='vert';UI.tmp=[]}})},
   cqopen:d=>{UI.cq=d.id;UI.sel=null;UI.tool='sel';UI.tmp=[];render()},
   cqBack:()=>{UI.cq=null;render()},
   tool:d=>{UI.tool=d.t;UI.tmp=[];UI.hover=null;render()},
   rot:d=>{const c=CQ(UI.cq),it=c.items.find(i=>i.id===UI.sel);if(it){it.r=((it.r+ +d.n)%360+360)%360;save();redraw()}},
-  ord:d=>{const c=CQ(UI.cq),i=c.items.findIndex(x=>x.id===UI.sel),j=i+ +d.n;if(i>=0&&j>=0&&j<c.items.length){const t=c.items[i];c.items[i]=c.items[j];c.items[j]=t;save();redraw()}},
+  ord:d=>{const c=CQ(UI.cq),it=c.items.find(x=>x.id===UI.sel);if(!it||it.t==='cav')return;const nn=it.n+ +d.n,o=numbered(c).find(x=>x.n===nn);if(o){o.n=it.n;it.n=nn;save();redraw()}},
+  pathend:()=>finishPath(),autopath:()=>autoPath(),
   delsel:()=>delSel(),
   cqdel:()=>{const c=CQ(UI.cq);modal({title:'Excluir croqui?',body:'<p>“'+esc(c.name)+'” será removido, e os treinos ligados a ele ficam sem croqui.</p>',label:'Excluir',save:()=>{S.croquis=S.croquis.filter(x=>x!==c);S.treinos.forEach(t=>{if(t.croqui===c.id)t.croqui=''});UI.cq=null}})},
   ptab:d=>{UI.provTab=d.t;render()},pnew:()=>provaModal(),pedit:d=>provaModal(S.provas.find(p=>p.id===d.id)),ppen:d=>penModal(S.provas.find(p=>p.id===d.id)),
