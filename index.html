@@ -1220,7 +1220,7 @@ views.o_hip=function(){
   const bar='<div class="row" style="margin-bottom:12px"><input id="hq" type="search" value="'+esc(UI.hq||'')+'" placeholder="Buscar por CNPJ, nome, celular ou usuário" aria-label="Buscar hípica" style="max-width:420px" autocomplete="off"><span class="muted sm">'+fl.length+' de '+G.hips.length+'</span></div>';
   if(!fl.length)return k+bar+empty('Nenhuma hípica encontrada para essa busca.');
   return k+bar+'<div class="tw"><table><thead><tr><th>Hípica</th><th>CNPJ</th><th>Contato</th><th>Plano</th><th>Situação</th><th class="n">Em atraso</th><th>Acesso do administrador</th><th></th></tr></thead><tbody>'+
-   fl.map(h=>{const o=hipOwe(h.id);return '<tr><td><b>'+esc(h.fantasia)+'</b><br><span class="muted sm">Vence todo dia '+h.venc+' · cliente desde '+fmtD(h.criada)+'</span></td><td class="sm">'+esc(h.cnpj)+'</td><td class="sm">'+(h.tel?esc(telFmt(h.tel))+'<br>'+telLinks(h.tel,'Olá! Aqui é do EquiAltaris.'):'<span class="muted">—</span>')+'</td><td>'+esc(PLN[h.plano]||'Personalizado')+'<br><span class="muted sm">'+brl(h.valor)+'/mês</span></td><td>'+hipPill(h)+(h.status==='bloqueada'&&h.bloqEm?'<br><span class="muted sm">desde '+fmtD(h.bloqEm)+'</span>':'')+'</td><td class="n">'+(o?'<b style="color:var(--bad)">'+brl(o)+'</b>':'—')+'</td><td class="sm"><code>'+esc(h.login)+'</code></td><td class="n" style="white-space:nowrap"><button class="btn sm" data-act="hpedit" data-id="'+h.id+'">Editar</button> '+(h.status==='bloqueada'?'<button class="btn sm pri" data-act="hplib" data-id="'+h.id+'">Liberar</button>':'<button class="btn sm danger" data-act="hpbloq" data-id="'+h.id+'">Bloquear</button>')+' <button class="btn sm danger" data-act="hpdel" data-id="'+h.id+'">Remover</button></td></tr>'}).join('')+'</tbody></table></div>';
+   fl.map(h=>{const o=hipOwe(h.id);return '<tr><td><b>'+esc(h.fantasia)+'</b><br><span class="muted sm">Vence todo dia '+h.venc+' · cliente desde '+fmtD(h.criada)+'</span></td><td class="sm">'+esc(h.cnpj)+'</td><td class="sm">'+(h.tel?esc(telFmt(h.tel))+'<br>'+telLinks(h.tel,'Olá! Aqui é do EquiAltaris.'):'<span class="muted">—</span>')+'</td><td>'+esc(PLN[h.plano]||'Personalizado')+'<br><span class="muted sm">'+brl(h.valor)+'/mês</span></td><td>'+hipPill(h)+(h.status==='bloqueada'&&h.bloqEm?'<br><span class="muted sm">desde '+fmtD(h.bloqEm)+'</span>':'')+'</td><td class="n">'+(o?'<b style="color:var(--bad)">'+brl(o)+'</b>':'—')+'</td><td class="sm"><code>'+esc(h.login||'—')+'</code><br>'+chipAcesso(h.login)+' <button class="btn sm" data-act="acesso" data-e="'+esc(h.login||'')+'" data-n="'+esc(h.fantasia)+'" data-p="staff" data-h="'+h.id+'">Acesso</button></td><td class="n" style="white-space:nowrap"><button class="btn sm" data-act="hpedit" data-id="'+h.id+'">Editar</button> '+(h.status==='bloqueada'?'<button class="btn sm pri" data-act="hplib" data-id="'+h.id+'">Liberar</button>':'<button class="btn sm danger" data-act="hpbloq" data-id="'+h.id+'">Bloquear</button>')+' <button class="btn sm danger" data-act="hpdel" data-id="'+h.id+'">Remover</button></td></tr>'}).join('')+'</tbody></table></div>';
 };
 function hipModal(h){
   const isNew=!h;const o=h||{fantasia:'',cnpj:'',plano:'standard',valor:G.planos.standard.v,venc:10,login:''};
@@ -1607,7 +1607,7 @@ function senhaModal(){
 function chipAcesso(em){return acessoDe(em)?'<span class="pill ok">com acesso</span>':'<span class="pill">sem acesso</span>'}
 function senhaForte(){const a='abcdefghijkmnopqrstuvwxyz',A='ABCDEFGHJKLMNPQRSTUVWXYZ',n='23456789',t=a+A+n;let r=A[Math.floor(Math.random()*A.length)]+a[Math.floor(Math.random()*a.length)]+n[Math.floor(Math.random()*n.length)];
   for(let i=0;i<7;i++)r+=t[Math.floor(Math.random()*t.length)];return r.split('').sort(()=>Math.random()-.5).join('')}
-function acessoModal(em,nome,papelAlvo,refId){
+function acessoModal(em,nome,papelAlvo,refId,hipId){
   const tem=acessoDe(em);
   const campo=fld('Senha'+(tem?' nova':' inicial'),'ac-s',senhaForte(),'text','autocapitalize="none"')+
     '<p class="muted sm">Anote e entregue esta senha para a pessoa. Ela não fica guardada no sistema e não dá para consultar depois.</p>';
@@ -1627,7 +1627,7 @@ function acessoModal(em,nome,papelAlvo,refId){
      const senha=V('ac-s'),err=m=>{const e=$('#ac-err');if(e)e.textContent=m;return false};
      if(senha.length<8)return err('A senha precisa de pelo menos 8 caracteres.');
      const ok=$('#m-ok');if(ok){ok.disabled=true;ok.textContent='Salvando…'}
-     chamarAcessos(tem?{acao:'senha',email:em,senha:senha}:{acao:'criar',email:em,senha:senha,nome:nome,papel:papelAlvo,ref_id:refId})
+     chamarAcessos(tem?{acao:'senha',email:em,senha:senha}:{acao:'criar',email:em,senha:senha,nome:nome,papel:papelAlvo,ref_id:refId,hipica_id:hipId||minhaHip()})
       .then(r=>{
         if(r.erro){err(r.erro);if(ok){ok.disabled=false;ok.textContent=tem?'Trocar a senha':'Liberar acesso'}return}
         $('#modal').innerHTML='';render();
@@ -1896,7 +1896,7 @@ const act={
   acancel:d=>{const a=S.aulas.find(x=>x.id===d.id);modal({title:'Cancelar aula?',body:'<p>'+esc(a.tipo)+' em '+whenTxt(a)+'. A hípica será avisada pela agenda.</p>',label:'Cancelar aula',save:()=>{a.status='cancelada'}})},
   enviar:d=>enviarModal(S.pag.find(x=>x.id===d.id)),
   viewfile:d=>viewFile(d.id),
-  acesso:d=>{if(!d.e||d.e.indexOf('@')<0){modal({title:'Sem e-mail',body:'<p>Cadastre um e-mail válido para esta pessoa antes de liberar o acesso.</p>'});return}acessoModal(d.e,d.n||d.e,d.p,d.r)},
+  acesso:d=>{if(!d.e||d.e.indexOf('@')<0){modal({title:'Falta o e-mail',body:'<p>Para liberar o acesso, primeiro cadastre um e-mail válido em Editar.</p>'});return}acessoModal(d.e,d.n||d.e,d.p,d.r,d.h)},
   pixcopy:(d,b)=>{try{navigator.clipboard.writeText(S.pix).then(()=>{b.textContent='Chave copiada'},()=>{b.textContent='Copie a chave acima'})}catch(e){b.textContent='Copie a chave acima'}},
   snew:()=>alunoModal(),sedit:d=>alunoModal(S.students.find(x=>x.id===d.id)),
   anew:()=>aulaModal(),aedit:d=>aulaModal(S.aulas.find(x=>x.id===d.id)),
