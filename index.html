@@ -296,14 +296,22 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261016-1439';
+const APPV='20261016-1744';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
 const PLN={lite:'Light',standard:'Standard',full:'Full',personalizado:'Personalizado'};
 const DEMO_INSTRS=()=>[];
 function blankTenant(h){return {horses:[],croquis:[],treinos:[],provas:[],fin:[],seq:1,students:[],aulas:[],vagas:[],remarc:[],msgs:[],insc:[],inscPed:[],pag:[],files:{},pix:'',staff:{email:h.login,name:'Administrador'},instrs:[]}}
-function normT(T,demo){T.msgs=T.msgs||[];T.insc=T.insc||[];T.inscPed=T.inscPed||[];T.files=T.files||{};T.pag=T.pag||[];if(!T.instrs)T.instrs=demo?DEMO_INSTRS():[];return T}
+function normT(T,demo){
+  ['horses','croquis','treinos','provas','fin','students','aulas','vagas','remarc','msgs','insc','inscPed','pag'].forEach(k=>{if(!Array.isArray(T[k]))T[k]=[]});
+  if(!T.files||typeof T.files!=='object')T.files={};
+  if(typeof T.pix!=='string')T.pix='';
+  if(typeof T.seq!=='number')T.seq=1;
+  if(!T.staff||typeof T.staff!=='object')T.staff={name:'Administrador'};
+  if(!Array.isArray(T.instrs))T.instrs=demo?DEMO_INSTRS():[];
+  return T;
+}
 function gfile(txt){return {name:'comprovante.svg',at:TODAY,data:'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="420" height="220"><rect width="420" height="220" fill="#fff" stroke="#ccc"/><text x="24" y="52" font-family="Arial" font-size="20" font-weight="700" fill="#0f766e">PIX enviado</text><text x="24" y="100" font-family="Arial" font-size="16" fill="#333">'+txt+'</text><text x="24" y="190" font-family="Arial" font-size="12" fill="#888">Comprovante de exemplo</text></svg>')}}
 function seedG(){
   const cm=TODAY.slice(0,7);
@@ -557,9 +565,9 @@ const IC={
  prop:'<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/>',
  chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.2A8 8 0 1 1 21 12z"/>',
  conta:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
-const NAV=[['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['aulas','Aulas','prog'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietário','prop'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
-const NAV_S=[['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav']];
-const NAV_I=[['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['aulas','Aulas','prog'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova']];
+const NAV=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['aulas','Aulas','prog'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietário','prop'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
+const NAV_S=[['feed','Comunidade','chat'],['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav']];
+const NAV_I=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['aulas','Aulas','prog'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova']];
 const VKEY={painel:'painel',prog:'prog',cavalos:'cavalos',cavaleiros:'cavaleiros',croquis:'croquis',provas:'provas',fin:'fin',prop:'prop',conta:'conta'};
 
 /* ---------- modal ---------- */
@@ -666,7 +674,7 @@ function croquiSVG(c,o){
 
 /* ---------- views ---------- */
 const views={};
-const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
+const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
 const topActs={
   prog:()=>'<button class="btn" data-act="relTreinos">Relatório de treinos</button><button class="btn brass" data-act="amanha">Programação para amanhã</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>',
   cavalos:()=>{const h=UI.user.hid&&HIP();return (h?limChip(S.horses.length,hipLim(h).c):'')+'<button class="btn pri" data-act="hnew">Novo cavalo</button>'},
@@ -689,7 +697,7 @@ function render(){
   if(!S||!G.hips.some(h=>h.id===UI.user.hid)){logout();return}
   const st=UI.user.role==='aluno';const stu=st?S.students.find(x=>x.id===UI.user.id):null;
   if(st&&!stu){logout();return}
-  if(st&&UI.view.indexOf('s_')!==0)UI.view='s_inicio';
+  if(st&&UI.view!=='feed'&&UI.view.indexOf('s_')!==0)UI.view='s_inicio';
   if(!st&&UI.view.indexOf('s_')===0)UI.view='painel';
   if(UI.user.role==='instrutor'&&!IN(UI.user.id)){logout();return}
   const hip=HIP(),blk=hip.status==='bloqueada';
@@ -701,7 +709,7 @@ function render(){
   if(UI.user.role!=='staff'&&UI.view==='instrs')UI.view='painel';
   if(st&&UI.view==='s_cavalo'&&!myHorse())UI.view='s_inicio';
   const inst=UI.user.role==='instrutor';
-  if(inst&&NAV_I.every(n=>n[0]!==UI.view))UI.view='painel';
+  if(inst&&UI.view!=='feed'&&NAV_I.every(n=>n[0]!==UI.view))UI.view='painel';
   let nav=st?NAV_S.filter(n=>n[0]!=='s_cavalo'||myHorse()):inst?NAV_I:NAV;
   if(blk)nav=UI.user.role==='staff'?[['plano','Meu plano','fin'],['suporte','Suporte','chat']]:[];
   nav=nav.concat([['senha','Trocar senha','conta'],['logout','Sair','conta']]);
@@ -715,12 +723,24 @@ function render(){
   $('#who').innerHTML=st?'<b>Portal do aluno</b><br>Dúvidas? Fale com a hípica.':(inst?'<b>'+esc(IN(UI.user.id).name)+'</b><br>Área do instrutor.':'<b>Plano '+esc(PLN[hip.plano]||'Personalizado')+'</b><br>'+brl(hip.valor)+'/mês');
   const m=meta[UI.view];$('#ttl').textContent=m[0];$('#sub').textContent=m[1];
   $('#topact').innerHTML=topActs[UI.view]?topActs[UI.view]():'';
-  $('#view').innerHTML=views[UI.view]();
+  mostrarView();
   if(UI.view==='croquis'&&UI.cq)bindStage();
   const mg=document.querySelector('.msgs');if(mg)mg.scrollTop=mg.scrollHeight;
   document.title='EquiAltaris';
 }
 function empty(t){return '<div class="empty">'+t+'</div>'}
+function mostrarView(){
+  const v=views[UI.view];
+  try{
+    if(typeof v!=='function')throw new Error('tela '+UI.view+' não existe');
+    $('#view').innerHTML=v();
+  }catch(e){
+    $('#view').innerHTML='<div class="empty">Não foi possível abrir esta tela.<br>'+
+      '<span class="muted sm">'+esc(String((e&&e.message)||e))+'</span><br>'+
+      '<button class="btn sm" style="margin-top:10px" onclick="location.reload()">Recarregar</button></div>';
+    try{console.error('[EquiAltaris] erro na tela '+UI.view,e)}catch(_){}
+  }
+}
 function pillFer(h){
   const f=(h.ferr||[]).slice().sort((a,b)=>a.d.localeCompare(b.d)).pop();if(!f)return '<span class="pill">Sem registro</span>';
   const dd=Math.round((dt(f.prox)-dt(TODAY))/864e5);
@@ -808,6 +828,67 @@ views.cavalos=function(){
       '<div class="muted">Proprietário: '+esc(h.owner||'—')+(h.studentId?' · aluno com acesso ao portal':'')+'</div>'+
       '<div class="stat"><div><small>Peso</small><b>'+(p.length?p[p.length-1].kg+' kg':'—')+'</b></div><div><small>Último ferrageamento</small><b>'+(f?fmtS(f.d):'—')+'</b></div><div><small>Vencimento</small>'+pillFer(h)+'</div><div><small>Saúde</small>'+tratPill(h)+'</div></div>'+sp+
       '<div class="row"><button class="btn sm" data-act="hpeso" data-id="'+h.id+'">Registrar peso</button><button class="btn sm" data-act="hferr" data-id="'+h.id+'">Registrar ferrageamento</button><button class="btn sm brass" data-act="hhub" data-id="'+h.id+'">Saúde e alimentação</button></div></div>';
+  }).join('')+'</div>';
+};
+
+/* ---------- Comunidade: a rede das hípicas ---------- */
+let FEED=[],FEEDST='',FEEDFOTO=null;
+async function loadFeed(){
+  if(!await authOk()){FEEDST='erro';return}
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/posts?select=*&order=criado_em.desc&limit=60',{headers:sbH()});
+    if(!r.ok){FEEDST=(r.status===404||r.status===400)?'preparando':'erro';FEED=[];return}
+    FEED=await r.json();FEEDST='ok';
+  }catch(e){FEEDST='erro';FEED=[]}
+}
+function podePostar(){return UI.user&&(UI.user.role==='staff'||UI.user.role==='instrutor')}
+function quemSou(){
+  if(!UI.user)return '';
+  if(UI.user.role==='instrutor'){const i=IN(UI.user.id);return i?i.name:'Instrutor'}
+  return 'Administração';
+}
+async function publicarPost(){
+  const t=(V('fd-t')||'').trim();
+  if(!t&&!FEEDFOTO)return null;
+  const h=HIP();
+  const corpo={id:uid(),hipica_id:h.id,hipica_nome:h.fantasia,autor:quemSou(),texto:t,foto:FEEDFOTO||''};
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/posts',{method:'POST',headers:Object.assign({Prefer:'return=minimal'},sbH()),body:JSON.stringify(corpo)});
+    if(!r.ok)return {erro:r.status===404?'A Comunidade ainda não foi liberada no servidor.':'Não foi possível publicar agora.'};
+    FEEDFOTO=null;await loadFeed();return {ok:true};
+  }catch(e){return {erro:'Sem conexão com o servidor.'}}
+}
+async function apagarPost(id){
+  try{await fetch(SB_URL+'/rest/v1/posts?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:sbH()})}catch(e){}
+  await loadFeed();render();
+}
+function fmtQuando(iso){
+  if(!iso)return '';
+  const d=new Date(iso),m=Math.round((new Date()-d)/60000);
+  if(m<1)return 'agora';
+  if(m<60)return m+' min';
+  if(m<1440)return Math.round(m/60)+' h';
+  return fmtS(ymd(d));
+}
+views.feed=function(){
+  const caixa=podePostar()?'<div class="card" style="margin-bottom:16px"><h3>Publicar da '+esc(HIP().fantasia)+'</h3>'+
+    '<label class="f">Mensagem<textarea id="fd-t" rows="3" placeholder="Conte uma conquista, divulgue uma prova, parabenize alguém…"></textarea></label>'+
+    '<div class="row" style="margin-top:8px;align-items:center"><label class="btn sm">Escolher foto<input type="file" id="fd-f" accept="image/*" style="display:none"></label>'+
+    '<span class="muted sm" id="fd-n">'+(FEEDFOTO?'foto escolhida':'sem foto')+'</span>'+
+    '<button class="btn pri sm" data-act="fdpost" style="margin-left:auto">Publicar</button></div>'+
+    '<div class="err" id="fd-err" role="alert"></div>'+
+    '<p class="muted sm" style="margin-top:8px">O que você publicar aqui aparece para todas as hípicas do EquiAltaris. Não use dados pessoais de alunos.</p></div>':'';
+  if(FEEDST==='preparando')return caixa+empty('A Comunidade está sendo preparada e entra no ar em breve.');
+  if(FEEDST==='erro')return caixa+empty('Não consegui carregar a Comunidade agora.');
+  if(!FEED.length)return caixa+empty('Nenhuma publicação ainda. Seja o primeiro.');
+  return caixa+'<div class="grid">'+FEED.map(function(p){
+    const meu=UI.user.hid&&p.hipica_id===UI.user.hid&&podePostar();
+    return '<div class="card"><h3>'+esc(p.hipica_nome||'Hípica')+'<span class="muted sm" style="font-weight:400;margin-left:auto;padding-left:10px">'+esc(fmtQuando(p.criado_em))+'</span></h3>'+
+      '<div class="muted sm" style="margin-bottom:6px">'+esc(p.autor||'')+'</div>'+
+      (p.texto?'<p style="white-space:pre-wrap;margin:0 0 8px">'+esc(p.texto)+'</p>':'')+
+      (p.foto?'<img src="'+esc(p.foto)+'" alt="" style="width:100%;border-radius:10px;display:block">':'')+
+      (meu?'<div class="row" style="margin-top:8px"><button class="btn sm danger" data-act="fddel" data-id="'+esc(p.id)+'">Apagar</button></div>':'')+
+      '</div>';
   }).join('')+'</div>';
 };
 
@@ -1059,10 +1140,12 @@ async function boot(){
 function showLogin(){
   $('#view').innerHTML='';$('#nav').innerHTML='';$('#app').hidden=true;const L=$('#login');L.hidden=false;
   const pb=parcAtivas('img').length?'<div class="lgbg" aria-hidden="true">'+parcSlides('lgsl',false)+'</div>':'';
+  const stf=UI.lgRole==='staff';
   L.innerHTML='<div class="lg">'+pb+'<form class="lgc" id="lf" autocomplete="on"><div class="lgl"><img src="'+LOGO+'" alt="EquiAltaris"></div>'+
+   '<div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="'+(!stf)+'" data-act="lgrole" data-r="aluno">Aluno</button><button type="button" role="tab" aria-selected="'+stf+'" data-act="lgrole" data-r="staff">Instrutor ou hípica</button></div>'+
    fld('E-mail','lg-e','','email','autocomplete="username" autocapitalize="none"')+fld('Senha','lg-p','','password','autocomplete="current-password"')+
    '<div class="err" id="lg-err" role="alert"></div><button class="btn pri" type="submit">Entrar</button>'+
-   '<p class="muted sm" style="margin-top:12px;text-align:center">Esqueceu a senha? Fale com o EquiAltaris.</p>'+
+   '<p class="muted sm" style="margin-top:12px;text-align:center">'+(stf?'Use o e-mail cadastrado pelo EquiAltaris.':'Use o e-mail que a sua hípica cadastrou.')+'<br>Esqueceu a senha? Fale com o EquiAltaris.</p>'+
    '</form></div>';
 }
 async function doLogin(){
@@ -1258,7 +1341,7 @@ function renderOwner(){
   $('#who').innerHTML='<b>Administração</b><br>Gestão das hípicas clientes.';
   const m=meta[UI.view];$('#ttl').textContent=m[0];$('#sub').textContent=m[1];
   $('#topact').innerHTML=topActs[UI.view]?topActs[UI.view]():'';
-  $('#view').innerHTML=views[UI.view]();document.title='EquiAltaris';
+  mostrarView();document.title='EquiAltaris';
 }
 views.o_hip=function(){
   const at=G.hips.filter(h=>h.status!=='bloqueada'),bl=G.hips.filter(h=>h.status==='bloqueada'),dev=G.hips.filter(h=>hipDebt(h.id).length);
@@ -1906,7 +1989,9 @@ function hubModal(h){
 
 /* ---------- ações ---------- */
 const act={
-  nav:d=>{if(d.v==='logout'){logout();return}if(d.v==='senha'){senhaModal();return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
+  lgrole:d=>{UI.lgRole=d.r;showLogin()},
+  nav:d=>{if(d.v==='logout'){logout();return}if(d.v==='senha'){senhaModal();return}
+    if(d.v==='feed'){UI.view='feed';render();loadFeed().then(function(){if(UI.view==='feed')render()});return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
   inew:()=>inscEventModal(),iedit:d=>inscEventModal(S.insc.find(x=>x.id===d.id)),
   itoggle:d=>{const e=S.insc.find(x=>x.id===d.id);e.status=e.status==='aberta'?'encerrada':'aberta';save();render()},
   ireq:d=>inscModal(S.insc.find(x=>x.id===d.id)),
@@ -1950,6 +2035,12 @@ const act={
   acancel:d=>{const a=S.aulas.find(x=>x.id===d.id);modal({title:'Cancelar aula?',body:'<p>'+esc(a.tipo)+' em '+whenTxt(a)+'. A hípica será avisada pela agenda.</p>',label:'Cancelar aula',save:()=>{a.status='cancelada'}})},
   enviar:d=>enviarModal(S.pag.find(x=>x.id===d.id)),
   viewfile:d=>viewFile(d.id),
+  fdpost:()=>{const b=$('#fd-err');if(b)b.textContent='Publicando…';
+    publicarPost().then(function(r){
+      if(!r){if(b)b.textContent='Escreva uma mensagem ou escolha uma foto.';return}
+      if(r.erro){if(b)b.textContent=r.erro;return}
+      render();});},
+  fddel:d=>modal({title:'Apagar publicação?',body:'<p>Ela sai da Comunidade para todo mundo.</p>',label:'Apagar',save:()=>{apagarPost(d.id);return true}}),
   acesso:d=>{if(!d.e||d.e.indexOf('@')<0){modal({title:'Falta o e-mail',body:'<p>Para liberar o acesso, primeiro cadastre um e-mail válido em Editar.</p>'});return}acessoModal(d.e,d.n||d.e,d.p,d.r,d.h)},
   pixcopy:(d,b)=>{try{navigator.clipboard.writeText(S.pix).then(()=>{b.textContent='Chave copiada'},()=>{b.textContent='Copie a chave acima'})}catch(e){b.textContent='Copie a chave acima'}},
   snew:()=>alunoModal(),sedit:d=>alunoModal(S.students.find(x=>x.id===d.id)),
@@ -2008,6 +2099,14 @@ document.addEventListener('input',e=>{const t=e.target;if(t.id==='hq'){UI.hq=t.v
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.id==='pix-k'){S.pix=t.value.trim();save();return}
+  if(t.id==='fd-f'){const f=t.files[0];if(!f)return;
+    const n=$('#fd-n'),er=$('#fd-err');
+    if(!/^image\//.test(f.type)){if(er)er.textContent='Envie uma imagem (PNG ou JPG).';return}
+    if(f.size>4*1024*1024){if(er)er.textContent='Foto muito pesada. O limite é 4 MB.';return}
+    if(n)n.textContent='carregando…';
+    readImage(f).then(d=>{FEEDFOTO=d;if(n)n.textContent='foto escolhida';if(er)er.textContent=''})
+      .catch(()=>{if(er)er.textContent='Não consegui ler a foto.'});
+    return}
   if(t.id==='hl-f'){const f=t.files[0];if(!f)return;if(!/^image\//.test(f.type)){$('#hl-err').textContent='Formato não aceito. Envie PNG, JPG ou SVG.';return}
     if(f.size>5*1024*1024){$('#hl-err').textContent='Arquivo muito pesado ('+(f.size/1048576).toFixed(1).replace('.',',')+' MB). O limite é 5 MB.';return}
     const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{if(im.width&&im.width<300&&!/svg/.test(f.type)){$('#hl-err').textContent='Imagem pequena ('+im.width+' px de largura). Envie uma com pelo menos 300 px para não ficar borrada.';return}const k=Math.min(1,420/Math.max(im.width||420,im.height||420)),c=document.createElement('canvas');c.width=Math.max(1,Math.round((im.width||420)*k));c.height=Math.max(1,Math.round((im.height||420)*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);HIP().logo=c.toDataURL('image/png');UI.logoState='done';save();render()};im.onerror=()=>{$('#hl-err').textContent='Não consegui ler essa imagem.'};im.src=fr.result};fr.readAsDataURL(f);return}
