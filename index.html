@@ -137,6 +137,9 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .cq{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
 .cq .card{padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:8px}
 .cq .card:hover{border-color:var(--primary)}
+#stage{overflow:auto;max-height:78vh;border-radius:10px}
+.zrow{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-bottom:6px}
+.zrow b{font-variant-numeric:tabular-nums;min-width:46px;text-align:center;font-weight:600;color:var(--muted)}
 .ed{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
 .tools{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .tools .btn{text-align:left}
@@ -147,7 +150,7 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .s-sel{stroke:var(--primary);stroke-width:.25;fill:none;stroke-dasharray:.6 .4}
 .s-lbl{font-size:1.5px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--sand);stroke-width:.5px;font-family:var(--f-body)}
 .s-no{font-size:1.5px;font-weight:700;fill:#fff;font-family:var(--f-body);pointer-events:none}
-.s-dst{font-size:1.3px;fill:var(--muted);paint-order:stroke;stroke:var(--sand);stroke-width:.5px;font-family:var(--f-body)}
+.s-dst{pointer-events:none;font-size:1.3px;fill:var(--muted);paint-order:stroke;stroke:var(--sand);stroke-width:.5px;font-family:var(--f-body)}
 /* gráficos */
 .bars{display:flex;flex-direction:column;gap:7px}
 .bar{display:grid;grid-template-columns:minmax(90px,38%) 1fr 34px;gap:8px;align-items:center;font-size:12.5px}
@@ -484,7 +487,7 @@ const total=f=>(+f.unit||0)*(+f.qtd||0);
 const owners=()=>[...new Set(S.horses.map(h=>h.owner).filter(Boolean))];
 
 const UI={ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'lista',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
-  cobOwner:'',cobMonth:TODAY.slice(0,7),repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true};
+  cobOwner:'',cobMonth:TODAY.slice(0,7),repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true,zoom:1};
 
 /* ---------- ícones ---------- */
 const IC={
@@ -560,12 +563,28 @@ function plen(P){let L=0;for(let i=0;i<P.length-1;i++){const p0=P[i-1]||P[i],p1=
   const c1={x:p1.x+(p2.x-p0.x)/6,y:p1.y+(p2.y-p0.y)/6},c2={x:p2.x-(p3.x-p1.x)/6,y:p2.y-(p3.y-p1.y)/6};let q=p1;
   for(let k=1;k<=16;k++){const t=k/16,u=1-t;const r={x:u*u*u*p1.x+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*p2.x,y:u*u*u*p1.y+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*p2.y};L+=Math.hypot(r.x-q.x,r.y-q.y);q=r}}return L}
 const PCOL='#c2410c';
-function dists(c){const n=numbered(c),o=[];for(let i=1;i<n.length;i++)o.push({a:i,b:i+1,d:Math.hypot(n[i].x-n[i-1].x,n[i].y-n[i-1].y),p:[n[i-1],n[i]]});return o}
+function qAt(a,cp,b,t){const u=1-t;return {x:u*u*a.x+2*u*t*cp.x+t*t*b.x,y:u*u*a.y+2*u*t*cp.y+t*t*b.y}}
+function dists(c){
+  const n=numbered(c),o=[],keep={};c.bends=c.bends||{};
+  for(let i=1;i<n.length;i++){
+    const A=n[i-1],B=n[i],k=A.id+'|'+B.id,a={x:A.x,y:A.y},b={x:B.x,y:B.y},cp=c.bends[k];keep[k]=1;
+    if(cp)o.push({a:i,b:i+1,k:k,bent:true,len:qlen({a:a,b:b,c:cp}),d:'M'+a.x+' '+a.y+' Q'+cp.x+' '+cp.y+' '+b.x+' '+b.y,m:qAt(a,cp,b,.5)});
+    else o.push({a:i,b:i+1,k:k,bent:false,len:Math.hypot(b.x-a.x,b.y-a.y),d:'M'+a.x+' '+a.y+' L'+b.x+' '+b.y,m:{x:(a.x+b.x)/2,y:(a.y+b.y)/2}});
+  }
+  Object.keys(c.bends).forEach(k=>{if(!keep[k])delete c.bends[k]});
+  return o;
+}
 function croquiSVG(c,o){
-  o=o||{};fixNums(c);const W=c.W,Hh=c.H;let s='<svg class="pista" viewBox="0 0 '+W+' '+Hh+'" '+(o.id?'id="'+o.id+'"':'')+' role="img" aria-label="Croqui '+esc(c.name)+'">'+
+  o=o||{};fixNums(c);const W=c.W,Hh=c.H;const ed=o.sel!==undefined;let s='<svg class="pista" style="width:'+(100*(o.zoom||1))+'%" viewBox="0 0 '+W+' '+Hh+'" '+(o.id?'id="'+o.id+'"':'')+' role="img" aria-label="Croqui '+esc(c.name)+'">'+
    '<defs><marker id="arw" viewBox="0 0 6 6" refX="4.5" refY="3" markerWidth="2.4" markerHeight="2.4" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L6 3L0 6z" fill="'+PCOL+'"/></marker><pattern id="g5" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M5 0H0V5" fill="none" stroke="var(--grid)" stroke-width=".08"/></pattern></defs>'+
    '<rect width="'+W+'" height="'+Hh+'" fill="var(--sand)"/><rect width="'+W+'" height="'+Hh+'" fill="url(#g5)"/><rect x=".1" y=".1" width="'+(W-.2)+'" height="'+(Hh-.2)+'" fill="none" stroke="var(--ink)" stroke-width=".3"/>';
-  if(o.showDist!==false)dists(c).forEach(d=>{s+='<line x1="'+d.p[0].x+'" y1="'+d.p[0].y+'" x2="'+d.p[1].x+'" y2="'+d.p[1].y+'" stroke="var(--muted)" stroke-width=".12" stroke-dasharray=".6 .5"/><text class="s-dst" text-anchor="middle" x="'+((d.p[0].x+d.p[1].x)/2)+'" y="'+((d.p[0].y+d.p[1].y)/2-.5)+'">'+num(d.d)+' m</text>'});
+  if(o.showDist!==false)dists(c).forEach(d=>{
+    s+='<g data-bend="'+d.k+'" style="cursor:'+(ed?'grab':'default')+'">'+
+      (ed&&o.tool==='sel'?'<path d="'+d.d+'" fill="none" stroke="transparent" stroke-width="1.4"/>':'')+
+      '<path d="'+d.d+'" fill="none" stroke="var(--muted)" stroke-width=".12" stroke-dasharray=".6 .5"/>'+
+      (ed?'<circle data-bh="1" cx="'+d.m.x+'" cy="'+d.m.y+'" r=".5" fill="var(--sand)" stroke="var(--muted)" stroke-width=".14"/>':'')+
+      '<text class="s-dst" text-anchor="middle" x="'+d.m.x+'" y="'+(d.m.y-.9)+'">'+num(d.len)+' m</text></g>';
+  });
   c.lines.forEach(l=>{
     const sel=o.sel===l.id;
     const d=l.k==='curve'?'M'+l.a.x+' '+l.a.y+' Q'+l.c.x+' '+l.c.y+' '+l.b.x+' '+l.b.y:'M'+l.a.x+' '+l.a.y+' L'+l.b.x+' '+l.b.y;
@@ -579,7 +598,7 @@ function croquiSVG(c,o){
   c.items.forEach(it=>{
     const num_=it.t==='cav'?0:it.n;
     s+='<g data-id="'+it.id+'" style="cursor:'+(o.sel!==undefined?'move':'default')+'"><g transform="translate('+it.x+' '+it.y+') rotate('+it.r+')">'+shape(it)+
-      '<rect x="-2.3" y="-1.5" width="4.6" height="3" fill="transparent"/>'+(o.sel===it.id?'<rect class="s-sel" x="-2.4" y="-1.5" width="4.8" height="3"/>':'')+'</g>'+
+      '<rect x="-2.3" y="-1.5" width="4.6" height="3" fill="transparent"/>'+(o.sel===it.id?'<rect class="s-sel" x="-2.4" y="-1.5" width="4.8" height="3"/><line x1="2.1" y1="0" x2="2.9" y2="0" stroke="var(--primary)" stroke-width=".14"/><circle data-rot="1" cx="2.9" cy="0" r=".62" fill="var(--primary)" stroke="#fff" stroke-width=".16" style="cursor:grab"/>':'')+'</g>'+
       (num_?'<circle cx="'+it.x+'" cy="'+(it.y-2.9)+'" r="1.25" fill="var(--ink)" stroke="#fff" stroke-width=".18"/><text class="s-no" text-anchor="middle" x="'+it.x+'" y="'+(it.y-2.4)+'">'+num_+'</text>':'')+'</g>';
   });
   if(o.sel!==undefined)(c.paths||[]).filter(pa=>pa.id===o.sel).forEach(pa=>{pa.pts.forEach((q,i)=>{s+='<g data-id="'+pa.id+'" style="cursor:grab"><circle data-pt="'+i+'" cx="'+q.x+'" cy="'+q.y+'" r=".75" fill="#fff" stroke="var(--primary)" stroke-width=".25"/></g>'})});
@@ -744,7 +763,8 @@ views.croquis=function(){
 function editorHTML(){
   const c=CQ(UI.cq);if(!c)return empty('Croqui não encontrado.');
   const T=[['sel','Selecionar'],['vert','Vertical'],['oxer','Parelha'],['triplo','Triplo'],['cav','Cavalete'],['line','Medir reta'],['curve','Medir curva'],['path','Traçado']];
-  return '<div class="ed"><div><div id="stage">'+croquiSVG(c,{id:'stg',sel:UI.sel,tmp:UI.tmp,hover:UI.hover,showDist:UI.showDist,tool:UI.tool})+'</div>'+
+  return '<div class="ed"><div><div class="zrow"><button class="btn sm" data-act="zoom" data-n="-1" aria-label="Diminuir zoom">−</button><b id="zl">'+Math.round(UI.zoom*100)+'%</b><button class="btn sm" data-act="zoom" data-n="1" aria-label="Aumentar zoom">+</button><button class="btn sm" data-act="zoom" data-n="0">100%</button></div>'+
+   '<div id="stage">'+croquiSVG(c,{id:'stg',sel:UI.sel,tmp:UI.tmp,hover:UI.hover,showDist:UI.showDist,tool:UI.tool,zoom:UI.zoom})+'</div>'+
    '<p class="muted sm" id="hint" style="margin:8px 2px 0">'+hint()+'</p></div>'+
    '<div class="grid"><div class="card"><div class="fg" style="grid-template-columns:1fr">'+fld('Nome do treino','cq-n',c.name)+fld('Descrição do exercício','cq-d',c.desc,'textarea')+
    '<div class="fg">'+fld('Largura (m)','cq-w',c.W,'number','min="10" max="120" step="1"')+fld('Comprimento (m)','cq-h',c.H,'number','min="10" max="120" step="1"')+'</div></div></div>'+
@@ -755,19 +775,28 @@ function editorHTML(){
    '<div class="card"><h3>Distâncias</h3><ul class="dist" id="dl">'+distList(c)+'</ul></div>'+
    '<button class="btn danger" data-act="cqdel">Excluir croqui</button></div></div>';
 }
-function hint(){const t=UI.tool;return t==='sel'?'Arraste qualquer obstáculo ou traçado para mover. Delete remove o selecionado.':t==='path'?'Clique para marcar os pontos do traçado; dois cliques no último ponto (ou Enter) concluem. Depois arraste os pontos para ajustar.':t==='line'?'Clique em dois pontos para medir uma linha reta.':t==='curve'?'Clique no início, no fim e depois no ponto que define a curvatura.':'Clique na pista para colocar. Para mover um obstáculo já colocado, arraste ele. Use Nº ↓/↑ para mudar a numeração.'}
-function distList(c){const d=dists(c);let s=d.map(x=>'<li><span>'+x.a+' → '+x.b+'</span><b>'+num(x.d)+' m</b></li>').join('');
+function hint(){const t=UI.tool;return t==='sel'?'Arraste para mover. Clique no obstáculo e gire pela bolinha azul na ponta. Puxe a bolinha no meio da linha cinza para virar curva.':t==='path'?'Clique para marcar os pontos do traçado; dois cliques no último ponto (ou Enter) concluem. Depois arraste os pontos para ajustar.':t==='line'?'Clique em dois pontos para medir uma linha reta.':t==='curve'?'Clique no início, no fim e depois no ponto que define a curvatura.':'Clique na pista para colocar. Arraste um obstáculo já colocado para mover, e gire pela bolinha azul na ponta dele.'}
+function distList(c){const d=dists(c);let s=d.map(x=>'<li><span>'+x.a+' → '+x.b+(x.bent?' <span class="muted">curva</span>':'')+'</span><b>'+num(x.len)+' m</b></li>').join('');
   c.lines.forEach((l,i)=>{s+='<li><span>'+(l.k==='curve'?'Curva':'Reta')+' '+(i+1)+'</span><b>'+num(llen(l))+' m</b></li>'});
   (c.paths||[]).forEach((pa,i)=>{s+='<li><span>Traçado '+(i+1)+'</span><b>'+num(plen(pa.pts))+' m</b></li>'});return s||'<li class="muted">Coloque dois obstáculos para ver a distância.</li>'}
-function redraw(){const c=CQ(UI.cq);if(!c)return;$('#stage').innerHTML=croquiSVG(c,{id:'stg',sel:UI.sel,tmp:UI.tmp,hover:UI.hover,showDist:UI.showDist,tool:UI.tool});$('#dl').innerHTML=distList(c);$('#hint').textContent=hint();bindStage()}
+function redraw(){const c=CQ(UI.cq);if(!c)return;const st=$('#stage'),sl=st.scrollLeft,sp=st.scrollTop;
+  st.innerHTML=croquiSVG(c,{id:'stg',sel:UI.sel,tmp:UI.tmp,hover:UI.hover,showDist:UI.showDist,tool:UI.tool,zoom:UI.zoom});st.scrollLeft=sl;st.scrollTop=sp;$('#dl').innerHTML=distList(c);$('#hint').textContent=hint();bindStage()}
 function snap(v){return Math.round(v*2)/2}
 let CQD=null;
-function cqPt(e){const svg=$('#stg'),c=CQ(UI.cq);const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse());return {x:Math.max(0,Math.min(c.W,snap(q.x))),y:Math.max(0,Math.min(c.H,snap(q.y)))}}
+function cqPtR(e){const svg=$('#stg');const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+function cqPt(e){const c=CQ(UI.cq),q=cqPtR(e);return {x:Math.max(0,Math.min(c.W,snap(q.x))),y:Math.max(0,Math.min(c.H,snap(q.y)))}}
 function cqFind(c,id){return c.items.find(i=>i.id===id)||c.lines.find(l=>l.id===id)||(c.paths||[]).find(l=>l.id===id)}
 window.addEventListener('pointermove',e=>{
   if(!UI.cq||UI.view!=='croquis'||!$('#stg'))return;const c=CQ(UI.cq);if(!c)return;
+  if(CQD&&CQD.bend){const p=cqPt(e),ids=CQD.bend.split('|'),A=c.items.find(i=>i.id===ids[0]),B=c.items.find(i=>i.id===ids[1]);
+    if(A&&B){const mid={x:(A.x+B.x)/2,y:(A.y+B.y)/2};c.bends=c.bends||{};
+      if(Math.hypot(p.x-mid.x,p.y-mid.y)<.7)delete c.bends[CQD.bend];
+      else c.bends[CQD.bend]={x:2*p.x-mid.x,y:2*p.y-mid.y};
+      redraw()}
+    return}
   if(CQD){const p=cqPt(e),o=cqFind(c,CQD.id);if(!o){CQD=null;return}const dx=p.x-CQD.p0.x,dy=p.y-CQD.p0.y;
-    if(o.t){o.x=CQD.orig.x+dx;o.y=CQD.orig.y+dy}
+    if(CQD.rot&&o.t){const q=cqPtR(e),st=e.shiftKey?15:1;let a=Math.atan2(q.y-o.y,q.x-o.x)*180/Math.PI;o.r=((Math.round(a/st)*st)%360+360)%360}
+    else if(o.t){o.x=CQD.orig.x+dx;o.y=CQD.orig.y+dy}
     else if(o.pts){if(CQD.pt!=null)o.pts[CQD.pt]={x:p.x,y:p.y};else o.pts=CQD.orig.pts.map(q=>({x:q.x+dx,y:q.y+dy}))}
     else{['a','b','c'].forEach(k=>{if(o[k]){o[k]={x:CQD.orig[k].x+dx,y:CQD.orig[k].y+dy}}})}
     redraw()}
@@ -781,10 +810,11 @@ function bindStage(){
   c.paths=c.paths||[];
   const find=id=>cqFind(c,id);
   svg.addEventListener('pointerdown',e=>{
-    const p=pt(e),g=e.target.closest('[data-id]'),t=UI.tool,drawing=UI.tmp.length>0;
+    const p=pt(e),g=e.target.closest('[data-id]'),bd=e.target.closest('[data-bend]'),t=UI.tool,drawing=UI.tmp.length>0;
+    if(bd&&!g&&!drawing){CQD={bend:bd.dataset.bend,p0:p};UI.sel=null;redraw();return}
     if(g&&!drawing){
       UI.sel=g.dataset.id;const o=find(UI.sel),pe=e.target.closest('[data-pt]');
-      CQD={p0:p,orig:JSON.parse(JSON.stringify(o)),id:UI.sel,pt:pe?+pe.dataset.pt:null};
+      CQD={p0:p,orig:JSON.parse(JSON.stringify(o)),id:UI.sel,pt:pe?+pe.dataset.pt:null,rot:!!e.target.closest('[data-rot]')};
       redraw();return}
     if(t==='sel'){UI.sel=null;redraw();return}
     if(t==='line'||t==='curve'){
@@ -1791,7 +1821,8 @@ const act={
   hpeso:d=>{const h=H(d.id);modal({title:'Registrar peso · '+h.name,body:'<div class="fg">'+fld('Data','w-d',TODAY,'date')+fld('Peso (kg)','w-k','','number','min="100" max="1000" step="1"')+'</div>',save:()=>{const k=+V('w-k');if(!k||!V('w-d'))return false;h.peso.push({d:V('w-d'),kg:k})}})},
   hferr:d=>{const h=H(d.id);modal({title:'Registrar ferrageamento · '+h.name,body:'<div class="fg">'+fld('Data realizada','e-d',TODAY,'date')+fld('Próximo ferrageamento','e-p',addDays(TODAY,35),'date')+fld('Ferrador','e-f','Ferrador Lima','text',null,'full')+'</div>',save:()=>{if(!V('e-d'))return false;h.ferr.push({d:V('e-d'),prox:V('e-p')||addDays(V('e-d'),35),ferrador:V('e-f')})}})},
   cqnew:()=>{modal({title:'Novo croqui de salto',body:'<div class="fg">'+fld('Nome do treino','n-n','','text',null,'full')+fld('Largura da pista (m)','n-w',50,'number','min="10" max="120"')+fld('Comprimento da pista (m)','n-h',30,'number','min="10" max="120"')+'</div>',label:'Criar e editar',save:()=>{const c={id:uid(),name:V('n-n').trim()||'Croqui sem nome',desc:'',W:+V('n-w')||50,H:+V('n-h')||30,items:[],lines:[],paths:[]};S.croquis.push(c);UI.cq=c.id;UI.sel=null;UI.tool='vert';UI.tmp=[]}})},
-  cqopen:d=>{UI.cq=d.id;UI.sel=null;UI.tool='sel';UI.tmp=[];render()},
+  cqopen:d=>{UI.cq=d.id;UI.sel=null;UI.tool='sel';UI.tmp=[];UI.zoom=1;render()},
+  zoom:d=>{const n=+d.n;UI.zoom=n===0?1:Math.max(.6,Math.min(4,Math.round(UI.zoom*(n>0?1.25:.8)*100)/100));const z=$('#zl');if(z)z.textContent=Math.round(UI.zoom*100)+'%';redraw()},
   cqBack:()=>{UI.cq=null;render()},
   tool:d=>{UI.tool=d.t;UI.tmp=[];UI.hover=null;render()},
   rot:d=>{const c=CQ(UI.cq),it=c.items.find(i=>i.id===UI.sel);if(it){it.r=((it.r+ +d.n)%360+360)%360;save();redraw()}},
