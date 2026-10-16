@@ -141,6 +141,8 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .tr.au.done{background:var(--ok-bg);border-left-color:var(--ok)}
 .tr em{display:block}
 .wk th.hd u.off{color:var(--muted);font-weight:400}
+#aviso{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:60;max-width:min(92vw,460px);background:var(--bad-bg,#3a1414);color:#ffd9d9;border:1px solid var(--bad,#b3261e);border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.4;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#aviso b{display:block;margin-bottom:2px}
 .addw{display:flex;gap:4px}
 .addw .addt{font-size:11px;padding:4px 2px}
 .addt{width:100%;border:1px dashed transparent;background:none;border-radius:7px;padding:5px;color:color-mix(in srgb,var(--muted) 60%,transparent);cursor:pointer;font-size:12px;transition:.12s}
@@ -278,6 +280,7 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 </div>
 <div id="login" hidden></div>
 <div id="modal"></div>
+<div id="aviso" hidden role="status"></div>
 
 <script>
 (function(){
@@ -311,7 +314,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261016-1845';
+const APPV='20261016-1930';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -394,7 +397,7 @@ const myInst=()=>UI.user&&UI.user.role==='instrutor'?UI.user.id:(UI.chInst&&IN(U
 function save(){G.rev=Date.now();try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}syncPushSoon()}
 /* ---------- sincronização entre aparelhos (Supabase) ---------- */
 const SB_URL='https://dqazntahnkwookpbsamj.supabase.co',SB_KEY='sb_publishable_SFRVvZtlbJfW35Buj3mhMQ_ltHEpynM';
-const SYNC={ready:false,t:0,busy:false};
+const SYNC={ready:false,t:0,busy:false,rt:0};
 function sbH(){const h={apikey:SB_KEY,'Content-Type':'application/json'};if(AUTH.tok)h.Authorization='Bearer '+AUTH.tok;return h}
 /* ---------- autenticação (Supabase Auth) ---------- */
 const AKEY='equialtaris.auth';
@@ -441,7 +444,10 @@ async function loadPerfil(){
   try{const r=await fetch(SB_URL+'/rest/v1/perfis?select=*&id=eq.'+encodeURIComponent(AUTH.user.id),{headers:sbH()});
     if(!r.ok)return null;const rows=await r.json();return rows[0]||null}catch(e){return null}
 }
-function syncPushSoon(){if(!SYNC.ready)return;clearTimeout(SYNC.t);SYNC.t=setTimeout(pushDirty,1500)}
+function avisoSync(on){const a=document.getElementById('aviso');if(!a)return;
+  if(!on){a.hidden=true;a.innerHTML='';return}
+  a.hidden=false;a.innerHTML='<b>Alterações não salvas no servidor</b>O que você mudou agora está só neste aparelho. Verifique a internet e tente de novo \u2014 não feche esta aba.';}
+function syncPushSoon(){if(!SYNC.ready)return;clearTimeout(SYNC.t);SYNC.t=setTimeout(()=>{pushDirty().then(ok=>avisoSync(!ok)).catch(()=>avisoSync(true))},1500)}
 /* ---------- sincronização por tabela (um registro por hípica) ---------- */
 const TBL=[['plataforma','id'],['hipicas','id'],['tenant_data','hipica_id'],['cobrancas','id'],['plat_files','id'],['parcerias','id'],['chat_plataforma','id']];
 let SNAP={};
@@ -523,8 +529,11 @@ async function pushAluno(){
     SNAP.__aluno=js;return true;
   }catch(e){return false}
 }
+function formAberto(){return !!document.querySelector('#modal .md')}
 async function syncPull(){
-  if(SYNC.busy)return false;if(!await authOk())return false;SYNC.busy=true;
+  if(SYNC.busy)return false;
+  if(formAberto()){clearTimeout(SYNC.rt);SYNC.rt=setTimeout(()=>{if(UI.user)syncPull()},15000);return false}
+  if(!await authOk())return false;SYNC.busy=true;
   try{
     const r=ehAluno()?await fetchAluno():await fetchAll();
     if(!r)return false;
@@ -1765,7 +1774,7 @@ function parcModal(p){
      if(link&&!safeUrl(link))return err('O link precisa começar com http:// ou https://.');
      if(isNew&&(G.parc||[]).length>=12)return err('Limite de 12 parceiros. Pause ou exclua algum.');
      const v={nome:nome,link:link,ativa:V('pc-a')==='1',img:PCF||'',ba:PCB||'',bc:PCC||'',bga:PBA,bgc:PBC,ra:PRA,rc:PRC};delete o.banner;
-     if(isNew){G.parc=G.parc||[];G.parc.push(Object.assign({id:uid()},v))}else{Object.assign(p,v);delete p.banner}PCF=PCB=PCC=null}});
+     if(isNew){G.parc=G.parc||[];G.parc.push(Object.assign({id:uid()},v))}else{const alvo=(G.parc||[]).find(x=>x.id===p.id)||p;Object.assign(alvo,v);delete alvo.banner;if(!(G.parc||[]).some(x=>x===alvo))(G.parc=G.parc||[]).push(alvo)}PCF=PCB=PCC=null}});
 }
 function readPhoto(f,max){return new Promise((res,rej)=>{
   if(!/^image\//.test(f.type))return rej('Formato não aceito. Envie JPG ou PNG.');
