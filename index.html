@@ -668,7 +668,7 @@ function render(){
   if(inst&&NAV_I.every(n=>n[0]!==UI.view))UI.view='painel';
   let nav=st?NAV_S.filter(n=>n[0]!=='s_cavalo'||myHorse()):inst?NAV_I:NAV;
   if(blk)nav=UI.user.role==='staff'?[['plano','Meu plano','fin'],['suporte','Suporte','chat']]:[];
-  nav=nav.concat([['logout','Sair','conta']]);
+  nav=nav.concat([['senha','Trocar senha','conta'],['logout','Sair','conta']]);
   markRead();
   const badge=S.pag.filter(p=>p.status==='enviado').length,rbadge=S.remarc.filter(r=>r.status==='pendente').length;
   const cbadge=st?S.msgs.filter(m=>m.student===UI.user.id&&m.from==='staff'&&!m.read).length:S.msgs.filter(m=>m.from==='aluno'&&!m.read&&(!inst||(m.canal==='instrutor'&&mi(m)===UI.user.id))).length;
@@ -1198,7 +1198,7 @@ function renderOwner(){
   if(UI.view.indexOf('o_')!==0)UI.view='o_dash';
   markRead();
   const conf=G.cob.filter(c=>c.status==='enviado').length,oun=G.chat.filter(m=>m.from==='hip'&&!m.read).length;
-  const nav=[['o_dash','Dashboard','painel'],['o_hip','Hípicas','pess'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['logout','Sair','conta']];
+  const nav=[['o_dash','Dashboard','painel'],['o_hip','Hípicas','pess'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['senha','Trocar senha','conta'],['logout','Sair','conta']];
   $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='o_cob'&&conf?'<span class="badge">'+conf+'</span>':'')+(n[0]==='o_chat'&&oun?'<span class="badge">'+oun+'</span>':'')+'</button>').join('');
   $('#st1').textContent='Plataforma';$('#st2').textContent=G.owner.nome;
   $('#who').innerHTML='<b>Administração</b><br>Gestão das hípicas clientes.';
@@ -1576,6 +1576,34 @@ views.instrs=function(){
    S.instrs.map(i=>'<tr><td><b>'+esc(i.name)+'</b></td><td><code>'+esc(i.email)+'</code></td><td>'+S.aulas.filter(a=>a.instrutor===i.name&&a.status==='agendada').length+'</td><td class="n">'+chipAcesso(i.email)+' <button class="btn sm" data-act="acesso" data-e="'+esc(i.email)+'" data-n="'+esc(i.name)+'" data-p="instrutor" data-r="'+i.id+'">Acesso</button> <button class="btn sm" data-act="xedit" data-id="'+i.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div>'+
    '<p class="muted sm" style="margin-top:10px">Cada instrutor entra com o próprio e-mail, vê alunos, aulas, remarcações e as mensagens que os alunos enviam para ele. Não tem acesso ao financeiro. Use o botão Acesso para liberar ou tirar a entrada no sistema.</p>';
 };
+async function trocarMinhaSenha(nova){
+  if(!await authOk())return {erro:'Sua sessão expirou. Entre de novo.'};
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/user',{method:'PUT',headers:sbH(),body:JSON.stringify({password:nova})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)return {erro:d.error_description||d.msg||d.message||'Não foi possível trocar a senha.'};
+    return {ok:true};
+  }catch(e){return {erro:'Sem conexão com o servidor.'}}
+}
+function senhaModal(){
+  modal({title:'Trocar minha senha',
+   body:'<p class="muted" style="margin-bottom:10px">Você entra com <code>'+esc((AUTH.user&&AUTH.user.email)||'')+'</code>.</p>'+
+     '<div class="fg" style="grid-template-columns:1fr">'+fld('Nova senha','sn-a','','password','autocomplete="new-password"')+fld('Repita a nova senha','sn-b','','password','autocomplete="new-password"')+'</div>'+
+     '<p class="muted sm">Use pelo menos 8 caracteres. Guarde em lugar seguro: depois de trocar, ninguém consegue consultar a senha.</p><div class="err" id="sn-err" role="alert"></div>',
+   label:'Trocar senha',
+   save:()=>{
+     const a=V('sn-a'),b=V('sn-b'),err=m=>{const e=$('#sn-err');if(e)e.textContent=m;return false};
+     if(a.length<8)return err('A senha precisa de pelo menos 8 caracteres.');
+     if(a!==b)return err('As duas senhas não são iguais.');
+     const ok=$('#m-ok');if(ok){ok.disabled=true;ok.textContent='Trocando…'}
+     trocarMinhaSenha(a).then(r=>{
+       if(r.erro){err(r.erro);if(ok){ok.disabled=false;ok.textContent='Trocar senha'}return}
+       $('#modal').innerHTML='';
+       modal({title:'Senha trocada',body:'<p>Pronto. Use a senha nova da próxima vez que entrar.</p>'});
+     });
+     return false;
+   }});
+}
 function chipAcesso(em){return acessoDe(em)?'<span class="pill ok">com acesso</span>':'<span class="pill">sem acesso</span>'}
 function senhaForte(){const a='abcdefghijkmnopqrstuvwxyz',A='ABCDEFGHJKLMNPQRSTUVWXYZ',n='23456789',t=a+A+n;let r=A[Math.floor(Math.random()*A.length)]+a[Math.floor(Math.random()*a.length)]+n[Math.floor(Math.random()*n.length)];
   for(let i=0;i<7;i++)r+=t[Math.floor(Math.random()*t.length)];return r.split('').sort(()=>Math.random()-.5).join('')}
@@ -1824,7 +1852,7 @@ function hubModal(h){
 
 /* ---------- ações ---------- */
 const act={
-  nav:d=>{if(d.v==='logout'){logout();return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
+  nav:d=>{if(d.v==='logout'){logout();return}if(d.v==='senha'){senhaModal();return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
   inew:()=>inscEventModal(),iedit:d=>inscEventModal(S.insc.find(x=>x.id===d.id)),
   itoggle:d=>{const e=S.insc.find(x=>x.id===d.id);e.status=e.status==='aberta'?'encerrada':'aberta';save();render()},
   ireq:d=>inscModal(S.insc.find(x=>x.id===d.id)),
