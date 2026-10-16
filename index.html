@@ -389,49 +389,41 @@ function seed(){
   return {horses,croquis,treinos,provas,fin,seq:pn,students,aulas,vagas,remarc,msgs,insc,inscPed,pag,files,pix:'pix@tco.demo',staff:{email:'hipicateste',pass:'123456',name:'Instrutor Demo'}};
 }
 const GKEY='equialtaris.g1';
+const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
 const PLN={lite:'Light',standard:'Standard',full:'Full',personalizado:'Personalizado'};
-const DEMO_INSTRS=()=>[{id:'i1',name:'Instrutor Demo',email:'instrutorteste',pass:'123456'},{id:'i2',name:'Carla Mendes',email:'carla',pass:'123456'}];
-function blankTenant(h){return {horses:[],croquis:[],treinos:[],provas:[],fin:[],seq:1,students:[],aulas:[],vagas:[],remarc:[],msgs:[],insc:[],inscPed:[],pag:[],files:{},pix:'',staff:{email:h.login,pass:h.pass,name:'Administrador'},instrs:[]}}
+const DEMO_INSTRS=()=>[];
+function blankTenant(h){return {horses:[],croquis:[],treinos:[],provas:[],fin:[],seq:1,students:[],aulas:[],vagas:[],remarc:[],msgs:[],insc:[],inscPed:[],pag:[],files:{},pix:'',staff:{email:h.login,name:'Administrador'},instrs:[]}}
 function normT(T,demo){T.msgs=T.msgs||[];T.insc=T.insc||[];T.inscPed=T.inscPed||[];T.files=T.files||{};T.pag=T.pag||[];if(!T.instrs)T.instrs=demo?DEMO_INSTRS():[];return T}
 function gfile(txt){return {name:'comprovante.svg',at:TODAY,data:'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="420" height="220"><rect width="420" height="220" fill="#fff" stroke="#ccc"/><text x="24" y="52" font-family="Arial" font-size="20" font-weight="700" fill="#0f766e">PIX enviado</text><text x="24" y="100" font-family="Arial" font-size="16" fill="#333">'+txt+'</text><text x="24" y="190" font-family="Arial" font-size="12" fill="#888">Comprovante de exemplo</text></svg>')}}
 function seedG(){
-  const base=dt(TODAY),mo=k=>ymd(new Date(base.getFullYear(),base.getMonth()+k,15)).slice(0,7),cm=mo(0),pm=mo(-1),pm2=mo(-2);
-  const hips=[
-   {id:'h1',tel:'(61) 99999-0101',fantasia:'TCO',cnpj:'12.345.678/0001-90',plano:'standard',valor:199,venc:10,status:'ativa',login:'hipicateste',pass:'123456',criada:pm2+'-02'},
-   {id:'h2',tel:'(61) 98888-0202',fantasia:'Hípica Vale Verde',cnpj:'23.456.789/0001-01',plano:'full',valor:349,venc:10,status:'ativa',login:'valeverde',pass:'123456',criada:pm2+'-10'},
-   {id:'h3',tel:'(62) 97777-0303',fantasia:'Haras Aurora',cnpj:'34.567.890/0001-12',plano:'lite',valor:99,venc:5,status:'ativa',login:'aurora',pass:'123456',criada:pm+'-03'},
-   {id:'h4',tel:'(61) 96666-0404',fantasia:'Centro Hípico Planalto',cnpj:'45.678.901/0001-23',plano:'personalizado',valor:520,venc:10,status:'bloqueada',bloqEm:addDays(TODAY,-6),login:'planalto',pass:'123456',criada:pm2+'-01'}];
-  const files={},cob=[];
-  const mk=(h,ref,st,paid,file)=>{const c={id:uid(),hip:h.id,ref:ref,valor:h.valor,venc:ref+'-'+pad(h.venc),status:st,fileId:'',paidAt:paid||'',nota:'',motivo:''};if(file){c.fileId=uid();files[c.fileId]=gfile('Valor: '+brl(h.valor))}cob.push(c)};
-  mk(hips[0],pm,'pago',pm+'-08',1);mk(hips[0],cm,'pago',cm+'-08',1);
-  mk(hips[1],pm,'pago',pm+'-09',1);mk(hips[1],cm,'enviado',TODAY,1);
-  mk(hips[2],pm,'pago',pm+'-04',1);mk(hips[2],cm,'pendente');
-  mk(hips[3],pm2,'pago',pm2+'-10',1);mk(hips[3],pm,'pendente');mk(hips[3],cm,'pendente');
-  const tenants={h1:normT(seed(),true)};hips.slice(1).forEach(h=>tenants[h.id]=normT(blankTenant(h)));
+  const cm=TODAY.slice(0,7);
+  const hips=[{id:'h5',tel:'',fantasia:'Haras MRZ',cnpj:'',plano:'full',valor:349,venc:10,status:'ativa',login:'mrzteste@gmail.com',criada:TODAY}];
+  const files={};
+  const cob=[{id:uid(),hip:'h5',ref:cm,valor:349,venc:addDays(TODAY,7),status:'pendente',fileId:'',paidAt:'',nota:'',motivo:''}];
+  const tenants={h5:normT(blankTenant(hips[0]))};
   const pbn=(a,b,t)=>'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+a+'"/><stop offset="1" stop-color="'+b+'"/></linearGradient></defs><rect width="1600" height="900" fill="url(#g)"/><circle cx="1250" cy="260" r="380" fill="#fff" opacity=".07"/><circle cx="300" cy="780" r="300" fill="#fff" opacity=".06"/><text x="800" y="470" text-anchor="middle" font-family="Georgia,serif" font-size="96" fill="#fff" opacity=".92">'+t+'</text></svg>');
   const parc=[{id:'pc1',nome:'Agro Cavalo Center',link:'',ativa:true,img:pbn('#14532d','#3f6212','Agro Cavalo Center')},{id:'pc2',nome:'Clínica Vet Horizonte',link:'',ativa:true,img:pbn('#0c4a6e','#155e75','Clínica Vet Horizonte')},{id:'pc3',nome:'Ferrador Lima',link:'',ativa:true,img:pbn('#78350f','#92400e','Ferrador Lima')}];
-  const NWc=Date.now(),chat=[{id:uid(),hip:'h4',from:'owner',txt:'Olá! Identificamos a mensalidade em aberto. Consegue informar o pagamento hoje?',at:NWc-30*3600000,read:true},{id:uid(),hip:'h4',from:'hip',txt:'Bom dia! Vou pagar amanhã e envio o comprovante pelo sistema.',at:NWc-5*3600000,read:false},{id:uid(),hip:'h2',from:'hip',txt:'Enviei o comprovante de outubro. Podem conferir?',at:NWc-2*3600000,read:false}];
-  return {v:1,parc,chat,owner:{email:'EquiAltaris',pass:'618906',nome:'EquiAltaris',tel:'(61) 99999-0000',pix:'pagamentos@equialtaris.demo'},planos:{lite:{n:'Light',v:99},standard:{n:'Standard',v:199},full:{n:'Full',v:349}},hips,cob,files,tenants};
+  return {v:1,parc,chat:[],owner:{email:'equialtaris@gmail.com',nome:'EquiAltaris',tel:'',pix:''},planos:{lite:{n:'Light',v:99},standard:{n:'Standard',v:199},full:{n:'Full',v:349}},hips,cob,files,tenants};
 }
 function loadG(){
   try{const r=localStorage.getItem(GKEY);if(r){const o=JSON.parse(r);if(o&&o.hips&&o.tenants)return o}}catch(e){}
-  const g=seedG();
-  try{const old=localStorage.getItem('equialtaris.v5');if(old){const o=JSON.parse(old);if(o&&o.horses)g.tenants.h1=normT(o,true)}}catch(e){}
-  return g;
+  return seedG();
 }
-G=loadG();
-G.hips.forEach(h=>{const T=G.tenants[h.id]||(G.tenants[h.id]=blankTenant(h));normT(T,h.id==='h1');T.staff={email:h.login,pass:h.pass,name:'Administrador'}});
-G.files=G.files||{};G.cob=G.cob||[];G.chat=G.chat||[];G.parc=G.parc||[];G.owner.tel=G.owner.tel||'';
-function ensureFixed(){
-  if(G.owner.email==='adminteste'){G.owner.email='EquiAltaris';if(G.owner.pass==='123456')G.owner.pass='618906'}
-  if(!(G.del||[]).includes('h5')&&!G.hips.some(h=>h.login.toLowerCase()==='harasmrz'||h.id==='h5')){
-    const h={id:'h5',tel:'',fantasia:'Haras MRZ',cnpj:'',plano:'full',valor:349,venc:10,status:'ativa',login:'Harasmrz',pass:'123456',criada:TODAY};
-    G.hips.push(h);G.tenants.h5=normT(blankTenant(h));G.tenants.h5.staff={email:h.login,pass:h.pass,name:'Administrador'};
-    G.cob.push({id:uid(),hip:'h5',ref:TODAY.slice(0,7),valor:349,venc:addDays(TODAY,7),status:'pendente',fileId:'',paidAt:'',nota:'',motivo:''});
-  }
+function scrubPass(){
+  if(G.owner)delete G.owner.pass;
+  (G.hips||[]).forEach(h=>{delete h.pass});
+  Object.keys(G.tenants||{}).forEach(k=>{const T=G.tenants[k];if(!T)return;
+    if(T.staff)delete T.staff.pass;(T.instrs||[]).forEach(x=>delete x.pass);(T.students||[]).forEach(x=>delete x.pass)});
 }
-ensureFixed();
+function normAll(){
+  G.hips=G.hips||[];G.tenants=G.tenants||{};G.owner=G.owner||{};
+  G.hips.forEach(h=>{const T=G.tenants[h.id]||(G.tenants[h.id]=blankTenant(h));normT(T);T.staff={email:h.login,name:'Administrador'}});
+  G.files=G.files||{};G.cob=G.cob||[];G.chat=G.chat||[];G.parc=G.parc||[];G.owner.tel=G.owner.tel||'';
+  G.parc.forEach(q=>{if(q.ba===undefined&&q.bc===undefined){const b=q.banner||q.img||'';q.ba=b;q.bc=b;q.bga=q.bgc='#0f1424'}});
+  scrubPass();
+}
+G=loadG();normAll();
 function useTenant(id){S=G.tenants[id]}
 const HIP=()=>G.hips.find(h=>h.id===UI.user.hid);
 const mi=m=>m.inst||(S.instrs[0]||{}).id;
@@ -442,21 +434,52 @@ function save(){G.rev=Date.now();try{localStorage.setItem(GKEY,JSON.stringify(G)
 /* ---------- sincronização entre aparelhos (Supabase) ---------- */
 const SB_URL='https://dqazntahnkwookpbsamj.supabase.co',SB_KEY='sb_publishable_SFRVvZtlbJfW35Buj3mhMQ_ltHEpynM';
 const SYNC={ready:false,t:0,busy:false};
-const sbH={apikey:SB_KEY,'Content-Type':'application/json'};
+function sbH(){const h={apikey:SB_KEY,'Content-Type':'application/json'};if(AUTH.tok)h.Authorization='Bearer '+AUTH.tok;return h}
+/* ---------- autenticação (Supabase Auth) ---------- */
+const AKEY='equialtaris.auth';
+const AUTH={tok:null,ref:null,exp:0,user:null,perfil:null};
+function authLoad(){try{const r=JSON.parse(localStorage.getItem(AKEY)||'null');if(r&&r.ref){AUTH.tok=r.tok;AUTH.ref=r.ref;AUTH.exp=r.exp||0;AUTH.user=r.user||null}}catch(e){}}
+function authSave(){try{if(AUTH.ref)localStorage.setItem(AKEY,JSON.stringify({tok:AUTH.tok,ref:AUTH.ref,exp:AUTH.exp,user:AUTH.user}));else localStorage.removeItem(AKEY)}catch(e){}}
+function authClear(){AUTH.tok=null;AUTH.ref=null;AUTH.exp=0;AUTH.user=null;AUTH.perfil=null;SYNC.ready=false;authSave()}
+function authSet(d){AUTH.tok=d.access_token;AUTH.ref=d.refresh_token;AUTH.exp=Date.now()+((d.expires_in||3600)*1000);if(d.user)AUTH.user=d.user;authSave()}
+async function authSignIn(email,pass){
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)return {err:d.error_description||d.msg||d.message||'erro'};
+    authSet(d);return {ok:true};
+  }catch(e){return {err:'rede'}}
+}
+async function authRefresh(){
+  if(!AUTH.ref)return false;
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:AUTH.ref})});
+    if(!r.ok){authClear();return false}
+    authSet(await r.json());return true;
+  }catch(e){return false}
+}
+async function authOk(){if(!AUTH.tok||!AUTH.ref)return false;if(Date.now()>AUTH.exp-60000)return await authRefresh();return true}
+async function authOut(){try{if(AUTH.tok)await fetch(SB_URL+'/auth/v1/logout',{method:'POST',headers:sbH()})}catch(e){}authClear()}
+async function loadPerfil(){
+  if(!AUTH.user||!AUTH.user.id)return null;
+  try{const r=await fetch(SB_URL+'/rest/v1/perfis?select=*&id=eq.'+encodeURIComponent(AUTH.user.id),{headers:sbH()});
+    if(!r.ok)return null;const rows=await r.json();return rows[0]||null}catch(e){return null}
+}
 function syncPushSoon(){if(!SYNC.ready)return;clearTimeout(SYNC.t);SYNC.t=setTimeout(syncPush,1500)}
 async function syncPush(){
-  try{const r=await fetch(SB_URL+'/rest/v1/equi_state?on_conflict=id',{method:'POST',headers:Object.assign({Prefer:'resolution=merge-duplicates,return=minimal'},sbH),body:JSON.stringify({id:'g',rev:G.rev||Date.now(),data:G})});return r.ok}catch(e){return false}
+  if(!await authOk())return false;
+  try{const r=await fetch(SB_URL+'/rest/v1/equi_state?on_conflict=id',{method:'POST',headers:Object.assign({Prefer:'resolution=merge-duplicates,return=minimal'},sbH()),body:JSON.stringify({id:'g',rev:G.rev||Date.now(),data:G})});return r.ok}catch(e){return false}
 }
 async function syncPull(){
-  if(SYNC.busy)return false;SYNC.busy=true;
+  if(SYNC.busy)return false;if(!await authOk())return false;SYNC.busy=true;
   try{
-    const r=await fetch(SB_URL+'/rest/v1/equi_state?id=eq.g&select=rev,data',{headers:sbH});
+    const r=await fetch(SB_URL+'/rest/v1/equi_state?id=eq.g&select=rev,data',{headers:sbH()});
     if(!r.ok)return false;
     const rows=await r.json();
     if(!rows.length){SYNC.ready=true;if(!G.rev)G.rev=Date.now();await syncPush();return true}
     const row=rows[0];SYNC.ready=true;
     if(+row.rev>(G.rev||0)&&row.data&&row.data.hips&&row.data.tenants){
-      G=row.data;try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}
+      G=row.data;normAll();try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}
       S=UI.user&&UI.user.hid?(G.tenants[UI.user.hid]||null):null;
       const typing=document.querySelector('#modal .md')||/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');
       if(!typing)render();
@@ -959,41 +982,53 @@ views.conta=function(){
 };
 
 /* ---------- login e sessão ---------- */
-function loadSession(){try{const r=JSON.parse(localStorage.getItem(SKEY)||'null');if(!r)return null;
-  if(r.role==='owner')return r;
-  const T=G.tenants[r.hid];if(!T||!G.hips.some(h=>h.id===r.hid))return null;
-  const ok=r.role==='staff'||(r.role==='instrutor'&&T.instrs.some(x=>x.id===r.id))||(r.role==='aluno'&&T.students.some(x=>x.id===r.id));
-  if(ok){useTenant(r.hid);return r}}catch(e){}return null}
-function saveSession(){try{if(UI.user)localStorage.setItem(SKEY,JSON.stringify(UI.user));else localStorage.removeItem(SKEY)}catch(e){}}
-function logout(){UI.user=null;UI.cq=null;UI.logoState=null;saveSession();render()}
+function homeView(u){return u.role==='owner'?'o_dash':u.role==='aluno'?'s_inicio':'painel'}
+function userFromPerfil(p){
+  if(!p)return null;
+  if(p.papel==='owner'){S=null;return {role:'owner'}}
+  if(!p.hipica_id||!G.hips.some(h=>h.id===p.hipica_id))return null;
+  useTenant(p.hipica_id);if(!S)return null;
+  if(p.papel==='staff')return {role:'staff',hid:p.hipica_id};
+  if(p.papel==='instrutor'&&(S.instrs||[]).some(x=>x.id===p.ref_id))return {role:'instrutor',id:p.ref_id,hid:p.hipica_id};
+  if(p.papel==='aluno'&&(S.students||[]).some(x=>x.id===p.ref_id))return {role:'aluno',id:p.ref_id,hid:p.hipica_id};
+  return null;
+}
+async function logout(){
+  try{if(SYNC.ready)await syncPush()}catch(e){}
+  await authOut();
+  try{localStorage.removeItem(GKEY)}catch(e){}
+  G=seedG();normAll();S=null;UI.user=null;UI.cq=null;UI.logoState=null;render();
+}
+async function boot(){
+  UI.user=null;
+  if(await authOk()){
+    const p=await loadPerfil();
+    if(p){await syncPull();const u=userFromPerfil(p);if(u){AUTH.perfil=p;UI.user=u;UI.view=homeView(u)}}
+    if(!UI.user)authClear();
+  }
+  render();
+}
 function showLogin(){
   $('#view').innerHTML='';$('#nav').innerHTML='';$('#app').hidden=true;const L=$('#login');L.hidden=false;
-  const stf=UI.lgRole==='staff';
   const pb=parcAtivas('img').length?'<div class="lgbg" aria-hidden="true">'+parcSlides('lgsl',false)+'</div>':'';
   L.innerHTML='<div class="lg">'+pb+'<form class="lgc" id="lf" autocomplete="on"><div class="lgl"><img src="'+LOGO+'" alt="EquiAltaris"></div>'+
-   '<div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="'+(!stf)+'" data-act="lgrole" data-r="aluno">Aluno</button><button type="button" role="tab" aria-selected="'+stf+'" data-act="lgrole" data-r="staff">Instrutor ou hípica</button></div>'+
-   fld(stf?'Usuário':'E-mail ou usuário','lg-e','','text','autocomplete="username" autocapitalize="none"')+fld('Senha','lg-p','','password','autocomplete="current-password"')+
+   fld('E-mail','lg-e','','email','autocomplete="username" autocapitalize="none"')+fld('Senha','lg-p','','password','autocomplete="current-password"')+
    '<div class="err" id="lg-err" role="alert"></div><button class="btn pri" type="submit">Entrar</button>'+
+   '<p class="muted sm" style="margin-top:12px;text-align:center">Esqueceu a senha? Fale com o EquiAltaris.</p>'+
    '</form></div>';
 }
-function doLogin(){
-  const u=findUser();if(u)return finishLogin(u);
-  $('#lg-err').textContent='Conferindo no servidor…';
-  syncPull().then(()=>{const u2=findUser();if(u2)finishLogin(u2);else{const e=$('#lg-err');if(e)e.textContent='E-mail ou senha incorretos.'}});
-}
-function findUser(){
-  const em=V('lg-e').trim().toLowerCase(),pw=V('lg-p');let u=null;
-  if(em===G.owner.email.toLowerCase()&&pw===G.owner.pass)u={role:'owner'};
-  for(let k=0;k<G.hips.length&&!u;k++){
-    const h=G.hips[k],T=G.tenants[h.id];
-    if(em===h.login.toLowerCase()&&pw===h.pass)u={role:'staff',hid:h.id};
-    else{const ii=T.instrs.find(x=>x.email.toLowerCase()===em&&x.pass===pw);if(ii)u={role:'instrutor',id:ii.id,hid:h.id};
-      else{const a=T.students.find(x=>x.email.toLowerCase()===em&&x.pass===pw);if(a)u={role:'aluno',id:a.id,hid:h.id}}}}
-  return u;
-}
-function finishLogin(u){
-  if(u.hid)useTenant(u.hid);else S=null;
-  UI.logoState=null;UI.user=u;UI.view=u.role==='owner'?'o_dash':u.role==='aluno'?'s_inicio':'painel';UI.cq=null;saveSession();render();
+async function doLogin(){
+  const em=V('lg-e').trim(),pw=V('lg-p'),er=$('#lg-err');
+  if(!em||!pw){er.textContent='Informe o e-mail e a senha.';return}
+  er.textContent='Entrando…';
+  const r=await authSignIn(em,pw);
+  if(r.err){er.textContent=r.err==='rede'?'Sem conexão com o servidor. Tente de novo.':'E-mail ou senha incorretos.';return}
+  const p=await loadPerfil();
+  if(!p){authClear();er.textContent='Esta conta ainda não está liberada. Fale com o EquiAltaris.';return}
+  await syncPull();
+  const u=userFromPerfil(p);
+  if(!u){authClear();er.textContent='Seu cadastro não foi encontrado na hípica. Fale com o EquiAltaris.';return}
+  AUTH.perfil=p;UI.logoState=null;UI.user=u;UI.view=homeView(u);UI.cq=null;render();
 }
 
 /* ---------- arquivos (comprovantes e exames) ---------- */
@@ -1190,24 +1225,24 @@ views.o_hip=function(){
    fl.map(h=>{const o=hipOwe(h.id);return '<tr><td><b>'+esc(h.fantasia)+'</b><br><span class="muted sm">Vence todo dia '+h.venc+' · cliente desde '+fmtD(h.criada)+'</span></td><td class="sm">'+esc(h.cnpj)+'</td><td class="sm">'+(h.tel?esc(telFmt(h.tel))+'<br>'+telLinks(h.tel,'Olá! Aqui é do EquiAltaris.'):'<span class="muted">—</span>')+'</td><td>'+esc(PLN[h.plano]||'Personalizado')+'<br><span class="muted sm">'+brl(h.valor)+'/mês</span></td><td>'+hipPill(h)+(h.status==='bloqueada'&&h.bloqEm?'<br><span class="muted sm">desde '+fmtD(h.bloqEm)+'</span>':'')+'</td><td class="n">'+(o?'<b style="color:var(--bad)">'+brl(o)+'</b>':'—')+'</td><td class="sm"><code>'+esc(h.login)+'</code></td><td class="n" style="white-space:nowrap"><button class="btn sm" data-act="hpedit" data-id="'+h.id+'">Editar</button> '+(h.status==='bloqueada'?'<button class="btn sm pri" data-act="hplib" data-id="'+h.id+'">Liberar</button>':'<button class="btn sm danger" data-act="hpbloq" data-id="'+h.id+'">Bloquear</button>')+' <button class="btn sm danger" data-act="hpdel" data-id="'+h.id+'">Remover</button></td></tr>'}).join('')+'</tbody></table></div>';
 };
 function hipModal(h){
-  const isNew=!h;const o=h||{fantasia:'',cnpj:'',plano:'standard',valor:G.planos.standard.v,venc:10,login:'',pass:''};
+  const isNew=!h;const o=h||{fantasia:'',cnpj:'',plano:'standard',valor:G.planos.standard.v,venc:10,login:''};
   modal({title:isNew?'Nova hípica':'Editar hípica',wide:true,
    body:'<div class="fg">'+fld('Nome fantasia','hp-n',o.fantasia,'text',null,'full')+fld('CNPJ','hp-c',o.cnpj,'text','inputmode="numeric" placeholder="00.000.000/0000-00"')+
     fld('Plano contratado','hp-pl',o.plano,'select',[['lite','Plano Light'],['standard','Plano Standard'],['full','Plano Full'],['personalizado','Plano Personalizado']])+fld('Valor mensal (R$)','hp-v',o.valor,'number','min="0" step="1"')+fld('Dia do vencimento','hp-d',o.venc,'number','min="1" max="28" step="1"')+
-    fld('Celular / WhatsApp','hp-t',o.tel||'','tel','inputmode="tel" placeholder="(61) 99999-9999"')+fld('Usuário do administrador da hípica','hp-l',o.login,'text','autocapitalize="none"')+fld('Senha inicial (demonstração)','hp-p',o.pass,'text')+'</div><div class="fg" id="hp-lim" style="margin-top:6px;'+(o.plano==='personalizado'?'':'display:none')+'">'+fld('Máximo de alunos (plano personalizado)','hp-la',o.limA||100,'number','min="1" step="1"')+fld('Máximo de cavalos (plano personalizado)','hp-lc',o.limC||100,'number','min="1" step="1"')+'</div><p class="muted sm" id="hp-limtx" style="margin:6px 0 0"></p>'+
-    '<p class="muted sm" style="margin-top:8px">O administrador da hípica entra com esse usuário e cria os instrutores e alunos, que ficam vinculados só a esta hípica.</p><div class="err" id="hp-err" role="alert"></div>',
+    fld('Celular / WhatsApp','hp-t',o.tel||'','tel','inputmode="tel" placeholder="(61) 99999-9999"')+fld('E-mail do administrador da hípica','hp-l',o.login,'email','autocapitalize="none"')+'</div><div class="fg" id="hp-lim" style="margin-top:6px;'+(o.plano==='personalizado'?'':'display:none')+'">'+fld('Máximo de alunos (plano personalizado)','hp-la',o.limA||100,'number','min="1" step="1"')+fld('Máximo de cavalos (plano personalizado)','hp-lc',o.limC||100,'number','min="1" step="1"')+'</div><p class="muted sm" id="hp-limtx" style="margin:6px 0 0"></p>'+
+    '<p class="muted sm" style="margin-top:8px">O administrador da hípica entra com esse e-mail. A senha é criada pelo EquiAltaris e enviada a ele; ninguém guarda senha dentro do sistema.</p><div class="err" id="hp-err" role="alert"></div>',
    save:()=>{
-     const v={fantasia:V('hp-n').trim(),cnpj:V('hp-c').replace(/\D/g,''),tel:telFmt(V('hp-t').trim()),plano:V('hp-pl'),valor:+V('hp-v')||0,limA:Math.max(1,Math.round(+V('hp-la')||100)),limC:Math.max(1,Math.round(+V('hp-lc')||100)),venc:Math.min(28,Math.max(1,+V('hp-d')||10)),login:V('hp-l').trim(),pass:V('hp-p')};
+     const v={fantasia:V('hp-n').trim(),cnpj:V('hp-c').replace(/\D/g,''),tel:telFmt(V('hp-t').trim()),plano:V('hp-pl'),valor:+V('hp-v')||0,limA:Math.max(1,Math.round(+V('hp-la')||100)),limC:Math.max(1,Math.round(+V('hp-lc')||100)),venc:Math.min(28,Math.max(1,+V('hp-d')||10)),login:V('hp-l').trim().toLowerCase()};
      const err=m=>{$('#hp-err').textContent=m;return false};
      if(!v.fantasia)return err('Informe o nome fantasia.');
      if(v.cnpj.length!==14)return err('O CNPJ precisa ter 14 números.');
      if(G.hips.some(x=>x!==h&&x.cnpj.replace(/\D/g,'')===v.cnpj))return err('Já existe uma hípica com esse CNPJ.');
      if(telDigits(v.tel).length<10)return err('Informe o celular com DDD.');
-     if(!v.login||!v.pass)return err('Informe usuário e senha do administrador.');
-     if(emailTaken(v.login,h))return err('Esse usuário já está em uso.');
+     if(!EMAIL_RE.test(v.login))return err('Informe um e-mail válido para o administrador.');
+     if(emailTaken(v.login,h))return err('Esse e-mail já está em uso.');
      v.cnpj=v.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5');
      if(isNew){const n=Object.assign({id:uid(),status:'ativa',criada:TODAY},v);G.hips.push(n);G.tenants[n.id]=normT(blankTenant(n))}
-     else{Object.assign(h,v);G.tenants[h.id].staff={email:v.login,pass:v.pass,name:'Administrador'}}}});
+     else{Object.assign(h,v);G.tenants[h.id].staff={email:v.login,name:'Administrador'}}}});
 hpLimUi();
 }
 function hpLimUi(){const pl=V('hp-pl'),box=$('#hp-lim'),tx=$('#hp-limtx');if(!box)return;box.style.display=pl==='personalizado'?'':'none';tx.textContent=pl==='personalizado'?'':'Limite do plano: até '+PLIM[pl]+' alunos e '+PLIM[pl]+' cavalos.'}
@@ -1477,7 +1512,6 @@ let PI=0,PCF=null,PCB=null,PCC=null,PBA='',PBC='',PRA=0,PRC=0;
 const PSZ={p:['Pequeno','6/1',520],m:['Médio','4/1',760],g:['Grande','3/1',960]};
 const pIdeal=k=>{const z=PSZ[G.pcfg[k]]||PSZ.m,r=+z[1].split('/')[0];return {w:z[2]*2,h:Math.round(z[2]*2/r),r:z[1].replace('/',':'),nome:z[0]}};
 G.pcfg={aluno:'m',cavalo:'m'};if(G.planos&&G.planos.lite)G.planos.lite.n='Light';
-(G.parc||[]).forEach(q=>{if(q.ba===undefined&&q.bc===undefined){const b=q.banner||q.img||'';q.ba=b;q.bc=b;q.bga=q.bgc='#0f1424'}});
 const parcAtivas=slot=>(G.parc||[]).filter(p=>p.ativa!==false&&p[slot||'img']);
 const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
 function parcSlides(cls,withLink,slot){
@@ -1545,11 +1579,11 @@ views.instrs=function(){
    '<p class="muted sm" style="margin-top:10px">Cada instrutor entra com o próprio usuário, vê alunos, aulas, remarcações e as mensagens que os alunos enviam para ele. Não tem acesso ao financeiro.</p>';
 };
 function instrModal(i){
-  const isNew=!i;const o=i||{name:'',email:'',pass:''};
+  const isNew=!i;const o=i||{name:'',email:''};
   modal({title:isNew?'Novo instrutor':'Editar instrutor',
-   body:'<div class="fg">'+fld('Nome','i-n',o.name,'text',null,'full')+fld('Usuário de acesso','i-e',o.email,'text','autocapitalize="none"')+fld('Senha (demonstração)','i-p',o.pass,'text')+'</div>',
+   body:'<div class="fg">'+fld('Nome','i-n',o.name,'text',null,'full')+fld('E-mail','i-e',o.email,'email','autocapitalize="none"')+'</div><p class="muted sm">O acesso do instrutor ao sistema é liberado pelo EquiAltaris a partir deste e-mail.</p>',
    del:(isNew||S.instrs.length<2)?null:()=>{S.instrs=S.instrs.filter(x=>x!==i)},
-   save:()=>{const v={name:V('i-n').trim(),email:V('i-e').trim(),pass:V('i-p')};if(!v.name||!v.email||!v.pass)return false;
+   save:()=>{const v={name:V('i-n').trim(),email:V('i-e').trim().toLowerCase()};if(!v.name||!EMAIL_RE.test(v.email))return false;
      const em=v.email.toLowerCase();
      if(emailTaken(v.email,i))return false;
      if(S.instrs.some(x=>x!==i&&x.name.toLowerCase()===v.name.toLowerCase()))return false;
@@ -1680,13 +1714,14 @@ views.alunos=function(){
   return '<div class="tw"><table><thead><tr><th>Aluno</th><th>Altura</th>'+(fin?'<th>Acesso</th><th>Plano</th>':'')+'<th>Cavalo próprio</th><th class="n">Aulas no mês</th><th class="n">Provas</th>'+(fin?'<th>Mensalidade atual</th><th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
 };
 function alunoModal(a){
-  const isNew=!a;const o=a||{name:'',email:'',pass:'',tel:'',plano:'Mensalidade · 4 aulas',valor:360};
+  const isNew=!a;const o=a||{name:'',email:'',tel:'',plano:'Mensalidade · 4 aulas',valor:360};
   const cur=a?(S.horses.find(h=>h.studentId===a.id)||{}).id||'':'';
   modal({title:isNew?'Novo aluno':'Editar aluno',wide:true,
-   body:'<div class="fg">'+fld('Nome','s-n',o.name,'text',null,'full')+fld('E-mail de acesso','s-e',o.email,'email')+fld('Senha de acesso (demonstração)','s-p',o.pass,'text')+fld('Telefone','s-t',o.tel,'text')+fld('Altura de trabalho','s-n2',o.nivel||'','text')+fld('Plano','s-pl',o.plano,'text')+fld('Mensalidade (R$)','s-v',o.valor,'number','min="0" step="1"')+
-    fld('Cavalo próprio (libera o painel do cavalo)','s-h',cur,'select',[['','Sem cavalo próprio']].concat(S.horses.filter(h=>!h.studentId||h.studentId===(a&&a.id)).map(h=>[h.id,h.name])),'full')+'</div><div class="err" id="lm-err" role="alert"></div>',
+   body:'<div class="fg">'+fld('Nome','s-n',o.name,'text',null,'full')+fld('E-mail','s-e',o.email,'email')+fld('Telefone','s-t',o.tel,'text')+fld('Altura de trabalho','s-n2',o.nivel||'','text')+fld('Plano','s-pl',o.plano,'text')+fld('Mensalidade (R$)','s-v',o.valor,'number','min="0" step="1"')+
+    fld('Cavalo próprio (libera o painel do cavalo)','s-h',cur,'select',[['','Sem cavalo próprio']].concat(S.horses.filter(h=>!h.studentId||h.studentId===(a&&a.id)).map(h=>[h.id,h.name])),'full')+'</div><p class="muted sm">Para alunos menores de idade, use o e-mail do responsável. O acesso do aluno ao portal é liberado pelo EquiAltaris.</p><div class="err" id="lm-err" role="alert"></div>',
    del:isNew?null:()=>{S.horses.forEach(h=>{if(h.studentId===a.id)delete h.studentId});S.students=S.students.filter(x=>x!==a);S.aulas=S.aulas.filter(x=>x.student!==a.id);S.pag=S.pag.filter(x=>x.student!==a.id)},
-   save:()=>{const v={name:V('s-n').trim(),email:V('s-e').trim(),pass:V('s-p'),tel:V('s-t'),nivel:V('s-n2'),plano:V('s-pl'),valor:+V('s-v')||0};if(!v.name||!v.email||!v.pass)return false;
+   save:()=>{const v={name:V('s-n').trim(),email:V('s-e').trim().toLowerCase(),tel:V('s-t'),nivel:V('s-n2'),plano:V('s-pl'),valor:+V('s-v')||0};
+     if(!v.name||!EMAIL_RE.test(v.email)){$('#lm-err').textContent='Informe o nome e um e-mail válido.';return false}
      if(emailTaken(v.email,a))return false;
      if(isNew){const L=hipLim(HIP());if(S.students.length>=L.a){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.a+' alunos. Fale com o EquiAltaris para ampliar.';return false}}
      let st=a;if(isNew){st=Object.assign({id:uid()},v);S.students.push(st)}else Object.assign(st,v);
@@ -1760,7 +1795,6 @@ function hubModal(h){
 /* ---------- ações ---------- */
 const act={
   nav:d=>{if(d.v==='logout'){logout();return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
-  lgrole:d=>{UI.lgRole=d.r;showLogin()},
   inew:()=>inscEventModal(),iedit:d=>inscEventModal(S.insc.find(x=>x.id===d.id)),
   itoggle:d=>{const e=S.insc.find(x=>x.id===d.id);e.status=e.status==='aberta'?'encerrada':'aberta';save();render()},
   ireq:d=>inscModal(S.insc.find(x=>x.id===d.id)),
@@ -1835,7 +1869,7 @@ const act={
   fpago:d=>{const f=S.fin.find(x=>x.id===d.id);f.pago=!f.pago;save();render()},
   cobPick:()=>{UI.finTab='cob';UI.view='fin';render()},
   cobCopy:(d,b)=>copyText(cobText(),b),
-  reset:()=>modal({title:'Restaurar dados de exemplo?',body:'<p>Todas as hípicas, cobranças e cadastros da plataforma voltam aos dados de exemplo e você sai do sistema.</p>',label:'Restaurar',save:()=>{G=seedG();G.hips.forEach(h=>normT(G.tenants[h.id],h.id==='h1'));ensureFixed();S=null;UI.user=null;UI.cq=null;saveSession()}})
+  reset:()=>modal({title:'Restaurar dados iniciais?',body:'<p>Hípicas, cobranças e cadastros voltam ao estado inicial. Os logins continuam os mesmos.</p>',label:'Restaurar',save:()=>{G=seedG();normAll();S=null;UI.cq=null}})
 };
 function horseModal(h){const isNew=!h;const o=h||{name:'',owner:''};
   modal({title:isNew?'Novo cavalo':'Editar cavalo',body:'<div class="fg">'+fld('Nome','h-n',o.name,'text',null,'full')+fld('Proprietário','h-o',o.owner,'list',owners(),'full')+'</div><div class="err" id="lm-err" role="alert"></div>',del:isNew?null:()=>{S.horses=S.horses.filter(x=>x!==h);S.treinos=S.treinos.filter(t=>t.horse!==h.id)},
@@ -1885,8 +1919,11 @@ document.addEventListener('change',e=>{
     else if(t.id==='cq-sd'){UI.showDist=t.checked;redraw()}}
 });
 $('#logoS').src=LOGO;
-UI.user=loadSession();
-render();
-syncPull();setInterval(syncPull,300000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncPull()});
+authLoad();
+if(AUTH.ref){const L=$('#login');L.hidden=false;L.innerHTML='<div class="lg"><div class="lgc" style="text-align:center"><div class="lgl"><img src="'+LOGO+'" alt="EquiAltaris"></div><p class="muted" style="margin-top:14px">Carregando…</p></div></div>'}
+else render();
+boot();
+setInterval(()=>{if(UI.user)syncPull()},300000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&UI.user)syncPull()});
 })();
 </script>
