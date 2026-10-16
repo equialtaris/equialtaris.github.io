@@ -434,7 +434,32 @@ const mi=m=>m.inst||(S.instrs[0]||{}).id;
 const IN=id=>S.instrs.find(x=>x.id===id);
 const INn=id=>(IN(id)||{name:'o instrutor'}).name;
 const myInst=()=>UI.user&&UI.user.role==='instrutor'?UI.user.id:(UI.chInst&&IN(UI.chInst)?UI.chInst:(S.instrs[0]||{}).id);
-function save(){try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}}
+function save(){G.rev=Date.now();try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}syncPushSoon()}
+/* ---------- sincronização entre aparelhos (Supabase) ---------- */
+const SB_URL='https://dqazntahnkwookpbsamj.supabase.co',SB_KEY='sb_publishable_SFRVvZtlbJfW35Buj3mhMQ_ltHEpynM';
+const SYNC={ready:false,t:0,busy:false};
+const sbH={apikey:SB_KEY,'Content-Type':'application/json'};
+function syncPushSoon(){if(!SYNC.ready)return;clearTimeout(SYNC.t);SYNC.t=setTimeout(syncPush,1500)}
+async function syncPush(){
+  try{const r=await fetch(SB_URL+'/rest/v1/equi_state?on_conflict=id',{method:'POST',headers:Object.assign({Prefer:'resolution=merge-duplicates,return=minimal'},sbH),body:JSON.stringify({id:'g',rev:G.rev||Date.now(),data:G})});return r.ok}catch(e){return false}
+}
+async function syncPull(){
+  if(SYNC.busy)return false;SYNC.busy=true;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/equi_state?id=eq.g&select=rev,data',{headers:sbH});
+    if(!r.ok)return false;
+    const rows=await r.json();
+    if(!rows.length){SYNC.ready=true;if(!G.rev)G.rev=Date.now();await syncPush();return true}
+    const row=rows[0];SYNC.ready=true;
+    if(+row.rev>(G.rev||0)&&row.data&&row.data.hips&&row.data.tenants){
+      G=row.data;try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}
+      S=UI.user&&UI.user.hid?(G.tenants[UI.user.hid]||null):null;
+      const typing=document.querySelector('#modal .md')||/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');
+      if(!typing)render();
+    }else if(+row.rev<(G.rev||0)){await syncPush()}
+    return true;
+  }catch(e){return false}finally{SYNC.busy=false}
+}
 const emailTaken=(em,ex)=>{em=String(em).toLowerCase();if(G.owner.email.toLowerCase()===em)return true;return G.hips.some(h=>h!==ex&&h.login.toLowerCase()===em)||Object.keys(G.tenants).some(k=>{const T=G.tenants[k];return T.instrs.some(x=>x!==ex&&x.email.toLowerCase()===em)||T.students.some(x=>x!==ex&&x.email.toLowerCase()===em)})};
 /* cobrança da plataforma */
 const cobOver=c=>(c.status==='pendente'||c.status==='recusado')&&c.venc<TODAY;
@@ -890,6 +915,11 @@ function showLogin(){
    '</form></div>';
 }
 function doLogin(){
+  const u=findUser();if(u)return finishLogin(u);
+  $('#lg-err').textContent='Conferindo no servidor…';
+  syncPull().then(()=>{const u2=findUser();if(u2)finishLogin(u2);else{const e=$('#lg-err');if(e)e.textContent='E-mail ou senha incorretos.'}});
+}
+function findUser(){
   const em=V('lg-e').trim().toLowerCase(),pw=V('lg-p');let u=null;
   if(em===G.owner.email.toLowerCase()&&pw===G.owner.pass)u={role:'owner'};
   for(let k=0;k<G.hips.length&&!u;k++){
@@ -897,7 +927,9 @@ function doLogin(){
     if(em===h.login.toLowerCase()&&pw===h.pass)u={role:'staff',hid:h.id};
     else{const ii=T.instrs.find(x=>x.email.toLowerCase()===em&&x.pass===pw);if(ii)u={role:'instrutor',id:ii.id,hid:h.id};
       else{const a=T.students.find(x=>x.email.toLowerCase()===em&&x.pass===pw);if(a)u={role:'aluno',id:a.id,hid:h.id}}}}
-  if(!u){$('#lg-err').textContent='E-mail ou senha incorretos.';return}
+  return u;
+}
+function finishLogin(u){
   if(u.hid)useTenant(u.hid);else S=null;
   UI.logoState=null;UI.user=u;UI.view=u.role==='owner'?'o_dash':u.role==='aluno'?'s_inicio':'painel';UI.cq=null;saveSession();render();
 }
@@ -1791,5 +1823,6 @@ document.addEventListener('change',e=>{
 $('#logoS').src=LOGO;
 UI.user=loadSession();
 render();
+syncPull();setInterval(syncPull,300000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncPull()});
 })();
 </script>
