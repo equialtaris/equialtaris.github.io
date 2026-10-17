@@ -143,6 +143,34 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .tr em{display:block}
 .wk th.hd u.off{color:var(--muted);font-weight:400}
 .feed{display:grid;gap:14px;max-width:620px}
+.pbar{display:flex;gap:4px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.pb{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px;font-size:12.5px;font-weight:600;transition:.12s}
+.pb svg{width:19px;height:19px;flex:none}
+.pb:hover{background:var(--surface2);color:var(--text)}
+.pb.on{color:var(--primary)}
+.pb.on svg{fill:color-mix(in srgb,var(--primary) 22%,transparent)}
+.pb span{min-width:6px}
+.coms{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.cm{display:flex;gap:9px;align-items:flex-start;margin-bottom:10px}
+.cm .cmb{flex:1;min-width:0}
+.cm .cmb b{cursor:pointer}
+.cm .cmb b:hover{color:var(--primary)}
+.cmx{background:none;border:0;color:var(--muted);cursor:pointer;font-size:17px;line-height:1;padding:0 4px}
+.cmx:hover{color:var(--bad,#b3261e)}
+.cmnew{display:flex;gap:8px;align-items:center}
+.cmnew input{flex:1}
+.repmark{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;margin-bottom:10px}
+.repmark svg{width:15px;height:15px}
+.orig{border:1px solid var(--line);border-radius:10px;padding:12px}
+.orig .phead{margin-bottom:8px}
+.pfoto.dentro{border-radius:8px}
+.pnums{display:flex;gap:16px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.pnums b{color:var(--text)}
+.cavs .cav{cursor:pointer;transition:.12s}
+.cavs .cav:hover{border-color:var(--primary);transform:translateY(-2px)}
+.cavhead{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.cavhead img{width:210px;height:150px;object-fit:cover;border-radius:12px;display:block}
+.cavhead .semf{width:210px;height:150px;border-radius:12px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px}
 .post .phead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .post .phead[role=button]{cursor:pointer}
 .post .phead[role=button]:hover b{color:var(--primary)}
@@ -331,7 +359,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261016-2340';
+const APPV='20261017-0120';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -634,7 +662,7 @@ const hn=id=>H(id).name;
 const total=f=>(+f.unit||0)*(+f.qtd||0);
 const owners=()=>[...new Set(S.horses.map(h=>h.owner).filter(Boolean))];
 
-const UI={ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'grade',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
+const UI={com:null,ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'grade',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
   cobOwner:'',cobMonth:TODAY.slice(0,7),repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true,zoom:1};
 
 /* ---------- ícones ---------- */
@@ -679,6 +707,7 @@ function modal(o){
   return close;
 }
 document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target&&/^cm-/.test(e.target.id||'')){const id=e.target.id.slice(3);e.preventDefault();act.cmsend({id:id});return}
   if(e.key==='Escape')$('#modal').innerHTML='';
   if((e.key==='Delete'||e.key==='Backspace')&&UI.view==='croquis'&&UI.cq&&UI.sel&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)&&!$('#modal').innerHTML){delSel();e.preventDefault()}
   if(UI.view==='croquis'&&UI.cq&&UI.tool==='path'&&UI.tmp.length&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){if(e.key==='Enter'){finishPath();e.preventDefault()}else if(e.key==='Escape'){UI.tmp=[];UI.hover=null;redraw()}}
@@ -1002,9 +1031,99 @@ async function loadFeed(){
     if(!r.ok){FEEDST=(r.status===404||r.status===400)?'preparando':'erro';FEED=[];return}
     FEED=await r.json();FEEDST='ok';
     await loadPerfis(FEED.map(p=>p.autor_id));
+    await loadInteracoes(FEED.map(p=>p.id));
     if(!MEUPERF)await loadMeuPerfil();
     await loadAvisos();
   }catch(e){FEEDST='erro';FEED=[]}
+}
+/* ---------- curtidas, comentarios e reposts ---------- */
+let LIKES={},COMN={},COMS={};
+const IHEART='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-6.6-4.3-8.8-7.9C1.3 9.4 2.8 5.9 6.1 5.3 8.2 4.9 10.1 6 12 8c1.9-2 3.8-3.1 5.9-2.7 3.3.6 4.8 4.1 2.9 7.3-2.2 3.6-8.8 7.9-8.8 7.9z"/></svg>';
+const ICHAT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8 8 0 0 1-8 8H7.5L3.5 22v-10.5a8 8 0 0 1 8-8H13a8 8 0 0 1 8 8z"/></svg>';
+const IREP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 2 21 6 17 10"/><path d="M3 12V9a3 3 0 0 1 3-3h15"/><polyline points="7 22 3 18 7 14"/><path d="M21 12v3a3 3 0 0 1-3 3H3"/></svg>';
+function idsIn(ids){return ids.filter(Boolean).map(x=>'"'+String(x).replace(/"/g,'')+'"').join(',')}
+async function loadInteracoes(ids){
+  const l=idsIn(ids);
+  if(!l){LIKES={};COMN={};return}
+  const u=meuUid();
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/curtidas?select=post_id,uid&post_id=in.('+l+')',{headers:sbH()});
+    if(r.ok){LIKES={};(await r.json()).forEach(c=>{const L=LIKES[c.post_id]||(LIKES[c.post_id]={n:0,eu:false});L.n++;if(c.uid===u)L.eu=true})}
+  }catch(e){}
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/comentarios?select=post_id&post_id=in.('+l+')',{headers:sbH()});
+    if(r.ok){COMN={};(await r.json()).forEach(c=>{COMN[c.post_id]=(COMN[c.post_id]||0)+1})}
+  }catch(e){}
+}
+async function curtir(id){
+  const u=meuUid();if(!u)return;
+  const L=LIKES[id]||(LIKES[id]={n:0,eu:false});
+  const novo=!L.eu;
+  L.eu=novo;L.n=Math.max(0,L.n+(novo?1:-1));render();
+  try{
+    if(novo)await fetch(SB_URL+'/rest/v1/curtidas?on_conflict=post_id,uid',{method:'POST',
+      headers:Object.assign({Prefer:'resolution=merge-duplicates,return=minimal'},sbH()),body:JSON.stringify({post_id:id,uid:u})});
+    else await fetch(SB_URL+'/rest/v1/curtidas?post_id=eq.'+encodeURIComponent(id)+'&uid=eq.'+encodeURIComponent(u),{method:'DELETE',headers:sbH()});
+  }catch(e){}
+}
+async function loadComs(id){
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/comentarios?select=*&post_id=eq.'+encodeURIComponent(id)+'&order=criado_em.asc',{headers:sbH()});
+    COMS[id]=r.ok?await r.json():[];
+    await loadPerfis(COMS[id].map(c=>c.autor_id));
+    COMN[id]=COMS[id].length;
+  }catch(e){COMS[id]=COMS[id]||[]}
+}
+async function comentar(id){
+  const t=(V('cm-'+id)||'').trim();
+  if(!t)return {erro:'Escreva o comentário.'};
+  const h=HIP();
+  const corpo={id:uid(),post_id:id,autor_id:meuUid(),autor:quemSou(),hipica_nome:(h&&h.fantasia)||'',texto:t.slice(0,600)};
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/comentarios',{method:'POST',headers:Object.assign({Prefer:'return=minimal'},sbH()),body:JSON.stringify(corpo)});
+    if(!r.ok)return {erro:r.status===404?'Os comentários ainda não foram liberados no servidor.':'Não consegui comentar agora.'};
+  }catch(e){return {erro:'Sem conexão com o servidor.'}}
+  await loadComs(id);return {ok:true};
+}
+async function apagarCom(id,post){
+  try{await fetch(SB_URL+'/rest/v1/comentarios?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:sbH()})}catch(e){}
+  await loadComs(post);render();
+}
+function origDe(p){
+  if(p.tipo==='repost'&&p.dados&&p.dados.orig)return p.dados.orig;
+  return null;
+}
+async function repostar(p){
+  const h=HIP();if(!h)return {erro:'Sua conta não está ligada a uma hípica.'};
+  const o=origDe(p)||{id:p.id,autor:p.autor,autor_id:p.autor_id,hipica_nome:p.hipica_nome,texto:p.texto,foto:p.foto,tipo:p.tipo,dados:p.dados||{},criado_em:p.criado_em};
+  if(o.autor_id&&o.autor_id===meuUid())return {erro:'Esta publicação já é sua.'};
+  const corpo={id:uid(),hipica_id:h.id,hipica_nome:h.fantasia,autor:quemSou(),autor_id:meuUid()||null,
+    texto:'',foto:'',tipo:'repost',repost_de:o.id,dados:{orig:o}};
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/posts',{method:'POST',headers:Object.assign({Prefer:'return=minimal'},sbH()),body:JSON.stringify(corpo)});
+    if(!r.ok)return {erro:'Não consegui repostar agora.'};
+  }catch(e){return {erro:'Sem conexão com o servidor.'}}
+  await loadFeed();return {ok:true};
+}
+function comentHTML(p){
+  const lista=COMS[p.id]||[];
+  const podeCom=podePostar();
+  return '<div class="coms">'+
+    (lista.length?lista.map(c=>{
+      const meu=c.autor_id&&(c.autor_id===meuUid());
+      const dono=UI.user.role==='owner';
+      const souAutor=p.autor_id&&p.autor_id===meuUid();
+      return '<div class="cm">'+avatar(c.autor_id,c.autor,30)+
+        '<div class="cmb"><b data-act="verperf" data-id="'+esc(c.autor_id||'')+'">'+esc(c.autor||'—')+'</b>'+
+        '<span class="muted sm"> · '+esc(fmtQuando(c.criado_em))+'</span>'+
+        '<p class="ptxt" style="margin:2px 0 0">'+esc(c.texto)+'</p></div>'+
+        ((meu||dono||souAutor)?'<button class="cmx" data-act="cmdel" data-id="'+esc(c.id)+'" data-p="'+esc(p.id)+'" aria-label="Apagar comentário">×</button>':'')+
+        '</div>'}).join('')
+      :'<p class="muted sm" style="margin:0 0 8px">Nenhum comentário ainda.</p>')+
+    (podeCom?'<div class="cmnew"><input id="cm-'+esc(p.id)+'" placeholder="Escreva um comentário…" maxlength="600">'+
+      '<button class="btn sm pri" data-act="cmsend" data-id="'+esc(p.id)+'">Enviar</button></div>'+
+      '<div class="err" id="cme-'+esc(p.id)+'" role="alert"></div>':'')+
+    '</div>';
 }
 async function loadPerfilView(id){
   PERFST='';PERFPOSTS=[];
@@ -1013,6 +1132,7 @@ async function loadPerfilView(id){
     await loadPerfis([id]);
     const r=await fetch(SB_URL+'/rest/v1/posts?select=*&autor_id=eq.'+encodeURIComponent(id)+'&order=criado_em.desc&limit=40',{headers:sbH()});
     PERFPOSTS=r.ok?await r.json():[];PERFST='ok';
+    await loadInteracoes(PERFPOSTS.map(x=>x.id));
   }catch(e){PERFST='erro'}
 }
 async function publicarPost(extra){
@@ -1055,21 +1175,45 @@ function cardResultado(d){
   const h=li('Prova',d.prova)+li('Data',d.data?fmtS(d.data):'')+li('Categoria',d.cat)+li('Cavalo',d.cavalo)+li('Resultado',d.col);
   return h?'<div class="stat res">'+h+'</div>':'';
 }
+function corpoPost(p,dentro){
+  return (p.texto?'<p class="ptxt">'+esc(p.texto)+'</p>':'')+
+    (p.tipo==='resultado'?cardResultado(p.dados):'')+
+    (p.foto?'<img src="'+esc(p.foto)+'" alt="" class="pfoto'+(dentro?' dentro':'')+'">':'');
+}
+function cabecaPost(p,t){
+  const clica=p.autor_id?' data-act="verperf" data-id="'+esc(p.autor_id)+'" role="button" tabindex="0"':'';
+  return '<div class="phead"'+clica+'>'+avatar(p.autor_id,p.autor,t||40)+
+    '<div class="pn"><b>'+esc(p.autor||'—')+'</b><span class="muted sm">'+esc(p.hipica_nome||'')+' · '+esc(fmtQuando(p.criado_em))+'</span></div>'+
+    (p.tipo==='resultado'?'<span class="pill ok" style="margin-left:auto">Resultado</span>':'')+'</div>';
+}
+function barraPost(p){
+  const L=LIKES[p.id]||{n:0,eu:false};
+  const nc=COMN[p.id]||0;
+  const aberto=UI.com===p.id;
+  const podeRep=podePostar()&&!(p.autor_id&&p.autor_id===meuUid());
+  return '<div class="pbar">'+
+    '<button class="pb'+(L.eu?' on':'')+'" data-act="curtir" data-id="'+esc(p.id)+'" aria-pressed="'+(L.eu?'true':'false')+'">'+IHEART+'<span>'+(L.n||'')+'</span></button>'+
+    '<button class="pb'+(aberto?' on':'')+'" data-act="cmtoggle" data-id="'+esc(p.id)+'">'+ICHAT+'<span>'+(nc||'')+'</span></button>'+
+    (podeRep?'<button class="pb" data-act="rp" data-id="'+esc(p.id)+'">'+IREP+'<span>repostar</span></button>':'')+
+    '</div>';
+}
 function postHTML(p){
   const dono=UI.user.role==='owner';
   const meu=(p.autor_id&&p.autor_id===meuUid())||(!dono&&UI.user.hid&&p.hipica_id===UI.user.hid&&(UI.user.role==='staff'||UI.user.role==='instrutor'));
-  const clica=p.autor_id?' data-act="verperf" data-id="'+esc(p.autor_id)+'" role="button" tabindex="0"':'';
+  const o=origDe(p);
   const acoes=(meu||dono)?'<div class="row" style="margin-top:10px">'+
       '<button class="btn sm danger" data-act="fddel" data-id="'+esc(p.id)+'">Apagar</button>'+
       (dono&&p.autor_id?'<button class="btn sm" data-act="advertir" data-id="'+esc(p.id)+'">Advertir autor</button>':'')+'</div>':'';
-  return '<div class="card post">'+
-    '<div class="phead"'+clica+'>'+avatar(p.autor_id,p.autor)+
-      '<div class="pn"><b>'+esc(p.autor||'—')+'</b><span class="muted sm">'+esc(p.hipica_nome||'')+' · '+esc(fmtQuando(p.criado_em))+'</span></div>'+
-      (p.tipo==='resultado'?'<span class="pill ok" style="margin-left:auto">Resultado</span>':'')+'</div>'+
-    (p.texto?'<p class="ptxt">'+esc(p.texto)+'</p>':'')+
-    (p.tipo==='resultado'?cardResultado(p.dados):'')+
-    (p.foto?'<img src="'+esc(p.foto)+'" alt="" class="pfoto">':'')+
-    acoes+'</div>';
+  let miolo;
+  if(o){
+    miolo='<div class="repmark">'+IREP+' <b>'+esc(p.autor||'')+'</b> repostou</div>'+
+      (p.texto?'<p class="ptxt">'+esc(p.texto)+'</p>':'')+
+      '<div class="orig">'+cabecaPost(o,32)+corpoPost(o,true)+'</div>';
+  }else{
+    miolo=cabecaPost(p)+corpoPost(p);
+  }
+  return '<div class="card post">'+miolo+barraPost(p)+
+    (UI.com===p.id?comentHTML(p):'')+acoes+'</div>';
 }
 function avisoHTML(){
   const a=AVISOS[0];
@@ -1110,28 +1254,51 @@ views.o_feed=function(){
     '<p class="muted sm" style="margin:0 0 12px">Você vê tudo o que foi publicado. Apagar remove para todo mundo; advertir manda um aviso que o autor precisa confirmar antes de voltar a usar a Comunidade.</p>'+
     '<div class="feed">'+FEED.map(postHTML).join('')+'</div>';
 };
+function idadeCav(c){const a=+(c&&c.nasc);if(!a||a<1950)return null;const i=new Date().getFullYear()-a;return (i>=0&&i<60)?i:null}
 views.perfil=function(){
   const id=PERFVER||meuUid();
   const p=perfilDe(id)||{};
   const meu=id===meuUid();
   const nome=p.nome||(meu?((UI.user.role==='staff'&&HIP())?HIP().fantasia:quemSou()):'Perfil');
   const cav=Array.isArray(p.cavalos)?p.cavalos:[];
-  let h='<div class="card perfcap">'+avatar(id,nome,88)+
+  const posts=PERFPOSTS.filter(x=>x.tipo!=='repost').length;
+  let h='<div class="card perfcap">'+avatar(id,nome,92)+
     '<div class="pi"><h3 style="margin:0">'+esc(nome)+'</h3>'+
     '<span class="muted">'+esc(p.hipica_nome||'')+(p.tipo==='hipica'?' · hípica':'')+'</span>'+
-    (p.bio?'<p class="ptxt" style="margin:8px 0 0">'+esc(p.bio)+'</p>':'')+
-    (meu?'<div class="row" style="margin-top:10px"><button class="btn sm pri" data-act="perfedit">Editar meu perfil</button></div>':'')+
+    '<div class="pnums"><span><b>'+PERFPOSTS.length+'</b> publicações</span><span><b>'+cav.length+'</b> cavalos</span><span><b>'+posts+'</b> próprias</span></div>'+
+    (p.bio?'<p class="ptxt" style="margin:10px 0 0">'+esc(p.bio)+'</p>':'')+
+    (meu?'<div class="row" style="margin-top:12px"><button class="btn sm pri" data-act="perfedit">Editar meu perfil</button></div>':'')+
     '</div></div>';
   h+='<h3 style="margin:22px 0 10px">Cavalos</h3>';
-  h+=cav.length?'<div class="grid g3 cavs">'+cav.map(c=>'<div class="card cav">'+
+  h+=cav.length?'<div class="grid g3 cavs">'+cav.map((c,i)=>'<div class="card cav" data-act="vercav" data-i="'+i+'" role="button" tabindex="0">'+
       (c.foto?'<img src="'+esc(c.foto)+'" alt="">':'<div class="semf">sem foto</div>')+
-      '<b>'+esc(c.nome||'—')+'</b>'+(c.salto?'<span class="muted sm">salta '+esc(c.salto)+'</span>':'')+'</div>').join('')+'</div>'
+      '<b>'+esc(c.nome||'—')+'</b><span class="muted sm">'+[c.salto?'salta '+esc(c.salto):'',idadeCav(c)!==null?idadeCav(c)+' anos':''].filter(Boolean).join(' · ')+'</span></div>').join('')+'</div>'
     :empty(meu?'Você ainda não colocou nenhum cavalo no seu perfil.':'Nenhum cavalo cadastrado neste perfil.');
   h+='<h3 style="margin:22px 0 10px">Publicações</h3>';
   if(PERFST==='erro')return h+empty('Não consegui carregar as publicações.');
   h+=PERFPOSTS.length?'<div class="feed">'+PERFPOSTS.map(postHTML).join('')+'</div>':empty('Nenhuma publicação ainda.');
   return h;
 };
+function cavaloModal(i){
+  const id=PERFVER||meuUid(),p=perfilDe(id)||{};
+  const c=(Array.isArray(p.cavalos)?p.cavalos:[])[i];
+  if(!c)return;
+  const res=PERFPOSTS.filter(x=>x.tipo==='resultado'&&x.dados&&String(x.dados.cavalo||'').trim().toLowerCase()===String(c.nome||'').trim().toLowerCase());
+  const ida=idadeCav(c);
+  modal({title:c.nome||'Cavalo',wide:true,
+    body:'<div class="cavhead">'+(c.foto?'<img src="'+esc(c.foto)+'" alt="">':'<div class="semf">sem foto</div>')+
+      '<div style="flex:1;min-width:200px">'+
+      '<div class="muted sm" data-act="verperf" data-id="'+esc(id)+'" role="button" tabindex="0" style="cursor:pointer">de '+esc(p.nome||'')+(p.hipica_nome?' · '+esc(p.hipica_nome):'')+'</div>'+
+      '<div class="stat" style="margin-top:10px">'+
+        (c.salto?'<div><small>Salta</small><b>'+esc(c.salto)+'</b></div>':'')+
+        (ida!==null?'<div><small>Idade</small><b>'+ida+' anos</b></div>':'')+
+        '<div><small>Resultados</small><b>'+res.length+'</b></div></div>'+
+      (c.sobre?'<p class="ptxt" style="margin:10px 0 0">'+esc(c.sobre)+'</p>':'')+
+      '</div></div>'+
+      '<h4 style="margin:18px 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Resultados com '+esc(c.nome||'')+'</h4>'+
+      (res.length?'<ul class="hz-list">'+res.map(x=>'<li><span><b>'+esc(x.dados.prova||'')+'</b>'+(x.dados.col?' · '+esc(x.dados.col):'')+'<br><span class="muted sm">'+[x.dados.data?fmtS(x.dados.data):'',x.dados.cat||''].filter(Boolean).join(' · ')+'</span></span></li>').join('')+'</ul>'
+        :'<p class="muted sm">Nenhum resultado publicado com este cavalo ainda.</p>')});
+}
 function resultadoModal(){
   RESFOTO=null;
   const cavs=[];
@@ -1168,9 +1335,9 @@ function resultadoModal(){
 function perfilModal(){
   const p=MEUPERF||{};
   PFOTO=p.foto||null;
-  PCAV=(Array.isArray(p.cavalos)?p.cavalos:[]).map(c=>({nome:c.nome||'',salto:c.salto||'',foto:c.foto||''}));
+  PCAV=(Array.isArray(p.cavalos)?p.cavalos:[]).map(c=>({nome:c.nome||'',salto:c.salto||'',nasc:+c.nasc||0,sobre:c.sobre||'',foto:c.foto||''}));
   if(!PCAV.length&&S&&UI.user.role==='aluno')
-    S.horses.filter(h=>h.studentId===UI.user.id).forEach(h=>PCAV.push({nome:h.name,salto:h.salto||'',foto:''}));
+    S.horses.filter(h=>h.studentId===UI.user.id).forEach(h=>PCAV.push({nome:h.name,salto:h.salto||'',nasc:+h.nasc||0,sobre:'',foto:''}));
   const corpo=()=>'<div class="row" style="align-items:center;gap:14px;margin-bottom:14px">'+
       '<span id="pf-prev">'+(PFOTO?'<img class="av" style="width:72px;height:72px" src="'+esc(PFOTO)+'" alt="">':'<span class="av vazio" style="width:72px;height:72px;font-size:30px">'+esc(String(quemSou()).charAt(0).toUpperCase())+'</span>')+'</span>'+
       '<label class="btn sm">Escolher foto de perfil<input type="file" id="pf-f" accept="image/*" style="display:none"></label>'+
@@ -1178,7 +1345,7 @@ function perfilModal(){
     fld('Sobre você','pf-b',(p.bio||''),'textarea',null,'full')+
     '<h4 style="margin:18px 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Meus cavalos</h4>'+
     '<ul class="hz-list">'+(PCAV.length?PCAV.map((c,i)=>'<li><span>'+(c.foto?'<img class="av" style="width:30px;height:30px;margin-right:8px;vertical-align:middle" src="'+esc(c.foto)+'" alt="">':'')+'<b>'+esc(c.nome||'—')+'</b>'+(c.salto?' <span class="muted sm">salta '+esc(c.salto)+'</span>':'')+'</span><span style="display:flex;gap:6px"><label class="btn sm">Foto<input type="file" data-cf="'+i+'" accept="image/*" style="display:none"></label><button class="btn sm danger" data-crm="'+i+'">Remover</button></span></li>').join(''):'<li class="muted">Nenhum cavalo ainda.</li>')+'</ul>'+
-    '<div class="fg" style="margin-top:10px">'+fld('Nome do cavalo','pf-cn','','text')+fld('Altura que salta','pf-cs','','list',['0,80 m','0,90 m','1,00 m','1,10 m','1,20 m','1,30 m','1,40 m'])+'</div>'+
+    '<div class="fg" style="margin-top:10px">'+fld('Nome do cavalo','pf-cn','','text')+fld('Altura que salta','pf-cs','','list',['0,80 m','0,90 m','1,00 m','1,10 m','1,20 m','1,30 m','1,40 m'])+fld('Ano de nascimento','pf-cy','','number','min="1980" max="'+new Date().getFullYear()+'" placeholder="2017"')+fld('Sobre o cavalo','pf-cb','','text',null,'full')+'</div>'+
     '<div class="row"><button class="btn brass" id="pf-add">Adicionar cavalo</button></div>'+
     '<div class="err" id="pf-err" role="alert"></div>';
   modal({title:'Meu perfil',wide:true,body:corpo(),noFocus:true,
@@ -1196,7 +1363,7 @@ function perfilModal(){
         document.getElementById('pf-add').onclick=()=>{const n=V('pf-cn').trim();
           if(!n){$('#pf-err').textContent='Informe o nome do cavalo.';return}
           if(PCAV.length>=8){$('#pf-err').textContent='Máximo de 8 cavalos no perfil.';return}
-          PCAV.push({nome:n,salto:V('pf-cs').trim(),foto:''});refresh()};
+          PCAV.push({nome:n,salto:V('pf-cs').trim(),nasc:+V('pf-cy')||0,sobre:V('pf-cb').trim(),foto:''});refresh()};
         document.getElementById('pf-ok').onclick=()=>{
           const h=HIP();
           $('#pf-err').textContent='Salvando…';
@@ -2383,6 +2550,16 @@ const act={
   fddel:d=>modal({title:'Apagar publicação?',body:'<p>Ela sai da Comunidade para todo mundo.</p>',label:'Apagar',save:()=>{apagarPost(d.id);return true}}),
   verperf:d=>{PERFVER=d.id;UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(d.id).then(()=>{if(UI.view==='perfil')render()})},
   perfedit:()=>perfilModal(),
+  vercav:d=>cavaloModal(+d.i),
+  curtir:d=>{curtir(d.id)},
+  cmtoggle:d=>{if(UI.com===d.id){UI.com=null;render();return}UI.com=d.id;render();
+    if(!COMS[d.id])loadComs(d.id).then(()=>{if(UI.com===d.id)render()})},
+  cmsend:d=>{const e=document.getElementById('cme-'+d.id);if(e)e.textContent='Enviando…';
+    comentar(d.id).then(r=>{if(r&&r.erro){const x=document.getElementById('cme-'+d.id);if(x)x.textContent=r.erro;return}render()})},
+  cmdel:d=>apagarCom(d.id,d.p),
+  rp:d=>{const p=FEED.find(x=>x.id===d.id)||PERFPOSTS.find(x=>x.id===d.id);if(!p)return;
+    modal({title:'Repostar?',body:'<p>A publicação aparece no seu perfil e no feed, com o crédito de quem publicou primeiro.</p>',label:'Repostar',
+      save:()=>{repostar(p).then(r=>{if(r&&r.erro)modal({title:'Não deu',body:'<p>'+esc(r.erro)+'</p>'});else render()});return true}})},
   resnew:()=>resultadoModal(),
   advertir:d=>{const p=FEED.find(x=>x.id===d.id)||PERFPOSTS.find(x=>x.id===d.id);if(p)advertirModal(p)},
   avok:d=>{fetch(SB_URL+'/rest/v1/rpc/aviso_lido',{method:'POST',headers:sbH(),body:JSON.stringify({p_id:d.id})})
