@@ -1,3 +1,16 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111a2b">
+<meta name="description" content="EquiAltaris — gestão para centros de hipismo: programação, cavalos, alunos e comunidade.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EquiAltaris">
+<meta name="mobile-web-app-capable" content="yes">
 <title>EquiAltaris</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
@@ -299,7 +312,7 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .sl small{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:860px){.chs{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:860px){
-  #app{grid-template-columns:minmax(0,1fr)}
+  #app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
   .brand.logo{justify-content:flex-start}.brand.logo img{width:auto;height:64px}.flip{width:80px;height:64px}.brand.logo .fl-f{width:100%;height:100%}
   #side{position:static;height:auto;flex-direction:column;align-items:stretch;padding:10px 12px;gap:8px;min-width:0}
   .stable,.trial{display:none}
@@ -307,6 +320,48 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
   nav button{white-space:nowrap;padding:7px 10px}
   .ed{grid-template-columns:1fr}
   .top h1{font-size:24px}
+}
+@media (max-width:700px){
+  /* barra de navegação sempre à mão, compacta */
+  #side{position:sticky;top:0;z-index:30;padding:7px 10px 6px;gap:6px;box-shadow:0 2px 12px rgba(0,0,0,.28)}
+  .brand.logo img{height:34px;width:auto}
+  .flip{width:44px;height:34px}
+  nav button{padding:8px 11px;font-size:13px}
+  main{padding:14px 16px calc(44px + env(safe-area-inset-bottom,0px))}
+  .top{flex-direction:column;align-items:stretch;gap:10px;margin-bottom:16px}
+  .top h1{font-size:23px}
+  /* botões do topo em fila que desliza, em vez de empilhar */
+  .top>*{min-width:0}
+  #topact{flex-wrap:nowrap;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;gap:8px;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #topact::-webkit-scrollbar{display:none}
+  #topact>*{flex:none;white-space:nowrap}
+  /* no iPhone, campo com menos de 16px faz a tela dar zoom sozinha */
+  input,select,textarea{font-size:16px}
+  .btn{padding:9px 14px}
+  .tabs{display:flex;max-width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{white-space:nowrap;flex:none}
+  .stat{gap:10px}
+  .tw{-webkit-overflow-scrolling:touch;max-height:none}
+  .md{width:calc(100vw - 20px);max-width:none;max-height:86vh;overflow:auto}
+  .feed,.card.adv{max-width:100%}
+  .grid.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
+  .perfcap{gap:12px}
+  .cavhead img,.cavhead .semf{width:100%;height:180px}
+  .pb{padding:8px 12px}
+  /* agenda da programação */
+  .agenda{display:grid;gap:10px}
+  .ag{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px}
+  .ag.hoje{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .ag.fech{background:var(--surface2)}
+  .agh{display:flex;align-items:baseline;gap:8px;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  .agh b{font-family:var(--f-display);font-size:15px;text-transform:uppercase;letter-spacing:.04em}
+  .agh span{color:var(--muted);font-size:12.5px}
+  .agh u{margin-left:auto;text-decoration:none;font-size:11.5px;font-weight:600;color:var(--primary)}
+  .agh u.off{color:var(--muted);font-weight:400}
+  .ag .tr{font-size:13.5px}
+  .ag .addw{margin-top:2px}
+  .addt{border-color:var(--line);color:var(--muted)}
 }
 @media (prefers-reduced-motion:no-preference){.md{animation:pop .16s ease-out}@keyframes pop{from{transform:translateY(8px);opacity:0}}}
 </style>
@@ -359,7 +414,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261017-0120';
+const APPV='20261017-1730';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -840,6 +895,10 @@ function render(){
   const mg=document.querySelector('.msgs');if(mg)mg.scrollTop=mg.scrollHeight;
   document.title='EquiAltaris';
 }
+function telaEstreita(){try{return window.matchMedia('(max-width:700px)').matches}catch(e){return false}}
+try{const mq=window.matchMedia('(max-width:700px)');
+  const aviso=()=>{if(UI.user&&!document.querySelector('#modal .md'))render()};
+  if(mq.addEventListener)mq.addEventListener('change',aviso);else if(mq.addListener)mq.addListener(aviso);}catch(e){}
 function empty(t){return '<div class="empty">'+t+'</div>'}
 function mostrarView(){
   const v=views[UI.view];
@@ -908,6 +967,19 @@ function semanaHTML(){
     if(m>c.fim*60+c.passo-1)return 'tarde';
     return rot(Math.floor((m-c.ini*60)/c.passo)*c.passo+c.ini*60)};
   const nt=days.map(d=>agItens(d));
+  if(telaEstreita()){
+    h+='<div class="agenda">'+days.map((d,i)=>{
+      const its=nt[i],aberto=c.dias[i]!==0;
+      const rot0=rot(c.ini*60);
+      return '<div class="ag'+(d===TODAY?' hoje':'')+(aberto?'':' fech')+'">'+
+        '<div class="agh"><b>'+DOW[i]+'</b><span>'+fmtS(d)+'</span>'+
+          (aberto?(its.length?'<u>'+its.length+(its.length>1?' marcações':' marcação')+'</u>':'<u class="off">livre</u>'):'<u class="off">fechado</u>')+'</div>'+
+        its.map(agCard).join('')+
+        (aberto?'<div class="addw"><button class="addt" data-act="tnew" data-d="'+d+'" data-t="'+rot0+'">+ treino</button><button class="addt" data-act="anew" data-d="'+d+'" data-t="'+rot0+'">+ aula</button></div>':'')+
+        '</div>';
+    }).join('')+'</div>';
+    return h;
+  }
   const wkI=[].concat.apply([],nt);
   const rows=[];
   if(wkI.some(x=>hr(x.time)==='cedo'))rows.push(['cedo','Antes das '+pad(c.ini)+':00',rot(Math.max(0,c.ini*60-60))]);
