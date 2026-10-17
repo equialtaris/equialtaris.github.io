@@ -314,7 +314,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261016-1930';
+const APPV='20261016-2015';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -365,7 +365,7 @@ function seedG(){
   const cob=[{id:uid(),hip:'h5',ref:cm,valor:349,venc:addDays(TODAY,7),status:'pendente',fileId:'',paidAt:'',nota:'',motivo:''}];
   const tenants={h5:normT(blankTenant(hips[0]))};
   const pbn=(a,b,t)=>'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+a+'"/><stop offset="1" stop-color="'+b+'"/></linearGradient></defs><rect width="1600" height="900" fill="url(#g)"/><circle cx="1250" cy="260" r="380" fill="#fff" opacity=".07"/><circle cx="300" cy="780" r="300" fill="#fff" opacity=".06"/><text x="800" y="470" text-anchor="middle" font-family="Georgia,serif" font-size="96" fill="#fff" opacity=".92">'+t+'</text></svg>');
-  const parc=[{id:'pc1',nome:'Agro Cavalo Center',link:'',ativa:true,img:pbn('#14532d','#3f6212','Agro Cavalo Center')},{id:'pc2',nome:'Clínica Vet Horizonte',link:'',ativa:true,img:pbn('#0c4a6e','#155e75','Clínica Vet Horizonte')},{id:'pc3',nome:'Ferrador Lima',link:'',ativa:true,img:pbn('#78350f','#92400e','Ferrador Lima')}];
+  const parc=[];
   return {v:1,parc,chat:[],owner:{email:'equialtaris@gmail.com',nome:'EquiAltaris',tel:'',pix:''},planos:{lite:{n:'Light',v:99},standard:{n:'Standard',v:199},full:{n:'Full',v:349}},hips,cob,files,tenants};
 }
 function loadG(){
@@ -447,6 +447,20 @@ async function loadPerfil(){
 function avisoSync(on){const a=document.getElementById('aviso');if(!a)return;
   if(!on){a.hidden=true;a.innerHTML='';return}
   a.hidden=false;a.innerHTML='<b>Alterações não salvas no servidor</b>O que você mudou agora está só neste aparelho. Verifique a internet e tente de novo \u2014 não feche esta aba.';}
+/* fundo do login: as fotos das parcerias sao publicas, entao buscamos sem login */
+async function loadParcPub(){
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/parcerias?select=id,nome:data->>nome,img:data->>img,ativa:data->>ativa',{headers:{apikey:SB_KEY}});
+    if(!r.ok)return;
+    const rows=await r.json();if(!Array.isArray(rows))return;
+    const l=rows.filter(x=>x&&x.img).map(x=>({id:x.id,nome:x.nome||'',link:'',ativa:x.ativa!=='false',img:x.img,ba:'',bc:'',bga:'#0f1424',bgc:'#0f1424',ra:4,rc:4}));
+    if(UI.user||AUTH.perfil||SYNC.ready)return; /* ja logou enquanto buscava: nao mexe nos dados reais */
+    G.parc=l;
+    const L=document.getElementById('login');
+    if(L&&!L.hidden){const e=document.getElementById('lg-e'),w=document.getElementById('lg-p'),a=document.activeElement;
+      if((!e||!e.value)&&(!w||!w.value)&&a!==e&&a!==w)showLogin();}
+  }catch(e){}
+}
 function syncPushSoon(){if(!SYNC.ready)return;clearTimeout(SYNC.t);SYNC.t=setTimeout(()=>{pushDirty().then(ok=>avisoSync(!ok)).catch(()=>avisoSync(true))},1500)}
 /* ---------- sincronização por tabela (um registro por hípica) ---------- */
 const TBL=[['plataforma','id'],['hipicas','id'],['tenant_data','hipica_id'],['cobrancas','id'],['plat_files','id'],['parcerias','id'],['chat_plataforma','id']];
@@ -1197,7 +1211,7 @@ async function logout(){
   try{if(SYNC.ready)await pushDirty()}catch(e){}
   await authOut();
   try{localStorage.removeItem(GKEY)}catch(e){}
-  G=emptyG();normAll();S=null;snapReset();ACC=[];UI.user=null;UI.cq=null;UI.logoState=null;render();
+  G=emptyG();normAll();S=null;snapReset();ACC=[];UI.user=null;UI.cq=null;UI.logoState=null;render();loadParcPub();
 }
 async function checarVersao(){
   try{
@@ -1215,6 +1229,7 @@ async function checarVersao(){
 }
 async function boot(){
   UI.user=null;
+  loadParcPub();
   if(await authOk()){
     const p=await loadPerfil();
     if(p){AUTH.perfil=p;await syncPull();await loadACC();const u=userFromPerfil(p);if(u){UI.user=u;UI.view=homeView(u)}}
