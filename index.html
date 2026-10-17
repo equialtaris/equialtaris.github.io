@@ -83,6 +83,7 @@ a.btn{text-decoration:none;color:var(--ink,inherit);display:inline-flex;align-it
 .grid{display:grid;gap:16px}
 .g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
 .g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))}
 .kpi{display:flex;flex-direction:column;gap:2px}
 .kpi span{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.07em}
 .kpi b{font-family:var(--f-display);font-size:30px;font-variant-numeric:tabular-nums}
@@ -141,6 +142,22 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .tr.au.done{background:var(--ok-bg);border-left-color:var(--ok)}
 .tr em{display:block}
 .wk th.hd u.off{color:var(--muted);font-weight:400}
+.feed{display:grid;gap:14px;max-width:620px}
+.post .phead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.post .phead[role=button]{cursor:pointer}
+.post .phead[role=button]:hover b{color:var(--primary)}
+.post .pn{display:flex;flex-direction:column;line-height:1.25}
+.ptxt{white-space:pre-wrap;margin:0 0 10px;line-height:1.5}
+.pfoto{width:100%;border-radius:10px;display:block;margin-top:4px}
+.av{border-radius:50%;object-fit:cover;flex:none;display:inline-block;background:var(--surface2)}
+.av.vazio{display:inline-flex;align-items:center;justify-content:center;background:var(--primary);color:#fff;font-weight:700}
+.stat.res{margin:0 0 10px}
+.card.adv{border-color:var(--bad,#b3261e);max-width:620px}
+.perfcap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.perfcap .pi{flex:1;min-width:220px}
+.cavs .cav img{width:100%;height:130px;object-fit:cover;border-radius:10px;display:block;margin-bottom:8px}
+.cavs .cav .semf{height:130px;border-radius:10px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;margin-bottom:8px}
+.cavs .cav b{display:block}
 #aviso{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:60;max-width:min(92vw,460px);background:var(--bad-bg,#3a1414);color:#ffd9d9;border:1px solid var(--bad,#b3261e);border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.4;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 #aviso b{display:block;margin-bottom:2px}
 .addw{display:flex;gap:4px}
@@ -314,7 +331,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261016-2015';
+const APPV='20261016-2340';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -632,9 +649,9 @@ const IC={
  prop:'<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/>',
  chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.2A8 8 0 1 1 21 12z"/>',
  conta:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
-const NAV=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietário','prop'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
-const NAV_S=[['feed','Comunidade','chat'],['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav']];
-const NAV_I=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova']];
+const NAV=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietário','prop'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
+const NAV_S=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav']];
+const NAV_I=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova']];
 const VKEY={painel:'painel',prog:'prog',cavalos:'cavalos',cavaleiros:'cavaleiros',croquis:'croquis',provas:'provas',fin:'fin',prop:'prop',conta:'conta'};
 
 /* ---------- modal ---------- */
@@ -741,7 +758,7 @@ function croquiSVG(c,o){
 
 /* ---------- views ---------- */
 const views={};
-const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
+const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
 const topActs={
   prog:()=>(UI.alTab==='lista'?'<button class="btn pri" data-act="anew">Nova aula</button>':(UI.user.role==='staff'?'<button class="btn" data-act="expcfg">Horário de funcionamento</button>':'')+'<button class="btn" data-act="relTreinos">Relatório de treinos</button><button class="btn brass" data-act="amanha">Programação para amanhã</button><button class="btn" data-act="anew">Nova aula</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>'),
   cavalos:()=>{const h=UI.user.hid&&HIP();return (h?limChip(S.horses.length,hipLim(h).c):'')+'<button class="btn pri" data-act="hnew">Novo cavalo</button>'},
@@ -763,7 +780,7 @@ function render(){
   if(!S||!G.hips.some(h=>h.id===UI.user.hid)){logout();return}
   const st=UI.user.role==='aluno';const stu=st?S.students.find(x=>x.id===UI.user.id):null;
   if(st&&!stu){logout();return}
-  if(st&&UI.view!=='feed'&&UI.view.indexOf('s_')!==0)UI.view='s_inicio';
+  if(st&&UI.view!=='feed'&&UI.view!=='perfil'&&UI.view.indexOf('s_')!==0)UI.view='s_inicio';
   if(!st&&UI.view.indexOf('s_')===0)UI.view='painel';
   if(UI.user.role==='instrutor'&&!IN(UI.user.id)){logout();return}
   const hip=HIP(),blk=hip.status==='bloqueada';
@@ -775,7 +792,7 @@ function render(){
   if(UI.user.role!=='staff'&&UI.view==='instrs')UI.view='painel';
   if(st&&UI.view==='s_cavalo'&&!myHorse())UI.view='s_inicio';
   const inst=UI.user.role==='instrutor';
-  if(inst&&UI.view!=='feed'&&NAV_I.every(n=>n[0]!==UI.view))UI.view='painel';
+  if(inst&&UI.view!=='feed'&&UI.view!=='perfil'&&NAV_I.every(n=>n[0]!==UI.view))UI.view='painel';
   let nav=st?NAV_S.filter(n=>n[0]!=='s_cavalo'||myHorse()):inst?NAV_I:NAV;
   if(blk)nav=UI.user.role==='staff'?[['plano','Meu plano','fin'],['suporte','Suporte','chat']]:[];
   nav=nav.concat([['senha','Trocar senha','conta'],['logout','Sair','conta']]);
@@ -784,7 +801,7 @@ function render(){
   const cbadge=st?S.msgs.filter(m=>m.student===UI.user.id&&m.from==='staff'&&!m.read).length:S.msgs.filter(m=>m.from==='aluno'&&!m.read&&(!inst||(m.canal==='instrutor'&&mi(m)===UI.user.id))).length;
   const sbadge=gUnread(hip.id,'owner');
   const pbadge=st?0:S.inscPed.filter(x=>x.status==='pendente').length;
-  $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='pagto'&&badge?'<span class="badge">'+badge+'</span>':'')+(n[0]==='remarc'&&rbadge?'<span class="badge">'+rbadge+'</span>':'')+(n[0]==='suporte'&&sbadge?'<span class="badge">'+sbadge+'</span>':'')+(n[0]==='provas'&&pbadge?'<span class="badge">'+pbadge+'</span>':'')+((n[0]==='chat'||n[0]==='s_chat')&&cbadge?'<span class="badge">'+cbadge+'</span>':'')+'</button>').join('');
+  $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='pagto'&&badge?'<span class="badge">'+badge+'</span>':'')+(n[0]==='remarc'&&rbadge?'<span class="badge">'+rbadge+'</span>':'')+(n[0]==='suporte'&&sbadge?'<span class="badge">'+sbadge+'</span>':'')+(n[0]==='provas'&&pbadge?'<span class="badge">'+pbadge+'</span>':'')+(n[0]==='feed'&&AVISOS.length?'<span class="badge">!</span>':'')+((n[0]==='chat'||n[0]==='s_chat')&&cbadge?'<span class="badge">'+cbadge+'</span>':'')+'</button>').join('');
   $('#st1').textContent=st?'Aluno':'Centro';$('#st2').textContent=st?stu.name:hip.fantasia;
   $('#who').innerHTML=st?'<b>Portal do aluno</b><br>Dúvidas? Fale com a hípica.':(inst?'<b>'+esc(IN(UI.user.id).name)+'</b><br>Área do instrutor.':'<b>Plano '+esc(PLN[hip.plano]||'Personalizado')+'</b><br>'+brl(hip.valor)+'/mês');
   const m=meta[UI.view];$('#ttl').textContent=m[0];$('#sub').textContent=m[1];
@@ -932,35 +949,97 @@ views.cavalos=function(){
 };
 
 /* ---------- Comunidade: a rede das hípicas ---------- */
-let FEED=[],FEEDST='',FEEDFOTO=null;
+/* ---------- Comunidade: feed, perfis publicos e moderacao ---------- */
+let FEED=[],FEEDST='',FEEDFOTO=null,PERFIS={},MEUPERF=null,AVISOS=[],PERFVER=null,PERFPOSTS=[],PERFST='',PFOTO=null,PCAV=[],RESFOTO=null;
+const meuUid=()=>(AUTH.user&&AUTH.user.id)||'';
+function podePostar(){return !!(UI.user&&(UI.user.role==='staff'||UI.user.role==='instrutor'||UI.user.role==='aluno'))}
+function quemSou(){
+  if(!UI.user)return '';
+  if(UI.user.role==='instrutor'){const i=IN(UI.user.id);return i?i.name:'Instrutor'}
+  if(UI.user.role==='aluno'){const a=R(UI.user.id);return a?a.name:'Aluno'}
+  return 'Administração';
+}
+function perfilDe(id){return (id&&PERFIS[id])||null}
+function avatar(id,nome,t){
+  t=t||40;const p=perfilDe(id),f=p&&p.foto;
+  const ini=esc(String(nome||'?').trim().charAt(0).toUpperCase()||'?');
+  return f?'<img class="av" style="width:'+t+'px;height:'+t+'px" src="'+esc(f)+'" alt="">'
+          :'<span class="av vazio" style="width:'+t+'px;height:'+t+'px;font-size:'+Math.round(t/2.4)+'px">'+ini+'</span>';
+}
+async function loadPerfis(ids){
+  const falta=[];ids.forEach(x=>{if(x&&!PERFIS[x]&&falta.indexOf(x)<0)falta.push(x)});
+  if(!falta.length)return;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/perfis_pub?select=*&id=in.('+falta.join(',')+')',{headers:sbH()});
+    if(r.ok)(await r.json()).forEach(p=>{PERFIS[p.id]=p});
+  }catch(e){}
+  falta.forEach(x=>{if(!PERFIS[x])PERFIS[x]={id:x,nome:'',foto:'',bio:'',cavalos:[]}});
+}
+async function loadMeuPerfil(){
+  const u=meuUid();if(!u)return;
+  try{const r=await fetch(SB_URL+'/rest/v1/perfis_pub?select=*&id=eq.'+u,{headers:sbH()});
+    if(r.ok){const l=await r.json();MEUPERF=l[0]||null;if(MEUPERF)PERFIS[u]=MEUPERF}}catch(e){}
+}
+async function loadAvisos(){
+  const u=meuUid();if(!u||UI.user&&UI.user.role==='owner'){AVISOS=[];return}
+  try{const r=await fetch(SB_URL+'/rest/v1/avisos?select=*&para=eq.'+u+'&lido=is.false&order=criado_em.desc',{headers:sbH()});
+    AVISOS=r.ok?await r.json():[]}catch(e){AVISOS=[]}
+}
+async function salvarPerfil(dados){
+  const u=meuUid();if(!u)return false;
+  const corpo=Object.assign({id:u,atualizado_em:new Date().toISOString()},dados);
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/perfis_pub?on_conflict=id',{method:'POST',
+      headers:Object.assign({Prefer:'resolution=merge-duplicates,return=minimal'},sbH()),body:JSON.stringify([corpo])});
+    if(!r.ok)return false;
+    MEUPERF=Object.assign(MEUPERF||{},corpo);PERFIS[u]=MEUPERF;return true;
+  }catch(e){return false}
+}
 async function loadFeed(){
   if(!await authOk()){FEEDST='erro';return}
   try{
     const r=await fetch(SB_URL+'/rest/v1/posts?select=*&order=criado_em.desc&limit=60',{headers:sbH()});
     if(!r.ok){FEEDST=(r.status===404||r.status===400)?'preparando':'erro';FEED=[];return}
     FEED=await r.json();FEEDST='ok';
+    await loadPerfis(FEED.map(p=>p.autor_id));
+    if(!MEUPERF)await loadMeuPerfil();
+    await loadAvisos();
   }catch(e){FEEDST='erro';FEED=[]}
 }
-function podePostar(){return UI.user&&(UI.user.role==='staff'||UI.user.role==='instrutor')}
-function quemSou(){
-  if(!UI.user)return '';
-  if(UI.user.role==='instrutor'){const i=IN(UI.user.id);return i?i.name:'Instrutor'}
-  return 'Administração';
+async function loadPerfilView(id){
+  PERFST='';PERFPOSTS=[];
+  if(!await authOk()){PERFST='erro';return}
+  try{
+    await loadPerfis([id]);
+    const r=await fetch(SB_URL+'/rest/v1/posts?select=*&autor_id=eq.'+encodeURIComponent(id)+'&order=criado_em.desc&limit=40',{headers:sbH()});
+    PERFPOSTS=r.ok?await r.json():[];PERFST='ok';
+  }catch(e){PERFST='erro'}
 }
-async function publicarPost(){
+async function publicarPost(extra){
   const t=(V('fd-t')||'').trim();
-  if(!t&&!FEEDFOTO)return null;
-  const h=HIP();
-  const corpo={id:uid(),hipica_id:h.id,hipica_nome:h.fantasia,autor:quemSou(),texto:t,foto:FEEDFOTO||''};
+  if(!t&&!FEEDFOTO&&!extra)return null;
+  const h=HIP();if(!h)return {erro:'Sua conta não está ligada a uma hípica.'};
+  const corpo=Object.assign({id:uid(),hipica_id:h.id,hipica_nome:h.fantasia,autor:quemSou(),autor_id:meuUid()||null,
+    texto:t,foto:FEEDFOTO||'',tipo:'post',dados:{}},extra||{});
   try{
     const r=await fetch(SB_URL+'/rest/v1/posts',{method:'POST',headers:Object.assign({Prefer:'return=minimal'},sbH()),body:JSON.stringify(corpo)});
     if(!r.ok)return {erro:r.status===404?'A Comunidade ainda não foi liberada no servidor.':'Não foi possível publicar agora.'};
-    FEEDFOTO=null;await loadFeed();return {ok:true};
+    FEEDFOTO=null;RESFOTO=null;await loadFeed();return {ok:true};
   }catch(e){return {erro:'Sem conexão com o servidor.'}}
 }
 async function apagarPost(id){
   try{await fetch(SB_URL+'/rest/v1/posts?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:sbH()})}catch(e){}
+  if(UI.view==='perfil'&&PERFVER){await loadPerfilView(PERFVER)}
   await loadFeed();render();
+}
+async function enviarAdvertencia(post,texto,apagar){
+  const corpo={id:uid(),para:post.autor_id,de:G.owner.nome||'EquiAltaris',texto:texto,post_texto:(post.texto||'').slice(0,400)};
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/avisos',{method:'POST',headers:Object.assign({Prefer:'return=minimal'},sbH()),body:JSON.stringify(corpo)});
+    if(!r.ok)return false;
+  }catch(e){return false}
+  if(apagar)await apagarPost(post.id);else{await loadFeed();render()}
+  return true;
 }
 function fmtQuando(iso){
   if(!iso)return '';
@@ -970,27 +1049,188 @@ function fmtQuando(iso){
   if(m<1440)return Math.round(m/60)+' h';
   return fmtS(ymd(d));
 }
-views.feed=function(){
-  const caixa=podePostar()?'<div class="card" style="margin-bottom:16px"><h3>Publicar da '+esc(HIP().fantasia)+'</h3>'+
+function cardResultado(d){
+  if(!d||typeof d!=='object')return '';
+  const li=(l,v)=>v?'<div><small>'+l+'</small><b>'+esc(v)+'</b></div>':'';
+  const h=li('Prova',d.prova)+li('Data',d.data?fmtS(d.data):'')+li('Categoria',d.cat)+li('Cavalo',d.cavalo)+li('Resultado',d.col);
+  return h?'<div class="stat res">'+h+'</div>':'';
+}
+function postHTML(p){
+  const dono=UI.user.role==='owner';
+  const meu=(p.autor_id&&p.autor_id===meuUid())||(!dono&&UI.user.hid&&p.hipica_id===UI.user.hid&&(UI.user.role==='staff'||UI.user.role==='instrutor'));
+  const clica=p.autor_id?' data-act="verperf" data-id="'+esc(p.autor_id)+'" role="button" tabindex="0"':'';
+  const acoes=(meu||dono)?'<div class="row" style="margin-top:10px">'+
+      '<button class="btn sm danger" data-act="fddel" data-id="'+esc(p.id)+'">Apagar</button>'+
+      (dono&&p.autor_id?'<button class="btn sm" data-act="advertir" data-id="'+esc(p.id)+'">Advertir autor</button>':'')+'</div>':'';
+  return '<div class="card post">'+
+    '<div class="phead"'+clica+'>'+avatar(p.autor_id,p.autor)+
+      '<div class="pn"><b>'+esc(p.autor||'—')+'</b><span class="muted sm">'+esc(p.hipica_nome||'')+' · '+esc(fmtQuando(p.criado_em))+'</span></div>'+
+      (p.tipo==='resultado'?'<span class="pill ok" style="margin-left:auto">Resultado</span>':'')+'</div>'+
+    (p.texto?'<p class="ptxt">'+esc(p.texto)+'</p>':'')+
+    (p.tipo==='resultado'?cardResultado(p.dados):'')+
+    (p.foto?'<img src="'+esc(p.foto)+'" alt="" class="pfoto">':'')+
+    acoes+'</div>';
+}
+function avisoHTML(){
+  const a=AVISOS[0];
+  return '<div class="card adv"><h3>Aviso da administração do EquiAltaris</h3>'+
+    '<p class="ptxt">'+esc(a.texto)+'</p>'+
+    (a.post_texto?'<div class="note bad"><b>Publicação removida:</b> '+esc(a.post_texto)+'</div>':'')+
+    '<p class="muted sm">Enviado '+esc(fmtQuando(a.criado_em))+' por '+esc(a.de||'EquiAltaris')+'.</p>'+
+    '<button class="btn pri" data-act="avok" data-id="'+esc(a.id)+'">Li e entendi</button>'+
+    '<p class="muted sm" style="margin-top:10px">A Comunidade volta assim que você confirmar a leitura.</p></div>';
+}
+function caixaPost(){
+  if(!podePostar())return '';
+  const h=HIP();
+  return '<div class="card" style="margin-bottom:16px"><h3>Publicar'+(h?' · '+esc(h.fantasia):'')+'</h3>'+
     '<label class="f">Mensagem<textarea id="fd-t" rows="3" placeholder="Conte uma conquista, divulgue uma prova, parabenize alguém…"></textarea></label>'+
     '<div class="row" style="margin-top:8px;align-items:center"><label class="btn sm">Escolher foto<input type="file" id="fd-f" accept="image/*" style="display:none"></label>'+
     '<span class="muted sm" id="fd-n">'+(FEEDFOTO?'foto escolhida':'sem foto')+'</span>'+
-    '<button class="btn pri sm" data-act="fdpost" style="margin-left:auto">Publicar</button></div>'+
+    '<button class="btn sm brass" data-act="resnew" style="margin-left:auto">Publicar resultado de prova</button>'+
+    '<button class="btn pri sm" data-act="fdpost">Publicar</button></div>'+
     '<div class="err" id="fd-err" role="alert"></div>'+
-    '<p class="muted sm" style="margin-top:8px">O que você publicar aqui aparece para todas as hípicas do EquiAltaris. Não use dados pessoais de alunos.</p></div>':'';
+    '<p class="muted sm" style="margin-top:8px">O que você publicar aqui aparece para todo o EquiAltaris. Nada de dados pessoais de terceiros.</p></div>';
+}
+views.feed=function(){
+  if(AVISOS.length)return avisoHTML();
+  const caixa=caixaPost();
   if(FEEDST==='preparando')return caixa+empty('A Comunidade está sendo preparada e entra no ar em breve.');
   if(FEEDST==='erro')return caixa+empty('Não consegui carregar a Comunidade agora.');
   if(!FEED.length)return caixa+empty('Nenhuma publicação ainda. Seja o primeiro.');
-  return caixa+'<div class="grid">'+FEED.map(function(p){
-    const meu=UI.user.hid&&p.hipica_id===UI.user.hid&&podePostar();
-    return '<div class="card"><h3>'+esc(p.hipica_nome||'Hípica')+'<span class="muted sm" style="font-weight:400;margin-left:auto;padding-left:10px">'+esc(fmtQuando(p.criado_em))+'</span></h3>'+
-      '<div class="muted sm" style="margin-bottom:6px">'+esc(p.autor||'')+'</div>'+
-      (p.texto?'<p style="white-space:pre-wrap;margin:0 0 8px">'+esc(p.texto)+'</p>':'')+
-      (p.foto?'<img src="'+esc(p.foto)+'" alt="" style="width:100%;border-radius:10px;display:block">':'')+
-      (meu?'<div class="row" style="margin-top:8px"><button class="btn sm danger" data-act="fddel" data-id="'+esc(p.id)+'">Apagar</button></div>':'')+
-      '</div>';
-  }).join('')+'</div>';
+  return caixa+'<div class="feed">'+FEED.map(postHTML).join('')+'</div>';
 };
+views.o_feed=function(){
+  if(FEEDST==='preparando')return empty('A Comunidade ainda não foi liberada no servidor.');
+  if(FEEDST==='erro')return empty('Não consegui carregar a Comunidade agora.');
+  if(!FEED.length)return empty('Nenhuma publicação na Comunidade.');
+  const porHip={};FEED.forEach(p=>{porHip[p.hipica_nome||'—']=(porHip[p.hipica_nome||'—']||0)+1});
+  return '<div class="grid g4" style="margin-bottom:16px"><div class="card kpi"><span>Publicações</span><b>'+FEED.length+'</b><small>últimas 60</small></div>'+
+    '<div class="card kpi"><span>Hípicas publicando</span><b>'+Object.keys(porHip).length+'</b></div></div>'+
+    '<p class="muted sm" style="margin:0 0 12px">Você vê tudo o que foi publicado. Apagar remove para todo mundo; advertir manda um aviso que o autor precisa confirmar antes de voltar a usar a Comunidade.</p>'+
+    '<div class="feed">'+FEED.map(postHTML).join('')+'</div>';
+};
+views.perfil=function(){
+  const id=PERFVER||meuUid();
+  const p=perfilDe(id)||{};
+  const meu=id===meuUid();
+  const nome=p.nome||(meu?((UI.user.role==='staff'&&HIP())?HIP().fantasia:quemSou()):'Perfil');
+  const cav=Array.isArray(p.cavalos)?p.cavalos:[];
+  let h='<div class="card perfcap">'+avatar(id,nome,88)+
+    '<div class="pi"><h3 style="margin:0">'+esc(nome)+'</h3>'+
+    '<span class="muted">'+esc(p.hipica_nome||'')+(p.tipo==='hipica'?' · hípica':'')+'</span>'+
+    (p.bio?'<p class="ptxt" style="margin:8px 0 0">'+esc(p.bio)+'</p>':'')+
+    (meu?'<div class="row" style="margin-top:10px"><button class="btn sm pri" data-act="perfedit">Editar meu perfil</button></div>':'')+
+    '</div></div>';
+  h+='<h3 style="margin:22px 0 10px">Cavalos</h3>';
+  h+=cav.length?'<div class="grid g3 cavs">'+cav.map(c=>'<div class="card cav">'+
+      (c.foto?'<img src="'+esc(c.foto)+'" alt="">':'<div class="semf">sem foto</div>')+
+      '<b>'+esc(c.nome||'—')+'</b>'+(c.salto?'<span class="muted sm">salta '+esc(c.salto)+'</span>':'')+'</div>').join('')+'</div>'
+    :empty(meu?'Você ainda não colocou nenhum cavalo no seu perfil.':'Nenhum cavalo cadastrado neste perfil.');
+  h+='<h3 style="margin:22px 0 10px">Publicações</h3>';
+  if(PERFST==='erro')return h+empty('Não consegui carregar as publicações.');
+  h+=PERFPOSTS.length?'<div class="feed">'+PERFPOSTS.map(postHTML).join('')+'</div>':empty('Nenhuma publicação ainda.');
+  return h;
+};
+function resultadoModal(){
+  RESFOTO=null;
+  const cavs=[];
+  if(MEUPERF&&Array.isArray(MEUPERF.cavalos))MEUPERF.cavalos.forEach(c=>{if(c.nome)cavs.push(c.nome)});
+  if(S&&UI.user.role==='aluno')S.horses.filter(x=>x.studentId===UI.user.id).forEach(x=>{if(cavs.indexOf(x.name)<0)cavs.push(x.name)});
+  if(S&&UI.user.role!=='aluno')S.horses.forEach(x=>{if(cavs.indexOf(x.name)<0)cavs.push(x.name)});
+  modal({title:'Publicar resultado de prova',wide:true,
+    body:'<div class="fg">'+fld('Prova','rs-p','','text',null,'full')+fld('Data','rs-d',TODAY,'date')+
+      fld('Categoria ou altura','rs-c','','list',['0,80 m','0,90 m','1,00 m','1,10 m','1,20 m','1,30 m','1,40 m','Pré-mirim','Mirim','Júnior','Sênior'])+
+      fld('Cavalo','rs-h','',cavs.length?'list':'text',cavs)+
+      fld('Resultado','rs-r','','list',['1º lugar','2º lugar','3º lugar','4º lugar','5º lugar','Classificado','Sem falta','Participação'])+'</div>'+
+      fld('Comentário (opcional)','rs-t','','textarea',null,'full')+
+      '<div class="row" style="margin-top:4px;align-items:center"><label class="btn sm">Escolher foto<input type="file" id="rs-f" accept="image/*" style="display:none"></label><span class="muted sm" id="rs-n">sem foto</span></div>'+
+      '<div class="err" id="rs-err" role="alert"></div>',
+    extra:'<button class="btn pri" id="rs-ok">Publicar resultado</button>',noFocus:false,
+    after:close=>{
+      const fi=document.getElementById('rs-f');
+      if(fi)fi.onchange=()=>{const f=fi.files[0];if(!f)return;readImage(f).then(d=>{RESFOTO=d;$('#rs-n').textContent='foto escolhida';$('#rs-err').textContent=''}).catch(m=>{$('#rs-err').textContent=m})};
+      $('#rs-ok').onclick=()=>{
+        const d={prova:V('rs-p').trim(),data:V('rs-d'),cat:V('rs-c').trim(),cavalo:V('rs-h').trim(),col:V('rs-r').trim()};
+        if(!d.prova){$('#rs-err').textContent='Informe o nome da prova.';return}
+        $('#rs-err').textContent='Publicando…';
+        const guarda=FEEDFOTO;FEEDFOTO=RESFOTO;
+        const txt=V('rs-t').trim();
+        const campo=document.getElementById('fd-t');const antes=campo?campo.value:null;if(campo)campo.value=txt;
+        publicarPost({tipo:'resultado',dados:d,texto:txt}).then(r=>{
+          FEEDFOTO=guarda;if(campo&&antes!==null)campo.value=antes;
+          if(r&&r.erro){$('#rs-err').textContent=r.erro;return}
+          close();render();
+        });
+      };
+    }});
+}
+function perfilModal(){
+  const p=MEUPERF||{};
+  PFOTO=p.foto||null;
+  PCAV=(Array.isArray(p.cavalos)?p.cavalos:[]).map(c=>({nome:c.nome||'',salto:c.salto||'',foto:c.foto||''}));
+  if(!PCAV.length&&S&&UI.user.role==='aluno')
+    S.horses.filter(h=>h.studentId===UI.user.id).forEach(h=>PCAV.push({nome:h.name,salto:h.salto||'',foto:''}));
+  const corpo=()=>'<div class="row" style="align-items:center;gap:14px;margin-bottom:14px">'+
+      '<span id="pf-prev">'+(PFOTO?'<img class="av" style="width:72px;height:72px" src="'+esc(PFOTO)+'" alt="">':'<span class="av vazio" style="width:72px;height:72px;font-size:30px">'+esc(String(quemSou()).charAt(0).toUpperCase())+'</span>')+'</span>'+
+      '<label class="btn sm">Escolher foto de perfil<input type="file" id="pf-f" accept="image/*" style="display:none"></label>'+
+      (PFOTO?'<button class="btn sm danger" id="pf-rm">Tirar foto</button>':'')+'</div>'+
+    fld('Sobre você','pf-b',(p.bio||''),'textarea',null,'full')+
+    '<h4 style="margin:18px 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Meus cavalos</h4>'+
+    '<ul class="hz-list">'+(PCAV.length?PCAV.map((c,i)=>'<li><span>'+(c.foto?'<img class="av" style="width:30px;height:30px;margin-right:8px;vertical-align:middle" src="'+esc(c.foto)+'" alt="">':'')+'<b>'+esc(c.nome||'—')+'</b>'+(c.salto?' <span class="muted sm">salta '+esc(c.salto)+'</span>':'')+'</span><span style="display:flex;gap:6px"><label class="btn sm">Foto<input type="file" data-cf="'+i+'" accept="image/*" style="display:none"></label><button class="btn sm danger" data-crm="'+i+'">Remover</button></span></li>').join(''):'<li class="muted">Nenhum cavalo ainda.</li>')+'</ul>'+
+    '<div class="fg" style="margin-top:10px">'+fld('Nome do cavalo','pf-cn','','text')+fld('Altura que salta','pf-cs','','list',['0,80 m','0,90 m','1,00 m','1,10 m','1,20 m','1,30 m','1,40 m'])+'</div>'+
+    '<div class="row"><button class="btn brass" id="pf-add">Adicionar cavalo</button></div>'+
+    '<div class="err" id="pf-err" role="alert"></div>';
+  modal({title:'Meu perfil',wide:true,body:corpo(),noFocus:true,
+    extra:'<button class="btn pri" id="pf-ok">Salvar perfil</button>',
+    after:close=>{
+      const root=$('#modal');
+      const refresh=()=>{root.querySelector('.md>div').innerHTML=corpo();wire()};
+      const wire=()=>{
+        const fi=document.getElementById('pf-f');
+        if(fi)fi.onchange=()=>{const f=fi.files[0];if(!f)return;readImage(f).then(d=>{PFOTO=d;refresh()}).catch(m=>{$('#pf-err').textContent=m})};
+        const rm=document.getElementById('pf-rm');if(rm)rm.onclick=()=>{PFOTO=null;refresh()};
+        root.querySelectorAll('[data-crm]').forEach(b=>b.onclick=()=>{PCAV.splice(+b.dataset.crm,1);refresh()});
+        root.querySelectorAll('[data-cf]').forEach(b=>b.onchange=()=>{const f=b.files[0];if(!f)return;const i=+b.dataset.cf;
+          readImage(f).then(d=>{PCAV[i].foto=d;refresh()}).catch(m=>{$('#pf-err').textContent=m})});
+        document.getElementById('pf-add').onclick=()=>{const n=V('pf-cn').trim();
+          if(!n){$('#pf-err').textContent='Informe o nome do cavalo.';return}
+          if(PCAV.length>=8){$('#pf-err').textContent='Máximo de 8 cavalos no perfil.';return}
+          PCAV.push({nome:n,salto:V('pf-cs').trim(),foto:''});refresh()};
+        document.getElementById('pf-ok').onclick=()=>{
+          const h=HIP();
+          $('#pf-err').textContent='Salvando…';
+          salvarPerfil({nome:(UI.user.role==='staff'&&h&&h.fantasia)?h.fantasia:quemSou(),tipo:UI.user.role==='aluno'?'aluno':'hipica',
+            hipica_id:(h&&h.id)||null,hipica_nome:(h&&h.fantasia)||'',
+            foto:PFOTO||'',bio:V('pf-b').trim(),cavalos:PCAV}).then(ok=>{
+            if(!ok){$('#pf-err').textContent='Não consegui salvar o perfil agora.';return}
+            close();render();
+          });
+        };
+      };
+      wire();
+    }});
+}
+function advertirModal(p){
+  modal({title:'Advertir autor',wide:true,
+    body:'<p class="muted" style="margin-top:-6px">'+esc(p.autor||'')+' · '+esc(p.hipica_nome||'')+'</p>'+
+      (p.texto?'<div class="note">'+esc(p.texto.slice(0,300))+'</div>':'')+
+      fld('Mensagem da advertência (a pessoa lê e precisa confirmar)','ad-t','','textarea',null,'full')+
+      '<label class="row" style="align-items:center;gap:8px;margin:6px 0"><input type="checkbox" id="ad-x" checked style="width:auto"> Apagar também esta publicação</label>'+
+      '<div class="err" id="ad-err" role="alert"></div>',
+    extra:'<button class="btn pri" id="ad-ok">Enviar advertência</button>',
+    after:close=>{
+      $('#ad-ok').onclick=()=>{
+        const t=V('ad-t').trim();
+        if(!t){$('#ad-err').textContent='Escreva o motivo da advertência.';return}
+        $('#ad-err').textContent='Enviando…';
+        enviarAdvertencia(p,t,!!document.getElementById('ad-x').checked).then(ok=>{
+          if(!ok){$('#ad-err').textContent='Não consegui enviar a advertência agora.';return}
+          close();render();
+        });
+      };
+    }});
+}
 
 views.croquis=function(){
   if(UI.cq)return editorHTML();
@@ -1232,7 +1472,7 @@ async function boot(){
   loadParcPub();
   if(await authOk()){
     const p=await loadPerfil();
-    if(p){AUTH.perfil=p;await syncPull();await loadACC();const u=userFromPerfil(p);if(u){UI.user=u;UI.view=homeView(u)}}
+    if(p){AUTH.perfil=p;await syncPull();await loadACC();await loadMeuPerfil();await loadAvisos();const u=userFromPerfil(p);if(u){UI.user=u;UI.view=homeView(u)}}
     if(!UI.user)authClear();
   }
   render();
@@ -1436,7 +1676,7 @@ function renderOwner(){
   if(UI.view.indexOf('o_')!==0)UI.view='o_dash';
   markRead();
   const conf=G.cob.filter(c=>c.status==='enviado').length,oun=G.chat.filter(m=>m.from==='hip'&&!m.read).length;
-  const nav=[['o_dash','Dashboard','painel'],['o_hip','Hípicas','pess'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['senha','Trocar senha','conta'],['logout','Sair','conta']];
+  const nav=[['o_dash','Dashboard','painel'],['o_feed','Comunidade','chat'],['o_hip','Hípicas','pess'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['senha','Trocar senha','conta'],['logout','Sair','conta']];
   $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='o_cob'&&conf?'<span class="badge">'+conf+'</span>':'')+(n[0]==='o_chat'&&oun?'<span class="badge">'+oun+'</span>':'')+'</button>').join('');
   $('#st1').textContent='Plataforma';$('#st2').textContent=G.owner.nome;
   $('#who').innerHTML='<b>Administração</b><br>Gestão das hípicas clientes.';
@@ -2090,7 +2330,8 @@ const act={
   lgrole:d=>{UI.lgRole=d.r;showLogin()},
   nav:d=>{if(d.v==='logout'){logout();return}if(d.v==='senha'){senhaModal();return}
     if(d.v==='aulas'){UI.view='prog';UI.alTab='lista';render();return}
-    if(d.v==='feed'){UI.view='feed';render();loadFeed().then(function(){if(UI.view==='feed')render()});return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
+    if(d.v==='feed'||d.v==='o_feed'){UI.view=d.v;render();loadFeed().then(function(){if(UI.view===d.v)render()});return}
+    if(d.v==='perfil'){PERFVER=meuUid();UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(PERFVER).then(function(){if(UI.view==='perfil')render()});return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
   inew:()=>inscEventModal(),iedit:d=>inscEventModal(S.insc.find(x=>x.id===d.id)),
   itoggle:d=>{const e=S.insc.find(x=>x.id===d.id);e.status=e.status==='aberta'?'encerrada':'aberta';save();render()},
   ireq:d=>inscModal(S.insc.find(x=>x.id===d.id)),
@@ -2140,6 +2381,12 @@ const act={
       if(r.erro){if(b)b.textContent=r.erro;return}
       render();});},
   fddel:d=>modal({title:'Apagar publicação?',body:'<p>Ela sai da Comunidade para todo mundo.</p>',label:'Apagar',save:()=>{apagarPost(d.id);return true}}),
+  verperf:d=>{PERFVER=d.id;UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(d.id).then(()=>{if(UI.view==='perfil')render()})},
+  perfedit:()=>perfilModal(),
+  resnew:()=>resultadoModal(),
+  advertir:d=>{const p=FEED.find(x=>x.id===d.id)||PERFPOSTS.find(x=>x.id===d.id);if(p)advertirModal(p)},
+  avok:d=>{fetch(SB_URL+'/rest/v1/rpc/aviso_lido',{method:'POST',headers:sbH(),body:JSON.stringify({p_id:d.id})})
+    .then(()=>loadAvisos()).catch(()=>{}).then(()=>{AVISOS=AVISOS.filter(a=>a.id!==d.id);render();loadFeed().then(()=>render())})},
   acesso:d=>{if(!d.e||d.e.indexOf('@')<0){modal({title:'Falta o e-mail',body:'<p>Para liberar o acesso, primeiro cadastre um e-mail válido em Editar.</p>'});return}acessoModal(d.e,d.n||d.e,d.p,d.r,d.h)},
   pixcopy:(d,b)=>{try{navigator.clipboard.writeText(S.pix).then(()=>{b.textContent='Chave copiada'},()=>{b.textContent='Copie a chave acima'})}catch(e){b.textContent='Copie a chave acima'}},
   snew:()=>alunoModal(),sedit:d=>alunoModal(S.students.find(x=>x.id===d.id)),
