@@ -416,7 +416,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261018-1540';
+const APPV='20261018-1610';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -1745,7 +1745,7 @@ async function checarVersao(){
 }
 async function boot(){
   UI.user=null;
-  if(checarLinkRecuperacao()){loadParcPub();showLogin();checarVersao();return}
+  if(checarLinkRecuperacao()){loadParcPub();showLogin();return}
   loadParcPub();
   if(await authOk()){
     const p=await loadPerfil();
