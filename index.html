@@ -377,6 +377,19 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
   .ag .addw{margin-top:2px}
   .addt{border-color:var(--line);color:var(--muted)}
 }
+.relcab{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+.relcab b{font-family:var(--f-display);font-size:22px;display:block;line-height:1.1}
+.relcab span{color:var(--muted);font-size:13px}
+@media print{
+  @page{margin:14mm}
+  #side,#login,#modal,#aviso,.top,.tabs,#relact{display:none!important}
+  #app{display:block}
+  main{padding:0}
+  body{background:#fff;color:#000}
+  .card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+  .kpi b{font-size:26px}
+  table{font-size:12px}
+}
 @media (prefers-reduced-motion:no-preference){.md{animation:pop .16s ease-out}@keyframes pop{from{transform:translateY(8px);opacity:0}}}
 </style>
 
@@ -428,7 +441,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261018-2030';
+const APPV='20261018-2130';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -875,7 +888,7 @@ function croquiSVG(c,o){
 
 /* ---------- views ---------- */
 const views={};
-const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_uso:['Uso e parcerias','Quem está usando e quanto o sistema é usado'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
+const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_uso:['Uso e parcerias','Quem está usando e quanto o sistema é usado'],o_rel:['Relatório mensal','Números mês a mês para apresentar a parceiros'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
 const topActs={
   prog:()=>(UI.alTab==='lista'?'<button class="btn pri" data-act="anew">Nova aula</button>':(UI.user.role==='staff'?'<button class="btn" data-act="expcfg">Horário de funcionamento</button>':'')+'<button class="btn" data-act="relTreinos">Relatório de treinos</button><button class="btn brass" data-act="amanha">Programação para amanhã</button><button class="btn" data-act="anew">Nova aula</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>'),
   cavalos:()=>{const h=UI.user.hid&&HIP();return (h?limChip(S.horses.length,hipLim(h).c):'')+'<button class="btn pri" data-act="hnew">Novo cavalo</button>'},
@@ -1758,6 +1771,7 @@ async function checarVersao(){
 }
 async function boot(){
   UI.user=null;
+  try{registrarVisita()}catch(e){}
   if(checarLinkRecuperacao()){loadParcPub();showLogin();return}
   loadParcPub();
   if(await authOk()){
@@ -2038,7 +2052,7 @@ function renderOwner(){
   if(UI.view.indexOf('o_')!==0)UI.view='o_dash';
   markRead();
   const conf=G.cob.filter(c=>c.status==='enviado').length,oun=G.chat.filter(m=>m.from==='hip'&&!m.read).length;
-  const nav=[['o_dash','Dashboard','painel'],['o_feed','Comunidade','chat'],['o_hip','Hípicas','pess'],['o_uso','Uso e parcerias','painel'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['senha','Trocar senha','conta'],['logout','Sair','conta']];
+  const nav=[['o_dash','Dashboard','painel'],['o_feed','Comunidade','chat'],['o_hip','Hípicas','pess'],['o_uso','Uso e parcerias','painel'],['o_rel','Relatório mensal','prop'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['senha','Trocar senha','conta'],['logout','Sair','conta']];
   $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='o_cob'&&conf?'<span class="badge">'+conf+'</span>':'')+(n[0]==='o_chat'&&oun?'<span class="badge">'+oun+'</span>':'')+'</button>').join('');
   $('#st1').textContent='Plataforma';$('#st2').textContent=G.owner.nome;
   $('#who').innerHTML='<b>Administração</b><br>Gestão das hípicas clientes.';
@@ -2104,6 +2118,81 @@ function linhaBarra(rot,n,max,sub){
   return '<li><span class="bl">'+esc(rot)+'</span><span class="bb"><i style="width:'+p+'%"></i></span>'+
     '<span class="bn"><b>'+n+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span></li>';
 }
+/* ---------- visitantes e relatorio mensal ---------- */
+let MENSAL=null,MENSALST='';
+function meuDispositivo(){
+  try{
+    let d=localStorage.getItem('equialtaris.disp');
+    if(!d||d.length<8){d='d'+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+      localStorage.setItem('equialtaris.disp',d)}
+    return d;
+  }catch(e){return ''}
+}
+async function registrarVisita(){
+  const d=meuDispositivo();
+  if(!d)return;
+  try{sessionStorage.getItem('equi.vis')}catch(e){}
+  try{if(sessionStorage.getItem('equi.vis'))return;sessionStorage.setItem('equi.vis','1')}catch(e){}
+  try{await fetch(SB_URL+'/rest/v1/rpc/registrar_visita',{method:'POST',
+    headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_disp:d})})}catch(e){}
+}
+async function loadMensal(){
+  MENSALST='carregando';
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/rpc/uso_mensal',{method:'POST',headers:sbH(),body:JSON.stringify({p_meses:12})});
+    if(!r.ok){MENSALST=r.status===404?'preparando':'erro';return}
+    MENSAL=await r.json();MENSALST='ok';
+  }catch(e){MENSALST='erro'}
+}
+function mesNome(ym){
+  const M=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const p=String(ym||'').split('-');
+  return p.length===2?(M[(+p[1])-1]||'?')+' de '+p[0]:(ym||'');
+}
+function baseHoje(){
+  let al=0,cv=0;
+  Object.keys(G.tenants||{}).forEach(k=>{const T=G.tenants[k];if(!T)return;
+    al+=(T.students||[]).length;cv+=(T.horses||[]).length});
+  return {hipicas:(G.hips||[]).length,alunos:al,cavalos:cv};
+}
+function relatorioHTML(){
+  if(MENSALST==='carregando')return empty('Carregando o relatório…');
+  if(MENSALST==='preparando')return empty('O relatório ainda não foi liberado no servidor.');
+  if(MENSALST==='erro')return empty('Não consegui carregar o relatório agora.');
+  const l=MENSAL||[];
+  if(!l.length)return empty('Sem dados ainda.');
+  const b=baseHoje();
+  const soma=c=>l.reduce((t,x)=>t+(+x[c]||0),0);
+  const ult=l[l.length-1]||{},pen=l[l.length-2]||null;
+  const varia=(c)=>{
+    if(!pen||!(+pen[c]))return '';
+    const d=Math.round(((+ult[c]||0)-(+pen[c]))/(+pen[c])*100);
+    return '<small style="color:'+(d>=0?'var(--ok)':'var(--bad)')+'">'+(d>=0?'+':'')+d+'% vs. mês anterior</small>';
+  };
+  return '<div id="rel">'+
+    '<div class="relcab"><div><b>EquiAltaris</b><span>Relatório de uso da plataforma</span></div>'+
+      '<span class="muted sm">Gerado em '+fmtD(TODAY)+'</span></div>'+
+    '<div class="grid g4" style="margin-bottom:16px">'+
+      '<div class="card kpi"><span>Visitantes no mês</span><b>'+(+ult.visitantes||0)+'</b>'+varia('visitantes')+'</div>'+
+      '<div class="card kpi"><span>Pessoas usando</span><b>'+(+ult.pessoas||0)+'</b>'+varia('pessoas')+'</div>'+
+      '<div class="card kpi"><span>Telas abertas</span><b>'+(+ult.acessos||0)+'</b>'+varia('acessos')+'</div>'+
+      '<div class="card kpi"><span>Publicações</span><b>'+(+ult.publicacoes||0)+'</b>'+varia('publicacoes')+'</div>'+
+    '</div>'+
+    '<div class="grid g4" style="margin-bottom:18px">'+
+      '<div class="card kpi"><span>Hípicas na base</span><b>'+b.hipicas+'</b><small>hoje</small></div>'+
+      '<div class="card kpi"><span>Alunos cadastrados</span><b>'+b.alunos+'</b><small>hoje</small></div>'+
+      '<div class="card kpi"><span>Cavalos cadastrados</span><b>'+b.cavalos+'</b><small>hoje</small></div>'+
+      '<div class="card kpi"><span>Acumulado 12 meses</span><b>'+soma('acessos')+'</b><small>telas abertas</small></div>'+
+    '</div>'+
+    '<h3 style="margin:0 0 10px">Mês a mês</h3>'+
+    '<div class="tw"><table><thead><tr><th>Mês</th><th class="n">Visitantes</th><th class="n">Pessoas usando</th><th class="n">Telas abertas</th><th class="n">Publicações</th></tr></thead><tbody>'+
+    l.slice().reverse().map(x=>'<tr><td>'+esc(mesNome(x.mes))+'</td><td class="n">'+(+x.visitantes||0)+'</td><td class="n">'+(+x.pessoas||0)+'</td><td class="n">'+(+x.acessos||0)+'</td><td class="n">'+(+x.publicacoes||0)+'</td></tr>').join('')+
+    '</tbody></table></div>'+
+    '<p class="muted sm" style="margin-top:12px"><b>Visitantes</b> é quem abriu o sistema, com ou sem conta, contado uma vez por aparelho por dia. '+
+    '<b>Pessoas usando</b> são contas diferentes que entraram. <b>Telas abertas</b> conta uma visita por tela a cada cinco minutos.</p>'+
+    '</div>';
+}
+
 views.o_uso=function(){
   const abas='<div class="tabs" role="tablist">'+[[7,'7 dias'],[30,'30 dias'],[90,'90 dias']].map(d=>
     '<button role="tab" aria-selected="'+(USODIAS===d[0])+'" data-act="usod" data-d="'+d[0]+'">'+d[1]+'</button>').join('')+'</div>';
@@ -2131,6 +2220,7 @@ views.o_uso=function(){
   return abas+
     '<div class="grid g4" style="margin-bottom:16px">'+
       '<div class="card kpi"><span>Usando agora</span><b style="color:var(--ok)">'+agora+'</b><small>pessoas no sistema</small></div>'+
+      '<div class="card kpi"><span>Visitantes</span><b>'+(USO.visitantes||0)+'</b><small>aparelhos em '+USODIAS+' dias</small></div>'+
       '<div class="card kpi"><span>Pessoas no período</span><b>'+(USO.pessoas||0)+'</b><small>contas diferentes</small></div>'+
       '<div class="card kpi"><span>Acessos a telas</span><b>'+(USO.acessos||0)+'</b><small>em '+USODIAS+' dias</small></div>'+
       '<div class="card kpi"><span>Hípicas com uso</span><b>'+((USO.por_hipica||[]).length)+'</b><small>de '+G.hips.length+' cadastradas</small></div>'+
@@ -2141,6 +2231,10 @@ views.o_uso=function(){
     '</div>'+
     '<div style="margin-top:16px">'+tab('Telas mais abertas',USO.por_tela,x=>(meta[x.tela]?meta[x.tela][0]:(x.tela||'—')),'Nenhum acesso no período.')+'</div>'+
     '<p class="muted sm" style="margin-top:14px">Conta uma visita por tela a cada cinco minutos, por pessoa. Guarda quem abriu e quando, para somar — não guarda o caminho que cada um fez.</p>';
+};
+views.o_rel=function(){
+  return '<div class="row" style="justify-content:flex-end;margin-bottom:14px" id="relact">'+
+      '<button class="btn" data-act="relprint">Imprimir ou salvar em PDF</button></div>'+relatorioHTML();
 };
 views.o_hip=function(){
   const at=G.hips.filter(h=>h.status!=='bloqueada'),bl=G.hips.filter(h=>h.status==='bloqueada'),dev=G.hips.filter(h=>hipDebt(h.id).length);
@@ -2792,6 +2886,8 @@ const act={
     if(d.v==='aulas'){UI.view='prog';UI.alTab='lista';render();return}
     if(d.v==='feed'||d.v==='o_feed'){UI.view=d.v;render();loadFeed().then(function(){if(UI.view===d.v)render()});return}
     if(d.v==='perfil'){PERFVER=meuUid();UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(PERFVER).then(function(){if(UI.view==='perfil')render()});return}
+    if(d.v==='o_rel'){UI.view='o_rel';MENSALST='carregando';render();
+      loadMensal().then(function(){if(UI.view==='o_rel')render()});return}
     if(d.v==='o_uso'){UI.view='o_uso';USOST='carregando';render();
       Promise.all([loadPresenca(),loadUso(USODIAS)]).then(function(){if(UI.view==='o_uso')render()});return}
     if(d.v==='o_hip'||d.v==='alunos'){UI.view=d.v;render();loadPresenca().then(function(){if(UI.view===d.v)render()});return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
@@ -2846,6 +2942,7 @@ const act={
   fddel:d=>modal({title:'Apagar publicação?',body:'<p>Ela sai da Comunidade para todo mundo.</p>',label:'Apagar',save:()=>{apagarPost(d.id);return true}}),
   verperf:d=>{PERFVER=d.id;UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(d.id).then(()=>{if(UI.view==='perfil')render()})},
   perfedit:()=>perfilModal(),
+  relprint:()=>{try{window.print()}catch(e){}},
   usod:d=>{USODIAS=+d.d||30;USOST='carregando';render();
     Promise.all([loadPresenca(),loadUso(USODIAS)]).then(function(){if(UI.view==='o_uso')render()})},
   vercav:d=>cavaloModal(+d.i),
