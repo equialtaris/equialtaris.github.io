@@ -155,6 +155,18 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .tr.au.done{background:var(--ok-bg);border-left-color:var(--ok)}
 .tr em{display:block}
 .wk th.hd u.off{color:var(--muted);font-weight:400}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-left:8px;vertical-align:middle;flex:none}
+.dot.on{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 22%,transparent);animation:pulsa 2.4s ease-in-out infinite}
+@keyframes pulsa{50%{box-shadow:0 0 0 6px color-mix(in srgb,var(--ok) 6%,transparent)}}
+@media (prefers-reduced-motion:reduce){.dot.on{animation:none}}
+.onn{margin-left:5px;font-size:11.5px;font-weight:700;color:var(--ok);vertical-align:middle}
+.barras{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.barras li{display:grid;grid-template-columns:minmax(90px,30%) 1fr auto;gap:10px;align-items:center}
+.barras .bl{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.barras .bb{background:var(--surface2);border-radius:5px;height:9px;overflow:hidden}
+.barras .bb i{display:block;height:100%;background:var(--primary);border-radius:5px}
+.barras .bn{text-align:right;font-size:13px;white-space:nowrap}
+.barras .bn small{display:block;color:var(--muted);font-size:11px;font-weight:400}
 .feed{display:grid;gap:14px;max-width:620px}
 .pbar{display:flex;gap:4px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 .pb{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px;font-size:12.5px;font-weight:600;transition:.12s}
@@ -416,7 +428,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261018-1610';
+const APPV='20261018-2030';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -863,7 +875,7 @@ function croquiSVG(c,o){
 
 /* ---------- views ---------- */
 const views={};
-const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
+const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_uso:['Uso e parcerias','Quem está usando e quanto o sistema é usado'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
 const topActs={
   prog:()=>(UI.alTab==='lista'?'<button class="btn pri" data-act="anew">Nova aula</button>':(UI.user.role==='staff'?'<button class="btn" data-act="expcfg">Horário de funcionamento</button>':'')+'<button class="btn" data-act="relTreinos">Relatório de treinos</button><button class="btn brass" data-act="amanha">Programação para amanhã</button><button class="btn" data-act="anew">Nova aula</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>'),
   cavalos:()=>{const h=UI.user.hid&&HIP();return (h?limChip(S.horses.length,hipLim(h).c):'')+'<button class="btn pri" data-act="hnew">Novo cavalo</button>'},
@@ -912,6 +924,7 @@ function render(){
   const m=meta[UI.view];$('#ttl').textContent=m[0];$('#sub').textContent=m[1];
   $('#topact').innerHTML=topActs[UI.view]?topActs[UI.view]():'';
   mostrarView();
+  try{pulsar();logUso(UI.view)}catch(e){}
   if(UI.view==='croquis'&&UI.cq)bindStage();
   const mg=document.querySelector('.msgs');if(mg)mg.scrollTop=mg.scrollHeight;
   document.title='EquiAltaris';
@@ -1749,7 +1762,7 @@ async function boot(){
   loadParcPub();
   if(await authOk()){
     const p=await loadPerfil();
-    if(p){AUTH.perfil=p;await syncPull();await loadACC();await loadMeuPerfil();await loadAvisos();const u=userFromPerfil(p);if(u){UI.user=u;UI.view=homeView(u)}}
+    if(p){AUTH.perfil=p;await syncPull();await loadACC();await loadMeuPerfil();await loadAvisos();try{await loadPresenca()}catch(e){}const u=userFromPerfil(p);if(u){UI.user=u;UI.view=homeView(u)}}
     if(!UI.user)authClear();
   }
   render();
@@ -1847,7 +1860,7 @@ async function doLogin(){
   const p=await loadPerfil();
   if(!p){authClear();er.textContent='Esta conta ainda não está liberada. Fale com o EquiAltaris.';return}
   AUTH.perfil=p;
-  const okPull=await syncPull();await loadACC();
+  const okPull=await syncPull();await loadACC();try{await loadPresenca()}catch(e){}
   const u=userFromPerfil(p);
   if(!u){authClear();
     er.textContent=okPull?'Seu cadastro não foi encontrado na hípica. Fale com o EquiAltaris.'
@@ -2025,7 +2038,7 @@ function renderOwner(){
   if(UI.view.indexOf('o_')!==0)UI.view='o_dash';
   markRead();
   const conf=G.cob.filter(c=>c.status==='enviado').length,oun=G.chat.filter(m=>m.from==='hip'&&!m.read).length;
-  const nav=[['o_dash','Dashboard','painel'],['o_feed','Comunidade','chat'],['o_hip','Hípicas','pess'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['senha','Trocar senha','conta'],['logout','Sair','conta']];
+  const nav=[['o_dash','Dashboard','painel'],['o_feed','Comunidade','chat'],['o_hip','Hípicas','pess'],['o_uso','Uso e parcerias','painel'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['senha','Trocar senha','conta'],['logout','Sair','conta']];
   $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='o_cob'&&conf?'<span class="badge">'+conf+'</span>':'')+(n[0]==='o_chat'&&oun?'<span class="badge">'+oun+'</span>':'')+'</button>').join('');
   $('#st1').textContent='Plataforma';$('#st2').textContent=G.owner.nome;
   $('#who').innerHTML='<b>Administração</b><br>Gestão das hípicas clientes.';
@@ -2033,6 +2046,102 @@ function renderOwner(){
   $('#topact').innerHTML=topActs[UI.view]?topActs[UI.view]():'';
   mostrarView();document.title='EquiAltaris';
 }
+/* ---------- presenca (quem esta usando) e contagem de uso ---------- */
+let PRES=[],USO=null,USOST='',USODIAS=30,PULSO=0,USOLOG={};
+const ONLINE_MS=3*60*1000;
+const PAPEL_NOME={staff:'hípica',instrutor:'instrutor',aluno:'aluno',owner:'EquiAltaris'};
+function onlineDe(hid){
+  const t=Date.now();
+  return PRES.filter(p=>p.hipica_id===hid&&p.visto_em&&(t-new Date(p.visto_em).getTime())<ONLINE_MS);
+}
+function ultimoAcesso(refId){
+  const p=PRES.find(x=>x.ref_id===refId);
+  return p&&p.visto_em?p.visto_em:'';
+}
+function bolinha(hid){
+  const l=onlineDe(hid);
+  if(!l.length)return '<span class="dot" title="Ninguém usando agora"></span>';
+  const c={};l.forEach(p=>{const n=PAPEL_NOME[p.papel]||p.papel||'?';c[n]=(c[n]||0)+1});
+  const det=Object.keys(c).map(k=>c[k]+' '+k+(c[k]>1&&k!=='hípica'?'s':'')).join(', ');
+  return '<span class="dot on" title="'+esc(det)+' usando agora"></span><span class="onn">'+l.length+'</span>';
+}
+async function pulsar(){
+  const u=meuUid();
+  if(!u||!UI.user||UI.user.role==='owner')return;
+  const agora=Date.now();
+  if(agora-PULSO<60000)return;
+  PULSO=agora;
+  const corpo={uid:u,hipica_id:UI.user.hid||null,papel:UI.user.role,ref_id:UI.user.id||null,visto_em:new Date().toISOString()};
+  try{await fetch(SB_URL+'/rest/v1/presenca?on_conflict=uid',{method:'POST',
+    headers:Object.assign({Prefer:'resolution=merge-duplicates,return=minimal'},sbH()),body:JSON.stringify([corpo])})}catch(e){}
+}
+async function logUso(tela){
+  const u=meuUid();
+  if(!u||!UI.user||UI.user.role==='owner'||!tela)return;
+  const agora=Date.now();
+  if(USOLOG[tela]&&agora-USOLOG[tela]<300000)return;
+  USOLOG[tela]=agora;
+  try{await fetch(SB_URL+'/rest/v1/uso',{method:'POST',headers:Object.assign({Prefer:'return=minimal'},sbH()),
+    body:JSON.stringify({uid:u,hipica_id:UI.user.hid||null,papel:UI.user.role,tela:tela})})}catch(e){}
+}
+async function loadPresenca(){
+  if(!await authOk())return;
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/presenca?select=hipica_id,papel,ref_id,visto_em',{headers:sbH()});
+    PRES=r.ok?await r.json():[];
+  }catch(e){PRES=[]}
+}
+async function loadUso(d){
+  USOST='carregando';
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/rpc/uso_resumo',{method:'POST',headers:sbH(),body:JSON.stringify({p_dias:d||30})});
+    if(!r.ok){USOST=r.status===404?'preparando':'erro';return}
+    USO=await r.json();USODIAS=d||30;USOST='ok';
+  }catch(e){USOST='erro'}
+}
+function linhaBarra(rot,n,max,sub){
+  const p=max>0?Math.round(n/max*100):0;
+  return '<li><span class="bl">'+esc(rot)+'</span><span class="bb"><i style="width:'+p+'%"></i></span>'+
+    '<span class="bn"><b>'+n+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span></li>';
+}
+views.o_uso=function(){
+  const abas='<div class="tabs" role="tablist">'+[[7,'7 dias'],[30,'30 dias'],[90,'90 dias']].map(d=>
+    '<button role="tab" aria-selected="'+(USODIAS===d[0])+'" data-act="usod" data-d="'+d[0]+'">'+d[1]+'</button>').join('')+'</div>';
+  if(USOST==='carregando')return abas+empty('Carregando…');
+  if(USOST==='preparando')return abas+empty('A contagem de uso ainda não foi liberada no servidor.');
+  if(USOST==='erro')return abas+empty('Não consegui carregar os números agora.');
+  if(!USO)return abas+empty('Sem dados ainda.');
+  const agora=PRES.filter(p=>p.visto_em&&(Date.now()-new Date(p.visto_em).getTime())<ONLINE_MS).length;
+  const dias=USO.por_dia||[],maxd=Math.max(1,...dias.map(x=>+x.acessos||0));
+  let spark='';
+  if(dias.length>1){
+    const pts=dias.map((x,i)=>(4+i*(192/(dias.length-1)))+','+(50-(+x.acessos||0)/maxd*44));
+    spark='<div class="card"><h3>Acessos por dia</h3><svg class="spark" viewBox="0 0 200 54" preserveAspectRatio="none" role="img" aria-label="Acessos por dia">'+
+      '<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--primary)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>'+
+      '<span class="muted sm">'+esc(fmtS(dias[0].dia))+' a '+esc(fmtS(dias[dias.length-1].dia))+'</span></div>';
+  }
+  const tab=(titulo,lista,campo,vazio)=>{
+    const l=lista||[];
+    if(!l.length)return '<div class="card"><h3>'+titulo+'</h3>'+empty(vazio)+'</div>';
+    const max=Math.max(1,...l.map(x=>+x.acessos||0));
+    return '<div class="card"><h3>'+titulo+'</h3><ul class="barras">'+
+      l.map(x=>linhaBarra(campo(x),+x.acessos||0,max,x.pessoas+(x.pessoas>1?' pessoas':' pessoa'))).join('')+'</ul></div>';
+  };
+  const nomeHip=id=>{const h=G.hips.find(y=>y.id===id);return h?h.fantasia:(id||'—')};
+  return abas+
+    '<div class="grid g4" style="margin-bottom:16px">'+
+      '<div class="card kpi"><span>Usando agora</span><b style="color:var(--ok)">'+agora+'</b><small>pessoas no sistema</small></div>'+
+      '<div class="card kpi"><span>Pessoas no período</span><b>'+(USO.pessoas||0)+'</b><small>contas diferentes</small></div>'+
+      '<div class="card kpi"><span>Acessos a telas</span><b>'+(USO.acessos||0)+'</b><small>em '+USODIAS+' dias</small></div>'+
+      '<div class="card kpi"><span>Hípicas com uso</span><b>'+((USO.por_hipica||[]).length)+'</b><small>de '+G.hips.length+' cadastradas</small></div>'+
+    '</div>'+spark+
+    '<div class="grid g2" style="margin-top:16px">'+
+      tab('Por hípica',USO.por_hipica,x=>nomeHip(x.hipica_id),'Nenhum acesso no período.')+
+      tab('Por tipo de usuário',USO.por_papel,x=>(PAPEL_NOME[x.papel]||x.papel||'—'),'Nenhum acesso no período.')+
+    '</div>'+
+    '<div style="margin-top:16px">'+tab('Telas mais abertas',USO.por_tela,x=>(meta[x.tela]?meta[x.tela][0]:(x.tela||'—')),'Nenhum acesso no período.')+'</div>'+
+    '<p class="muted sm" style="margin-top:14px">Conta uma visita por tela a cada cinco minutos, por pessoa. Guarda quem abriu e quando, para somar — não guarda o caminho que cada um fez.</p>';
+};
 views.o_hip=function(){
   const at=G.hips.filter(h=>h.status!=='bloqueada'),bl=G.hips.filter(h=>h.status==='bloqueada'),dev=G.hips.filter(h=>hipDebt(h.id).length);
   const owe=G.hips.reduce((t,h)=>t+hipOwe(h.id),0),mrr=at.reduce((t,h)=>t+(+h.valor||0),0);
@@ -2047,7 +2156,7 @@ views.o_hip=function(){
   const bar='<div class="row" style="margin-bottom:12px"><input id="hq" type="search" value="'+esc(UI.hq||'')+'" placeholder="Buscar por CNPJ, nome, celular ou usuário" aria-label="Buscar hípica" style="max-width:420px" autocomplete="off"><span class="muted sm">'+fl.length+' de '+G.hips.length+'</span></div>';
   if(!fl.length)return k+bar+empty('Nenhuma hípica encontrada para essa busca.');
   return k+bar+'<div class="tw"><table><thead><tr><th>Hípica</th><th>CNPJ</th><th>Contato</th><th>Plano</th><th>Situação</th><th class="n">Em atraso</th><th>Acesso do administrador</th><th></th></tr></thead><tbody>'+
-   fl.map(h=>{const o=hipOwe(h.id);return '<tr><td><b>'+esc(h.fantasia)+'</b><br><span class="muted sm">Vence todo dia '+h.venc+' · cliente desde '+fmtD(h.criada)+'</span></td><td class="sm">'+esc(h.cnpj)+'</td><td class="sm">'+(h.tel?esc(telFmt(h.tel))+'<br>'+telLinks(h.tel,'Olá! Aqui é do EquiAltaris.'):'<span class="muted">—</span>')+'</td><td>'+esc(PLN[h.plano]||'Personalizado')+'<br><span class="muted sm">'+brl(h.valor)+'/mês</span></td><td>'+hipPill(h)+(h.status==='bloqueada'&&h.bloqEm?'<br><span class="muted sm">desde '+fmtD(h.bloqEm)+'</span>':'')+'</td><td class="n">'+(o?'<b style="color:var(--bad)">'+brl(o)+'</b>':'—')+'</td><td class="sm"><code>'+esc(h.login||'—')+'</code><br>'+chipAcesso(h.login)+' <button class="btn sm" data-act="acesso" data-e="'+esc(h.login||'')+'" data-n="'+esc(h.fantasia)+'" data-p="staff" data-h="'+h.id+'">Acesso</button></td><td class="n" style="white-space:nowrap"><button class="btn sm" data-act="hpedit" data-id="'+h.id+'">Editar</button> '+(h.status==='bloqueada'?'<button class="btn sm pri" data-act="hplib" data-id="'+h.id+'">Liberar</button>':'<button class="btn sm danger" data-act="hpbloq" data-id="'+h.id+'">Bloquear</button>')+' <button class="btn sm danger" data-act="hpdel" data-id="'+h.id+'">Remover</button></td></tr>'}).join('')+'</tbody></table></div>';
+   fl.map(h=>{const o=hipOwe(h.id);return '<tr><td><b>'+esc(h.fantasia)+'</b>'+bolinha(h.id)+'<br><span class="muted sm">Vence todo dia '+h.venc+' · cliente desde '+fmtD(h.criada)+'</span></td><td class="sm">'+esc(h.cnpj)+'</td><td class="sm">'+(h.tel?esc(telFmt(h.tel))+'<br>'+telLinks(h.tel,'Olá! Aqui é do EquiAltaris.'):'<span class="muted">—</span>')+'</td><td>'+esc(PLN[h.plano]||'Personalizado')+'<br><span class="muted sm">'+brl(h.valor)+'/mês</span></td><td>'+hipPill(h)+(h.status==='bloqueada'&&h.bloqEm?'<br><span class="muted sm">desde '+fmtD(h.bloqEm)+'</span>':'')+'</td><td class="n">'+(o?'<b style="color:var(--bad)">'+brl(o)+'</b>':'—')+'</td><td class="sm"><code>'+esc(h.login||'—')+'</code><br>'+chipAcesso(h.login)+' <button class="btn sm" data-act="acesso" data-e="'+esc(h.login||'')+'" data-n="'+esc(h.fantasia)+'" data-p="staff" data-h="'+h.id+'">Acesso</button></td><td class="n" style="white-space:nowrap"><button class="btn sm" data-act="hpedit" data-id="'+h.id+'">Editar</button> '+(h.status==='bloqueada'?'<button class="btn sm pri" data-act="hplib" data-id="'+h.id+'">Liberar</button>':'<button class="btn sm danger" data-act="hpbloq" data-id="'+h.id+'">Bloquear</button>')+' <button class="btn sm danger" data-act="hpdel" data-id="'+h.id+'">Remover</button></td></tr>'}).join('')+'</tbody></table></div>';
 };
 function hipModal(h){
   const isNew=!h;const o=h||{fantasia:'',cnpj:'',plano:'standard',valor:G.planos.standard.v,venc:10,login:''};
@@ -2592,8 +2701,8 @@ function pagCard(st){
 views.alunos=function(){
   const fin=UI.user.role==='staff';
   const rows=S.students.length?S.students.map(a=>{const hr=S.horses.find(h=>h.studentId===a.id);const pg=S.pag.find(p=>p.student===a.id&&p.ref===TODAY.slice(0,7));
-    return '<tr><td><b>'+esc(a.name)+'</b><br><span class="muted sm">'+esc(a.tel||'')+'</span></td><td>'+esc(a.nivel||'—')+'</td>'+(fin?'<td class="sm">'+esc(a.email)+'</td><td>'+esc(a.plano)+'<br><span class="muted sm">'+brl(a.valor)+'/mês</span></td>':'')+'<td>'+(hr?esc(hr.name):'<span class="muted">—</span>')+'</td><td class="n">'+S.aulas.filter(x=>x.student===a.id&&x.date.slice(0,7)===TODAY.slice(0,7)&&x.status!=='cancelada').length+'</td><td class="n">'+S.provas.filter(p=>p.rider===a.id&&p.done).length+'</td>'+(fin?'<td>'+(pg?payPill(pg):'<span class="muted">Não gerada</span>')+'</td><td class="n">'+chipAcesso(a.email)+' <button class="btn sm" data-act="acesso" data-e="'+esc(a.email)+'" data-n="'+esc(a.name)+'" data-p="aluno" data-r="'+a.id+'">Acesso</button> <button class="btn sm" data-act="sedit" data-id="'+a.id+'">Editar</button></td>':'')+'</tr>'}).join(''):'<tr><td colspan="9">'+empty('Nenhum aluno cadastrado.')+'</td></tr>';
-  return '<div class="tw"><table><thead><tr><th>Aluno</th><th>Altura</th>'+(fin?'<th>Acesso</th><th>Plano</th>':'')+'<th>Cavalo próprio</th><th class="n">Aulas no mês</th><th class="n">Provas</th>'+(fin?'<th>Mensalidade atual</th><th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+    const ua=ultimoAcesso(a.id);return '<tr><td><b>'+esc(a.name)+'</b><br><span class="muted sm">'+esc(a.tel||'')+'</span></td><td>'+esc(a.nivel||'—')+'</td>'+(fin?'<td class="sm">'+(ua?((Date.now()-new Date(ua).getTime())<ONLINE_MS?'<span class="pill ok">online agora</span>':fmtS(ymd(new Date(ua)))):'<span class="muted">nunca entrou</span>')+'</td>':'')+(fin?'<td class="sm">'+esc(a.email)+'</td><td>'+esc(a.plano)+'<br><span class="muted sm">'+brl(a.valor)+'/mês</span></td>':'')+'<td>'+(hr?esc(hr.name):'<span class="muted">—</span>')+'</td><td class="n">'+S.aulas.filter(x=>x.student===a.id&&x.date.slice(0,7)===TODAY.slice(0,7)&&x.status!=='cancelada').length+'</td><td class="n">'+S.provas.filter(p=>p.rider===a.id&&p.done).length+'</td>'+(fin?'<td>'+(pg?payPill(pg):'<span class="muted">Não gerada</span>')+'</td><td class="n">'+chipAcesso(a.email)+' <button class="btn sm" data-act="acesso" data-e="'+esc(a.email)+'" data-n="'+esc(a.name)+'" data-p="aluno" data-r="'+a.id+'">Acesso</button> <button class="btn sm" data-act="sedit" data-id="'+a.id+'">Editar</button></td>':'')+'</tr>'}).join(''):'<tr><td colspan="9">'+empty('Nenhum aluno cadastrado.')+'</td></tr>';
+  return '<div class="tw"><table><thead><tr><th>Aluno</th><th>Altura</th>'+(fin?'<th>Último acesso</th>':'')+(fin?'<th>Acesso</th><th>Plano</th>':'')+'<th>Cavalo próprio</th><th class="n">Aulas no mês</th><th class="n">Provas</th>'+(fin?'<th>Mensalidade atual</th><th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
 };
 function alunoModal(a){
   const isNew=!a;const o=a||{name:'',email:'',tel:'',plano:'Mensalidade · 4 aulas',valor:360};
@@ -2682,7 +2791,10 @@ const act={
   nav:d=>{if(d.v==='logout'){logout();return}if(d.v==='senha'){senhaModal();return}
     if(d.v==='aulas'){UI.view='prog';UI.alTab='lista';render();return}
     if(d.v==='feed'||d.v==='o_feed'){UI.view=d.v;render();loadFeed().then(function(){if(UI.view===d.v)render()});return}
-    if(d.v==='perfil'){PERFVER=meuUid();UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(PERFVER).then(function(){if(UI.view==='perfil')render()});return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
+    if(d.v==='perfil'){PERFVER=meuUid();UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(PERFVER).then(function(){if(UI.view==='perfil')render()});return}
+    if(d.v==='o_uso'){UI.view='o_uso';USOST='carregando';render();
+      Promise.all([loadPresenca(),loadUso(USODIAS)]).then(function(){if(UI.view==='o_uso')render()});return}
+    if(d.v==='o_hip'||d.v==='alunos'){UI.view=d.v;render();loadPresenca().then(function(){if(UI.view===d.v)render()});return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
   inew:()=>inscEventModal(),iedit:d=>inscEventModal(S.insc.find(x=>x.id===d.id)),
   itoggle:d=>{const e=S.insc.find(x=>x.id===d.id);e.status=e.status==='aberta'?'encerrada':'aberta';save();render()},
   ireq:d=>inscModal(S.insc.find(x=>x.id===d.id)),
@@ -2734,6 +2846,8 @@ const act={
   fddel:d=>modal({title:'Apagar publicação?',body:'<p>Ela sai da Comunidade para todo mundo.</p>',label:'Apagar',save:()=>{apagarPost(d.id);return true}}),
   verperf:d=>{PERFVER=d.id;UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(d.id).then(()=>{if(UI.view==='perfil')render()})},
   perfedit:()=>perfilModal(),
+  usod:d=>{USODIAS=+d.d||30;USOST='carregando';render();
+    Promise.all([loadPresenca(),loadUso(USODIAS)]).then(function(){if(UI.view==='o_uso')render()})},
   vercav:d=>cavaloModal(+d.i),
   curtir:d=>{curtir(d.id)},
   cmtoggle:d=>{if(UI.com===d.id){UI.com=null;render();return}UI.com=d.id;render();
@@ -2886,6 +3000,8 @@ if(AUTH.ref){const L=$('#login');L.hidden=false;L.innerHTML='<div class="lg"><di
 else render();
 boot();
 setInterval(()=>{if(UI.user)syncPull()},300000);
+setInterval(()=>{if(!UI.user)return;pulsar();
+  if(UI.view==='o_hip'||UI.view==='o_uso'||UI.view==='alunos')loadPresenca().then(()=>{if(!document.querySelector('#modal .md'))render()})},45000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&UI.user)syncPull()});
 })();
 </script>
