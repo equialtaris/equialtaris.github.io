@@ -252,6 +252,8 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .rep section{margin-bottom:20px}
 .rep h4{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .lg{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:var(--side);position:relative;overflow:hidden}
+.lnk{background:none;border:0;padding:0;color:var(--primary);font:inherit;font-weight:600;cursor:pointer;text-decoration:underline}
+.lnk:hover{filter:brightness(1.2)}
 .lgbg{position:absolute;inset:0;z-index:0}.lgbg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,18,38,.55),rgba(11,18,38,.72))}
 .lgsl{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.6s ease;text-decoration:none}.lgsl.on{opacity:1}
 .lgsl .pcap{position:absolute;left:20px;bottom:16px;z-index:2;color:#fff;font-size:12px;letter-spacing:.06em;opacity:.85;text-shadow:0 1px 6px #000a}.lgsl .pcap::before{content:"Parceiro · "}
@@ -414,7 +416,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261017-2110';
+const APPV='20261018-1540';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -717,7 +719,7 @@ const hn=id=>H(id).name;
 const total=f=>(+f.unit||0)*(+f.qtd||0);
 const owners=()=>[...new Set(S.horses.map(h=>h.owner).filter(Boolean))];
 
-const UI={com:null,ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'grade',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
+const UI={com:null,lgMode:'',ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'grade',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
   cobOwner:'',cobMonth:TODAY.slice(0,7),repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true,zoom:1};
 
 /* ---------- ícones ---------- */
@@ -1743,6 +1745,7 @@ async function checarVersao(){
 }
 async function boot(){
   UI.user=null;
+  if(checarLinkRecuperacao()){loadParcPub();showLogin();checarVersao();return}
   loadParcPub();
   if(await authOk()){
     const p=await loadPerfil();
@@ -1755,13 +1758,85 @@ async function boot(){
 function showLogin(){
   $('#view').innerHTML='';$('#nav').innerHTML='';$('#app').hidden=true;const L=$('#login');L.hidden=false;
   const pb=parcAtivas('img').length?'<div class="lgbg" aria-hidden="true">'+parcSlides('lgsl',false)+'</div>':'';
+  const topo='<div class="lgl"><img src="'+LOGO+'" alt="EquiAltaris"></div>';
+  if(UI.lgMode==='esqueci'){
+    L.innerHTML='<div class="lg">'+pb+'<form class="lgc" id="lf-esq" autocomplete="on">'+topo+
+      '<h3 style="margin:0 0 4px">Esqueci minha senha</h3>'+
+      '<p class="muted sm" style="margin:0 0 14px">Informe o e-mail da sua conta. Você recebe um link para criar uma senha nova.</p>'+
+      (RECMSG?'<div class="note bad" style="margin-bottom:12px">'+esc(RECMSG)+'</div>':'')+
+      fld('E-mail','rc-e','','email','autocomplete="username" autocapitalize="none"')+
+      '<div class="err" id="rc-err" role="alert"></div><button class="btn pri" type="submit">Enviar o link</button>'+
+      '<p class="muted sm" style="margin-top:12px;text-align:center"><button type="button" class="lnk" data-act="lgvolta">Voltar para a entrada</button></p>'+
+      '</form></div>';
+    return;
+  }
+  if(UI.lgMode==='nova'){
+    L.innerHTML='<div class="lg">'+pb+'<form class="lgc" id="lf-nova" autocomplete="on">'+topo+
+      '<h3 style="margin:0 0 4px">Criar senha nova</h3>'+
+      '<p class="muted sm" style="margin:0 0 14px">Escolha uma senha de pelo menos 8 caracteres.</p>'+
+      fld('Senha nova','nv-1','','password','autocomplete="new-password"')+
+      fld('Repita a senha','nv-2','','password','autocomplete="new-password"')+
+      '<div class="err" id="nv-err" role="alert"></div><button class="btn pri" type="submit">Salvar a senha</button>'+
+      '</form></div>';
+    return;
+  }
   const stf=UI.lgRole==='staff';
-  L.innerHTML='<div class="lg">'+pb+'<form class="lgc" id="lf" autocomplete="on"><div class="lgl"><img src="'+LOGO+'" alt="EquiAltaris"></div>'+
+  L.innerHTML='<div class="lg">'+pb+'<form class="lgc" id="lf" autocomplete="on">'+topo+
    '<div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="'+(!stf)+'" data-act="lgrole" data-r="aluno">Aluno</button><button type="button" role="tab" aria-selected="'+stf+'" data-act="lgrole" data-r="staff">Instrutor ou hípica</button></div>'+
    fld('E-mail','lg-e','','email','autocomplete="username" autocapitalize="none"')+fld('Senha','lg-p','','password','autocomplete="current-password"')+
    '<div class="err" id="lg-err" role="alert"></div><button class="btn pri" type="submit">Entrar</button>'+
-   '<p class="muted sm" style="margin-top:12px;text-align:center">'+(stf?'Use o e-mail cadastrado pelo EquiAltaris.':'Use o e-mail que a sua hípica cadastrou.')+'<br>Esqueceu a senha? Fale com o EquiAltaris.</p>'+
+   '<p class="muted sm" style="margin-top:12px;text-align:center">'+(stf?'Use o e-mail cadastrado pelo EquiAltaris.':'Use o e-mail que a sua hípica cadastrou.')+'<br><button type="button" class="lnk" data-act="lgesq">Esqueci minha senha</button></p>'+
    '</form></div>';
+}
+/* ---------- esqueci minha senha ---------- */
+let RECTOK=null,RECMSG='';
+function hashPars(){
+  const h=String(location.hash||'').replace(/^#/,'');const o={};
+  if(!h)return o;
+  h.split('&').forEach(par=>{const i=par.indexOf('=');if(i>0){try{o[decodeURIComponent(par.slice(0,i))]=decodeURIComponent(par.slice(i+1).replace(/\+/g,' '))}catch(e){}}});
+  return o;
+}
+function limpaHash(){try{history.replaceState(null,'',location.pathname+location.search)}catch(e){try{location.hash=''}catch(_){}}}
+function destinoRec(){
+  const h=location.hostname||'';
+  return /(^|\.)equialtaris\.com\.br$/.test(h)?location.origin+location.pathname:'';
+}
+async function authRecover(email){
+  const d=destinoRec();
+  const url=SB_URL+'/auth/v1/recover'+(d?'?redirect_to='+encodeURIComponent(d):'');
+  try{
+    const r=await fetch(url,{method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+    if(!r.ok){const t=await r.text();
+      if(/rate|limit|too many/i.test(t))return {erro:'Muitos pedidos seguidos. Espere alguns minutos e tente de novo.'};
+      return {erro:'Não consegui enviar o e-mail agora. Tente mais tarde.'}}
+    return {ok:true};
+  }catch(e){return {erro:'Sem conexão com o servidor.'}}
+}
+async function trocarSenhaRec(nova){
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/user',{method:'PUT',
+      headers:{apikey:SB_KEY,'Content-Type':'application/json',Authorization:'Bearer '+RECTOK},
+      body:JSON.stringify({password:nova})});
+    if(!r.ok){const t=await r.text();
+      if(/different from the old|same.*password/i.test(t))return {erro:'Escolha uma senha diferente da anterior.'};
+      if(/weak|short/i.test(t))return {erro:'Essa senha é fraca demais. Use pelo menos 8 caracteres.'};
+      return {erro:'Este link não vale mais. Peça um novo na tela de entrada.'}}
+    try{await fetch(SB_URL+'/auth/v1/logout',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+RECTOK}})}catch(e){}
+    return {ok:true};
+  }catch(e){return {erro:'Sem conexão com o servidor.'}}
+}
+function checarLinkRecuperacao(){
+  const h=hashPars();
+  if(h.error_description||h.error){
+    RECMSG=/expired|invalid/i.test(h.error_code||h.error_description||'')
+      ?'Esse link de recuperação expirou. Peça um novo abaixo.'
+      :'Não consegui validar esse link. Peça um novo abaixo.';
+    UI.lgMode='esqueci';limpaHash();return true;
+  }
+  if(h.type==='recovery'&&h.access_token){
+    RECTOK=h.access_token;UI.lgMode='nova';limpaHash();return true;
+  }
+  return false;
 }
 async function doLogin(){
   const em=V('lg-e').trim(),pw=V('lg-p'),er=$('#lg-err');
@@ -2602,6 +2677,8 @@ function hubModal(h){
 /* ---------- ações ---------- */
 const act={
   lgrole:d=>{UI.lgRole=d.r;showLogin()},
+  lgesq:()=>{UI.lgMode='esqueci';RECMSG='';showLogin()},
+  lgvolta:()=>{UI.lgMode='';RECTOK=null;RECMSG='';showLogin()},
   nav:d=>{if(d.v==='logout'){logout();return}if(d.v==='senha'){senhaModal();return}
     if(d.v==='aulas'){UI.view='prog';UI.alTab='lista';render();return}
     if(d.v==='feed'||d.v==='o_feed'){UI.view=d.v;render();loadFeed().then(function(){if(UI.view===d.v)render()});return}
@@ -2733,6 +2810,34 @@ document.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.cq .card[data-act]')){e.preventDefault();e.target.click()}});
 document.addEventListener('submit',e=>{
   if(e.target.id==='lf'){e.preventDefault();doLogin();return}
+  if(e.target.id==='lf-esq'){e.preventDefault();
+    const em=V('rc-e').trim(),er=$('#rc-err');
+    if(!EMAIL_RE.test(em)){er.textContent='Informe um e-mail válido.';return}
+    er.textContent='Enviando…';
+    authRecover(em).then(r=>{
+      if(r&&r.erro){er.textContent=r.erro;return}
+      const L=$('#login');
+      L.innerHTML='<div class="lg"><div class="lgc"><div class="lgl"><img src="'+LOGO+'" alt="EquiAltaris"></div>'+
+        '<h3 style="margin:0 0 6px">Verifique seu e-mail</h3>'+
+        '<p class="muted sm">Se existir uma conta com <b>'+esc(em)+'</b>, o link para criar a senha nova já está a caminho. Ele vale por pouco tempo \u2014 se não chegar em alguns minutos, olhe o spam.</p>'+
+        '<button class="btn" style="margin-top:14px" data-act="lgvolta">Voltar para a entrada</button></div></div>';
+    });
+    return}
+  if(e.target.id==='lf-nova'){e.preventDefault();
+    const a=V('nv-1'),b2=V('nv-2'),er=$('#nv-err');
+    if(a.length<8){er.textContent='A senha precisa ter pelo menos 8 caracteres.';return}
+    if(a!==b2){er.textContent='As duas senhas não são iguais.';return}
+    er.textContent='Salvando…';
+    trocarSenhaRec(a).then(r=>{
+      if(r&&r.erro){er.textContent=r.erro;return}
+      RECTOK=null;UI.lgMode='';authClear();
+      const L=$('#login');
+      L.innerHTML='<div class="lg"><div class="lgc"><div class="lgl"><img src="'+LOGO+'" alt="EquiAltaris"></div>'+
+        '<h3 style="margin:0 0 6px">Senha trocada</h3>'+
+        '<p class="muted sm">Pronto. Entre com a sua senha nova.</p>'+
+        '<button class="btn pri" style="margin-top:14px" data-act="lgvolta">Ir para a entrada</button></div></div>';
+    });
+    return}
   if(e.target.id==='gchf'){e.preventDefault();const t=V('ch-in').trim();if(!t)return;const f=e.target.dataset;G.chat.push({id:uid(),hip:f.h,from:f.f,txt:t.slice(0,1000),at:Date.now(),read:false});save();render();const i=$('#ch-in');if(i)i.focus();return}
   if(e.target.id==='chf'){e.preventDefault();const t=V('ch-in').trim();if(!t)return;const f=e.target.dataset;
     S.msgs.push({id:uid(),student:f.s,canal:f.c,inst:f.c==='instrutor'?f.i:'',from:f.f,txt:t.slice(0,1000),at:Date.now(),read:f.f==='staff'?false:false});save();render();const i=$('#ch-in');if(i)i.focus()}
