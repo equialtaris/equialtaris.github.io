@@ -377,6 +377,16 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
   .ag .addw{margin-top:2px}
   .addt{border-color:var(--line);color:var(--muted)}
 }
+.chk{display:flex;gap:9px;align-items:flex-start;margin:8px 0;font-size:14px;line-height:1.45;cursor:pointer}
+.chk input{width:17px;height:17px;flex:none;margin-top:1px;accent-color:var(--primary)}
+.doc h2{font-family:var(--f-display);font-size:23px;margin:0 0 2px}
+.doc .dsub{color:var(--muted);font-size:12.5px;margin:0 0 16px;text-transform:uppercase;letter-spacing:.06em}
+.doc h3{font-size:15px;margin:20px 0 6px}
+.doc p{margin:0 0 10px;line-height:1.65;max-width:72ch}
+.acew{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--bg)}
+.acec{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;width:100%;max-width:760px;box-shadow:0 18px 50px rgba(10,16,30,.14)}
+.acebox{max-height:46vh;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-top:12px;background:var(--bg)}
+@media (max-width:640px){.acec{padding:16px}.acebox{max-height:50vh;padding:12px}}
 .relcab{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:16px}
 .relcab b{font-family:var(--f-display);font-size:22px;display:block;line-height:1.1}
 .relcab span{color:var(--muted);font-size:13px}
@@ -441,7 +451,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261018-2130';
+const APPV='20261018-2320';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -759,9 +769,9 @@ const IC={
  prop:'<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6"/>',
  chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.2A8 8 0 1 1 21 12z"/>',
  conta:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
-const NAV=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietário','prop'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
-const NAV_S=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav']];
-const NAV_I=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova']];
+const NAV=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietário','prop'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta'],['docs','Termos e privacidade','conta']];
+const NAV_S=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav'],['docs','Termos e privacidade','conta']];
+const NAV_I=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova'],['docs','Termos e privacidade','conta']];
 const VKEY={painel:'painel',prog:'prog',cavalos:'cavalos',cavaleiros:'cavaleiros',croquis:'croquis',provas:'provas',fin:'fin',prop:'prop',conta:'conta'};
 
 /* ---------- modal ---------- */
@@ -888,7 +898,7 @@ function croquiSVG(c,o){
 
 /* ---------- views ---------- */
 const views={};
-const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_uso:['Uso e parcerias','Quem está usando e quanto o sistema é usado'],o_rel:['Relatório mensal','Números mês a mês para apresentar a parceiros'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
+const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Plano e dados do sistema'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_uso:['Uso e parcerias','Quem está usando e quanto o sistema é usado'],o_rel:['Relatório mensal','Números mês a mês para apresentar a parceiros'],docs:['Termos e privacidade','Os documentos que regem o uso do sistema'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
 const topActs={
   prog:()=>(UI.alTab==='lista'?'<button class="btn pri" data-act="anew">Nova aula</button>':(UI.user.role==='staff'?'<button class="btn" data-act="expcfg">Horário de funcionamento</button>':'')+'<button class="btn" data-act="relTreinos">Relatório de treinos</button><button class="btn brass" data-act="amanha">Programação para amanhã</button><button class="btn" data-act="anew">Nova aula</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>'),
   cavalos:()=>{const h=UI.user.hid&&HIP();return (h?limChip(S.horses.length,hipLim(h).c):'')+'<button class="btn pri" data-act="hnew">Novo cavalo</button>'},
@@ -905,12 +915,13 @@ const topActs={
 
 function render(){
   if(!UI.user){showLogin();return}
+  if(precisaAceite()){telaAceite();return}
   $('#login').hidden=true;$('#app').hidden=false;
   if(UI.user.role==='owner'){renderOwner();return}
   if(!S||!G.hips.some(h=>h.id===UI.user.hid)){logout();return}
   const st=UI.user.role==='aluno';const stu=st?S.students.find(x=>x.id===UI.user.id):null;
   if(st&&!stu){logout();return}
-  if(st&&UI.view!=='feed'&&UI.view!=='perfil'&&UI.view.indexOf('s_')!==0)UI.view='s_inicio';
+  if(st&&UI.view!=='feed'&&UI.view!=='perfil'&&UI.view!=='docs'&&UI.view.indexOf('s_')!==0)UI.view='s_inicio';
   if(!st&&UI.view.indexOf('s_')===0)UI.view='painel';
   if(UI.user.role==='instrutor'&&!IN(UI.user.id)){logout();return}
   const hip=HIP(),blk=hip.status==='bloqueada';
@@ -922,7 +933,7 @@ function render(){
   if(UI.user.role!=='staff'&&UI.view==='instrs')UI.view='painel';
   if(st&&UI.view==='s_cavalo'&&!myHorse())UI.view='s_inicio';
   const inst=UI.user.role==='instrutor';
-  if(inst&&UI.view!=='feed'&&UI.view!=='perfil'&&NAV_I.every(n=>n[0]!==UI.view))UI.view='painel';
+  if(inst&&UI.view!=='feed'&&UI.view!=='perfil'&&UI.view!=='docs'&&NAV_I.every(n=>n[0]!==UI.view))UI.view='painel';
   let nav=st?NAV_S.filter(n=>n[0]!=='s_cavalo'||myHorse()):inst?NAV_I:NAV;
   if(blk)nav=UI.user.role==='staff'?[['plano','Meu plano','fin'],['suporte','Suporte','chat']]:[];
   nav=nav.concat([['senha','Trocar senha','conta'],['logout','Sair','conta']]);
@@ -1100,7 +1111,11 @@ views.cavalos=function(){
 /* ---------- Comunidade: feed, perfis publicos e moderacao ---------- */
 let FEED=[],FEEDST='',FEEDFOTO=null,PERFIS={},MEUPERF=null,AVISOS=[],PERFVER=null,PERFPOSTS=[],PERFST='',PFOTO=null,PCAV=[],RESFOTO=null;
 const meuUid=()=>(AUTH.user&&AUTH.user.id)||'';
-function podePostar(){return !!(UI.user&&(UI.user.role==='staff'||UI.user.role==='instrutor'||UI.user.role==='aluno'))}
+function podePostar(){
+  if(!UI.user)return false;
+  if(UI.user.role==='aluno'){const st=R(UI.user.id);if(st&&!podeComunidade(st))return false;return true}
+  return UI.user.role==='staff'||UI.user.role==='instrutor';
+}
 function quemSou(){
   if(!UI.user)return '';
   if(UI.user.role==='instrutor'){const i=IN(UI.user.id);return i?i.name:'Instrutor'}
@@ -1344,7 +1359,10 @@ function avisoHTML(){
     '<p class="muted sm" style="margin-top:10px">A Comunidade volta assim que você confirmar a leitura.</p></div>';
 }
 function caixaPost(){
-  if(!podePostar())return '';
+  if(!podePostar()){
+    const m=motivoPostar();
+    return m?'<div class="note" style="margin-bottom:16px">'+esc(m)+'</div>':'';
+  }
   const h=HIP();
   return '<div class="card" style="margin-bottom:16px"><h3>Publicar'+(h?' · '+esc(h.fantasia):'')+'</h3>'+
     '<label class="f">Mensagem<textarea id="fd-t" rows="3" placeholder="Conte uma conquista, divulgue uma prova, parabenize alguém…"></textarea></label>'+
@@ -1776,7 +1794,7 @@ async function boot(){
   loadParcPub();
   if(await authOk()){
     const p=await loadPerfil();
-    if(p){AUTH.perfil=p;await syncPull();await loadACC();await loadMeuPerfil();await loadAvisos();try{await loadPresenca()}catch(e){}const u=userFromPerfil(p);if(u){UI.user=u;UI.view=homeView(u)}}
+    if(p){AUTH.perfil=p;await syncPull();await loadACC();await loadMeuPerfil();await loadAvisos();try{await loadAceites()}catch(e){}try{await loadPresenca()}catch(e){}const u=userFromPerfil(p);if(u){UI.user=u;UI.view=homeView(u)}}
     if(!UI.user)authClear();
   }
   render();
@@ -1874,7 +1892,7 @@ async function doLogin(){
   const p=await loadPerfil();
   if(!p){authClear();er.textContent='Esta conta ainda não está liberada. Fale com o EquiAltaris.';return}
   AUTH.perfil=p;
-  const okPull=await syncPull();await loadACC();try{await loadPresenca()}catch(e){}
+  const okPull=await syncPull();await loadACC();try{await loadAceites()}catch(e){}try{await loadPresenca()}catch(e){}
   const u=userFromPerfil(p);
   if(!u){authClear();
     er.textContent=okPull?'Seu cadastro não foi encontrado na hípica. Fale com o EquiAltaris.'
@@ -2049,10 +2067,10 @@ function brandLogo(){
 }
 function renderOwner(){
   brandLogo();
-  if(UI.view.indexOf('o_')!==0)UI.view='o_dash';
+  if(UI.view!=='docs'&&UI.view.indexOf('o_')!==0)UI.view='o_dash';
   markRead();
   const conf=G.cob.filter(c=>c.status==='enviado').length,oun=G.chat.filter(m=>m.from==='hip'&&!m.read).length;
-  const nav=[['o_dash','Dashboard','painel'],['o_feed','Comunidade','chat'],['o_hip','Hípicas','pess'],['o_uso','Uso e parcerias','painel'],['o_rel','Relatório mensal','prop'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['senha','Trocar senha','conta'],['logout','Sair','conta']];
+  const nav=[['o_dash','Dashboard','painel'],['o_feed','Comunidade','chat'],['o_hip','Hípicas','pess'],['o_uso','Uso e parcerias','painel'],['o_rel','Relatório mensal','prop'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['o_cfg','Configurações','conta'],['docs','Termos e privacidade','conta'],['senha','Trocar senha','conta'],['logout','Sair','conta']];
   $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='o_cob'&&conf?'<span class="badge">'+conf+'</span>':'')+(n[0]==='o_chat'&&oun?'<span class="badge">'+oun+'</span>':'')+'</button>').join('');
   $('#st1').textContent='Plataforma';$('#st2').textContent=G.owner.nome;
   $('#who').innerHTML='<b>Administração</b><br>Gestão das hípicas clientes.';
@@ -2118,6 +2136,267 @@ function linhaBarra(rot,n,max,sub){
   return '<li><span class="bl">'+esc(rot)+'</span><span class="bb"><i style="width:'+p+'%"></i></span>'+
     '<span class="bn"><b>'+n+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span></li>';
 }
+/* ---------- documentos jurídicos, aceite e menores ---------- */
+const DOCV='1.0';
+const DOCDATA='18 de outubro de 2026';
+function empNome(){return (G.owner&&G.owner.razao)||'EquiAltaris'}
+function empCnpj(){return (G.owner&&G.owner.cnpj)||''}
+function empMail(){return (G.owner&&G.owner.email)||'contato@equialtaris.com.br'}
+function empEnd(){return (G.owner&&G.owner.end)||''}
+function idEmp(){
+  const c=empCnpj(),e=empEnd(),n=empNome();
+  if(n==='EquiAltaris'&&!c&&!e)return '<b>EquiAltaris</b>';
+  return esc(n)+(c?', inscrita no CNPJ sob o nº '+esc(c):'')+(e?', com sede em '+esc(e):'')+
+    ', doravante <b>EquiAltaris</b>';
+}
+const DOCS={};
+DOCS.uso={t:'Termos de Uso',sub:'As regras do contrato entre você e o EquiAltaris',html:function(){return `
+<h3>1. Quem somos</h3>
+<p>O EquiAltaris é um sistema de gestão para centros de equitação, oferecido pela internet por `+idEmp()+`. Estes Termos regem o uso do sistema pelas hípicas contratantes e por todas as pessoas que acessam o sistema por meio delas.</p>
+
+<h3>2. As palavras que usamos</h3>
+<p><b>Plataforma</b> é o sistema EquiAltaris, acessado pelo site equialtaris.com.br. <b>Hípica</b> é o centro de equitação que contrata o plano e responde pelos dados que insere. <b>Usuário</b> é qualquer pessoa com acesso: administração da hípica, instrutor, aluno ou responsável legal de aluno menor de idade. <b>Comunidade</b> é a área em que os usuários publicam conteúdo visível para as demais hípicas do sistema.</p>
+
+<h3>3. Aceitação</h3>
+<p>Usar a Plataforma significa concordar com estes Termos e com a Política de Privacidade. O sistema registra quem aceitou, em que data e qual versão do documento. Quem não concorda não deve usar o sistema e deve avisar a hípica para que o acesso seja encerrado.</p>
+
+<h3>4. Conta e senha</h3>
+<p>O acesso é pessoal e intransferível. A hípica solicita a criação das contas e o EquiAltaris as libera. Cada usuário responde pelo que acontece na sua conta e deve guardar a senha em sigilo, não compartilhá-la e avisar imediatamente pelo e-mail `+esc(empMail())+` se suspeitar de uso indevido. É proibido criar conta com dados falsos ou em nome de outra pessoa.</p>
+
+<h3>5. Idade mínima e alunos menores de idade</h3>
+<p>Maiores de 18 anos usam a Plataforma livremente. Alunos menores de 18 anos só podem ter conta mediante autorização expressa do pai, da mãe ou do responsável legal, registrada no sistema pela hípica antes da liberação do acesso.</p>
+<p>A conta de aluno menor de 16 anos fica vinculada ao responsável legal indicado, que acompanha o uso, pode pedir a qualquer momento o histórico ou a exclusão da conta e pode revogar a autorização, hipótese em que o acesso é encerrado. Enquanto não houver autorização registrada, a conta do aluno menor não publica na Comunidade.</p>
+<p>Por padrão, o perfil de aluno menor nasce com a configuração de privacidade mais restritiva disponível, não recebe publicidade direcionada e não tem seus dados usados para formação de perfil comercial.</p>
+
+<h3>6. O plano da hípica</h3>
+<p>A hípica contrata um plano com limites de alunos e de cavalos e valor mensal, informados na área Meu plano. O pagamento é mensal, na data de vencimento combinada. Havendo atraso, o EquiAltaris pode suspender o acesso até a regularização, sem que isso apague os dados já gravados.</p>
+
+<h3>7. Responsabilidades da hípica</h3>
+<p>A hípica garante que os dados que insere são verdadeiros e que tem autorização para inseri-los, inclusive de alunos, proprietários de cavalos e responsáveis legais. Cabe à hípica colher a autorização do responsável de cada aluno menor, manter o cadastro atualizado e encerrar o acesso de quem deixa de fazer parte do centro.</p>
+
+<h3>8. Responsabilidades do usuário</h3>
+<p>O usuário se compromete a usar a Plataforma de forma lícita e a não: publicar conteúdo proibido pelas Regras da Comunidade; copiar, raspar ou extrair dados em massa; tentar burlar as proteções do sistema ou acessar a área de outra hípica; usar o sistema para spam, propaganda não autorizada, apostas ou venda de medicamentos; ou prejudicar o funcionamento do serviço.</p>
+
+<h3>9. O conteúdo que você publica</h3>
+<p>O que você publica continua sendo seu. Ao publicar, você concede ao EquiAltaris uma licença gratuita e limitada para armazenar e exibir aquele conteúdo dentro da Plataforma, enquanto a publicação existir, apenas para o funcionamento do serviço. Você responde pelo que publica e declara ter os direitos necessários, inclusive a autorização de imagem das pessoas retratadas.</p>
+
+<h3>10. Moderação</h3>
+<p>O EquiAltaris pode remover publicação que viole estes Termos ou as Regras da Comunidade, enviar advertência, suspender ou encerrar a conta, conforme a gravidade e a reincidência. Denúncias podem ser enviadas pelo canal de mensagens do sistema ou pelo e-mail `+esc(empMail())+`.</p>
+<p>Conteúdo com indício de exploração ou abuso sexual, aliciamento de criança ou adolescente, ou maus-tratos a animais é removido assim que identificado, independentemente de ordem judicial, e comunicado às autoridades competentes, com preservação dos registros pelo prazo legal.</p>
+
+<h3>11. Disponibilidade</h3>
+<p>Trabalhamos para manter a Plataforma no ar, mas o serviço pode ser interrompido para manutenção, atualização ou por falha de terceiros que compõem a infraestrutura. Não garantimos funcionamento ininterrupto nem livre de erros.</p>
+
+<h3>12. Os dados são da hípica</h3>
+<p>Os registros operacionais pertencem à hípica, que pode exportá-los a qualquer momento. Encerrado o contrato, os dados ficam disponíveis para exportação por 30 dias e depois são excluídos ou anonimizados, salvo o que a lei obrigue a guardar.</p>
+
+<h3>13. A propriedade do sistema</h3>
+<p>O software, a marca, o nome e o visual do EquiAltaris pertencem a `+esc(empNome())+`. O contrato concede uma licença de uso não exclusiva e intransferível enquanto durar o plano, e não transfere a propriedade de nada.</p>
+
+<h3>14. Limites de responsabilidade</h3>
+<p>O EquiAltaris é uma ferramenta de registro e organização. As informações de saúde e manejo dos cavalos servem de apoio e não substituem a avaliação de médico-veterinário ou de outro profissional habilitado; as decisões clínicas são do profissional responsável. O EquiAltaris não responde pelo conteúdo publicado por usuários, pelas decisões administrativas de cada hípica nem por prejuízo decorrente de informação inserida de forma incorreta. Nos limites permitidos pela lei, a responsabilidade do EquiAltaris fica restrita a danos diretos e ao valor pago pela hípica nos doze meses anteriores ao fato. Nada aqui afasta os direitos que a legislação consumerista assegure ao usuário pessoa física.</p>
+
+<h3>15. Vigência e encerramento</h3>
+<p>O contrato vigora por prazo indeterminado. Qualquer das partes pode encerrá-lo mediante aviso com 30 dias de antecedência. O EquiAltaris pode encerrar o acesso imediatamente em caso de violação grave destes Termos.</p>
+
+<h3>16. Mudanças nestes Termos</h3>
+<p>Podemos alterar estes Termos. Quando a mudança for relevante, avisamos no próprio sistema e pedimos um novo aceite antes de você continuar usando.</p>
+
+<h3>17. Lei e foro</h3>
+<p>Aplica-se a lei brasileira. Fica eleito o foro da comarca de Brasília, Distrito Federal, ressalvado o direito do consumidor de escolher o foro do seu domicílio.</p>
+`}};
+
+DOCS.priv={t:'Política de Privacidade',sub:'O que guardamos, por quê e como você controla',html:function(){return `
+<h3>1. Quem cuida dos seus dados</h3>
+<p>`+idEmp()+` oferece a Plataforma. Os papéis se dividem assim: em relação aos dados operacionais que a hípica cadastra e administra, como alunos, aulas, cavalos e cobranças, a <b>hípica é a controladora</b> e o EquiAltaris atua como <b>operador</b>, tratando os dados apenas conforme a instrução dela e o necessário para o serviço. Em relação à conta de acesso, às publicações da Comunidade e às métricas de uso da plataforma, o <b>EquiAltaris é o controlador</b>.</p>
+<p>Dúvidas, pedidos e exercício de direitos: `+esc(empMail())+`.</p>
+
+<h3>2. Que dados tratamos</h3>
+<p><b>Cadastro e acesso:</b> nome, e-mail, telefone, data de nascimento do aluno, papel na hípica, senha guardada de forma cifrada e não reversível, data e hora das entradas.</p>
+<p><b>Do responsável legal de aluno menor:</b> nome, e-mail e telefone, mais o registro da autorização concedida.</p>
+<p><b>Operacionais:</b> aulas, presenças, planos, mensalidades, comprovantes de pagamento enviados, fichas dos cavalos, alimentação, ferrageamento, ocorrências de saúde e resultados de prova.</p>
+<p><b>Publicados por você:</b> texto, fotos e resultados que você escolhe publicar na Comunidade, além de curtidas, comentários e republicações.</p>
+<p><b>De uso:</b> a contagem de quais telas foram abertas, quando, por qual tipo de usuário e de qual hípica, e um identificador aleatório gerado no seu aparelho para contar visitantes sem identificar quem é.</p>
+<p>Não pedimos nem usamos dados sensíveis como origem racial, convicção religiosa, opinião política ou dado biométrico, e não coletamos a sua localização.</p>
+
+<h3>3. Por que tratamos e com que base legal</h3>
+<p>Para <b>executar o contrato</b> e entregar o serviço: cadastro, acesso, agenda, financeiro, fichas dos cavalos e comunicação dentro do sistema. Para <b>cumprir obrigação legal</b>: guarda de registros de acesso e de documentos fiscais. Por <b>legítimo interesse</b>: segurança do sistema, prevenção a fraude e abuso, e estatísticas agregadas de uso, que usamos para melhorar a plataforma e para apresentar o alcance do serviço a parceiros comerciais, sempre em números somados e sem identificar pessoas. Por <b>consentimento</b>: a publicação na Comunidade e, no caso de aluno menor, o consentimento específico e destacado do responsável legal.</p>
+
+<h3>4. Sobre as métricas de uso</h3>
+<p>Contamos quantas telas foram abertas e quantas pessoas e aparelhos diferentes usaram o sistema em cada período. A contagem de visitantes é feita por um identificador aleatório guardado no seu próprio navegador, que não carrega nome, e-mail nem número de documento, e é contado uma vez por dia. Não rastreamos o caminho que cada pessoa percorre, não montamos perfil de comportamento e não usamos esses dados para publicidade. Os relatórios que apresentamos a parceiros trazem apenas totais.</p>
+
+<h3>5. Com quem compartilhamos</h3>
+<p>Não vendemos dados pessoais e não os cedemos para publicidade. Compartilhamos apenas com os fornecedores necessários ao funcionamento: a Supabase, que hospeda o banco de dados em servidores no Brasil, na região de São Paulo; a Resend, que envia os e-mails do sistema, como o de recuperação de senha; e o GitHub Pages, que hospeda as páginas do site. O envio de e-mail implica transferência internacional de nome e endereço de e-mail para os Estados Unidos, feita com as garantias contratuais exigidas pela LGPD. Também podemos compartilhar dados quando a lei ou uma ordem de autoridade competente exigir.</p>
+<p>Dentro da Plataforma, cada hípica enxerga apenas os seus próprios dados. O que é publicado na Comunidade, por sua natureza, fica visível para as demais hípicas e usuários do sistema.</p>
+
+<h3>6. Crianças e adolescentes</h3>
+<p>O tratamento de dados de aluno menor de idade depende de consentimento específico e destacado do pai, da mãe ou do responsável legal, colhido pela hípica e registrado no sistema. Coletamos o mínimo necessário. O perfil de aluno menor nasce com a configuração mais restritiva disponível, não recebe publicidade direcionada e não é usado para formação de perfil comercial. O responsável pode pedir a qualquer momento o acesso aos dados, a correção, a exclusão ou a revogação da autorização, pelo e-mail `+esc(empMail())+` ou pela própria hípica.</p>
+
+<h3>7. Como protegemos</h3>
+<p>Os dados trafegam cifrados. O acesso ao banco é controlado por regras que isolam cada hípica e cada aluno, de modo que um usuário só alcança o que lhe cabe. As senhas são guardadas de forma cifrada e não reversível, e nem o EquiAltaris nem a hípica conseguem lê-las. O acesso administrativo é restrito e registrado. Nenhum sistema é totalmente imune: havendo incidente com risco relevante, comunicamos os titulares e a Autoridade Nacional de Proteção de Dados nos prazos da lei.</p>
+
+<h3>8. Por quanto tempo guardamos</h3>
+<p>Dados de cadastro e operacionais ficam enquanto durar a relação com a hípica e, após o encerramento, por 30 dias para exportação, sendo depois excluídos ou anonimizados. Registros de acesso ficam por seis meses, conforme o Marco Civil da Internet. Documentos com reflexo fiscal ficam pelos prazos da legislação tributária. Publicações na Comunidade ficam até que você ou a moderação as removam.</p>
+
+<h3>9. Os seus direitos</h3>
+<p>A LGPD garante a você confirmar se tratamos seus dados, acessá-los, corrigi-los, pedir anonimização, bloqueio ou eliminação do que for desnecessário ou excessivo, pedir portabilidade, saber com quem compartilhamos, revogar o consentimento e se opor a tratamento feito por legítimo interesse. Basta escrever para `+esc(empMail())+`. Respondemos em até 15 dias. Quando o pedido envolver dado operacional sob responsabilidade da hípica, encaminhamos a ela e acompanhamos o atendimento.</p>
+
+<h3>10. O que guardamos no seu navegador</h3>
+<p>Guardamos no seu navegador apenas o necessário para o serviço funcionar: a sua sessão, para não pedir a senha a cada tela, e o identificador aleatório de aparelho usado na contagem de visitantes. Não usamos cookies de publicidade nem ferramentas de rastreamento de terceiros. Limpar os dados do navegador apaga essas informações.</p>
+
+<h3>11. Mudanças nesta Política</h3>
+<p>Podemos atualizar este documento. Mudança relevante é avisada dentro do sistema, com novo aceite quando for o caso. Versão `+DOCV+`, de `+DOCDATA+`.</p>
+`}};
+
+DOCS.com={t:'Regras da Comunidade',sub:'O combinado para a área de publicações',html:function(){return `
+<h3>O que é a Comunidade</h3>
+<p>É o mural do hipismo dentro do EquiAltaris. Hípicas, instrutores e alunos publicam conquistas, divulgam provas, mostram treinos e torcem uns pelos outros. O que você publica aqui aparece para as outras hípicas do sistema — publique pensando que gente de fora da sua cocheira vai ler.</p>
+
+<h3>O que rende boas publicações</h3>
+<p>Resultado de prova, com a categoria e a colocação. Evolução de treino. Apresentação do seu cavalo. Convite para competição ou clínica. Parabéns a um colega. Uma boa foto de pista.</p>
+
+<h3>O que não entra</h3>
+<p>Ofensa, humilhação, ameaça ou discriminação de qualquer tipo. Nudez e conteúdo sexual. Violência contra pessoa. Imagem de maus-tratos, treinamento abusivo ou animal em sofrimento. Dado pessoal de terceiro, como telefone, endereço, documento ou o valor que alguém paga. Foto de pessoa que não autorizou, e foto de criança ou adolescente sem autorização do responsável. Acusação contra pessoa ou hípica identificável. Venda, propaganda ou captação de clientes sem combinar antes com o EquiAltaris. Aposta, medicamento, suplemento de uso controlado ou qualquer coisa ligada a doping. Conteúdo falso, corrente e spam. E conteúdo que não tem nada a ver com hipismo.</p>
+
+<h3>Foto de criança e adolescente</h3>
+<p>Publicar foto de menor exige autorização do responsável legal. Mesmo com autorização, evite informar escola, endereço, rotina ou qualquer dado que permita localizar a criança fora da hípica. Se você é responsável e viu uma foto do seu filho que não autorizou, denuncie: a publicação sai do ar.</p>
+
+<h3>Bem-estar do cavalo</h3>
+<p>Publicação que mostre maus-tratos, excesso ou prática proibida pela federação é removida, e os casos graves são comunicados às autoridades. Crítica técnica é bem-vinda; exposição de animal em sofrimento, não.</p>
+
+<h3>Como denunciar</h3>
+<p>Use o canal de mensagens do sistema ou escreva para `+esc(empMail())+`, dizendo qual publicação e por quê. Olhamos todas as denúncias. Conteúdo com indício de crime contra criança ou adolescente sai do ar assim que identificado e é comunicado às autoridades.</p>
+
+<h3>O que acontece quando alguém passa do ponto</h3>
+<p>Dependendo do caso e da repetição: a publicação é removida; você recebe uma advertência, que aparece ao entrar no sistema; a conta é suspensa; ou a conta é encerrada. Casos graves vão direto para a última medida e, quando for crime, para as autoridades.</p>
+
+<h3>Uma última coisa</h3>
+<p>O hipismo brasileiro é pequeno e todo mundo se encontra na pista no fim de semana. Escreva aqui o que você diria olhando no olho.</p>
+`}};
+
+DOCS.resp={t:'Autorização do Responsável',sub:'Termo para aluno menor de 18 anos',html:function(){return `
+<p class="muted">Este termo é preenchido pela hípica junto ao pai, à mãe ou ao responsável legal do aluno menor de 18 anos, antes da liberação do acesso. A hípica guarda a via assinada e registra a autorização no sistema.</p>
+
+<h3>Declaração</h3>
+<p>Eu, responsável legal pelo aluno identificado no cadastro, declaro que fui informado sobre o funcionamento do sistema EquiAltaris, li os Termos de Uso, a Política de Privacidade e as Regras da Comunidade, e <b>autorizo</b>:</p>
+<p><b>a)</b> a criação de uma conta de acesso para o aluno, vinculada aos meus dados de contato, para acompanhar aulas, mensalidades e as informações do cavalo;</p>
+<p><b>b)</b> o tratamento dos dados pessoais do aluno pela hípica e pelo EquiAltaris, nas finalidades e condições descritas na Política de Privacidade;</p>
+<p><b>c)</b> conforme eu marcar no cadastro, a publicação de conteúdo pelo aluno na área Comunidade e o uso da imagem do aluno em fotos de aula, treino e competição publicadas ali.</p>
+
+<h3>Do que estou ciente</h3>
+<p>Que a Comunidade é visível para as outras hípicas e usuários do sistema. Que o perfil do aluno nasce com a configuração mais restritiva disponível e não recebe publicidade direcionada. Que posso acompanhar o uso, pedir o histórico, pedir a correção ou a exclusão dos dados e <b>revogar esta autorização a qualquer momento</b>, bastando avisar a hípica ou escrever para `+esc(empMail())+`, caso em que o acesso do aluno é encerrado e as publicações podem ser removidas.</p>
+<p>Que, enquanto esta autorização não estiver registrada, a conta do aluno não publica na Comunidade.</p>
+<p>Que a hípica é responsável por manter os meus dados de contato atualizados e por me comunicar mudanças relevantes.</p>
+
+<h3>Identificação</h3>
+<p>Nome do aluno, data de nascimento, nome do responsável legal, grau de parentesco, e-mail e telefone do responsável, data e assinatura. Esses campos são preenchidos na ficha do aluno dentro do sistema e devem corresponder à via assinada guardada pela hípica.</p>
+`}};
+
+/* ---------- aceite dos documentos ---------- */
+let ACEITES=null,ACEST='',ACETAB='uso',ACEERR='';
+const CK=id=>{const e=document.getElementById(id);return !!(e&&e.checked)};
+function docsExigidos(){return (UI.user&&UI.user.role==='owner')?[]:['uso','priv','com']}
+async function loadAceites(){
+  if(!AUTH.perfil||!AUTH.perfil.id){ACEITES=[];ACEST='ok';return}
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/aceites?select=doc,versao&uid=eq.'+encodeURIComponent(AUTH.perfil.id)+'&versao=eq.'+encodeURIComponent(DOCV),{headers:sbH()});
+    if(!r.ok){ACEITES=[];ACEST=r.status===404?'preparando':'erro';return}
+    ACEITES=await r.json();ACEST='ok';
+  }catch(e){ACEITES=[];ACEST='erro'}
+}
+function precisaAceite(){
+  if(!UI.user||UI.user.role==='owner')return false;
+  if(ACEITES===null||ACEST!=='ok')return false;
+  const tem={};(ACEITES||[]).forEach(a=>{tem[a.doc]=1});
+  return docsExigidos().some(d=>!tem[d]);
+}
+async function gravarAceite(){
+  if(!AUTH.perfil||!AUTH.perfil.id)return false;
+  const linhas=docsExigidos().map(d=>({uid:AUTH.perfil.id,doc:d,versao:DOCV,
+    papel:AUTH.perfil.papel||'',hipica_id:AUTH.perfil.hipica_id||null}));
+  try{
+    const h=sbH();h.Prefer='resolution=merge-duplicates';
+    const r=await fetch(SB_URL+'/rest/v1/aceites',{method:'POST',headers:h,body:JSON.stringify(linhas)});
+    if(!r.ok)return false;
+  }catch(e){return false}
+  ACEITES=linhas.map(l=>({doc:l.doc,versao:DOCV}));
+  return true;
+}
+function docCorpo(k){
+  const d=DOCS[k];if(!d)return '';
+  return '<div class="doc"><h2>'+esc(d.t)+'</h2><p class="dsub">'+esc(d.sub)+' · versão '+DOCV+' · '+esc(DOCDATA)+'</p>'+d.html()+'</div>';
+}
+function docAbas(lista,act){
+  return '<div class="tabs" role="tablist">'+lista.map(k=>
+    '<button role="tab" aria-selected="'+(ACETAB===k)+'" data-act="'+act+'" data-k="'+k+'">'+esc(DOCS[k].t)+'</button>').join('')+'</div>';
+}
+function telaAceite(){
+  $('#app').hidden=true;$('#modal').innerHTML='';
+  const L=$('#login');L.hidden=false;
+  const lista=docsExigidos();
+  if(lista.indexOf(ACETAB)<0)ACETAB=lista[0];
+  L.innerHTML='<div class="acew"><div class="acec">'+
+    '<div class="lgl" style="margin-bottom:14px"><img src="'+LOGO+'" alt="EquiAltaris"></div>'+
+    '<h3 style="margin:0 0 4px">Antes de continuar</h3>'+
+    '<p class="muted sm" style="margin:0 0 14px">Leia e aceite os documentos abaixo. Guardamos a data e a versão do que você aceitou.</p>'+
+    docAbas(lista,'acetab')+
+    '<div class="acebox">'+docCorpo(ACETAB)+'</div>'+
+    '<label class="chk" style="margin-top:14px"><input type="checkbox" id="ace-ok"><span>Li e aceito os Termos de Uso, a Política de Privacidade e as Regras da Comunidade.</span></label>'+
+    (ACEERR?'<div class="err" style="display:block">'+esc(ACEERR)+'</div>':'')+
+    '<div class="row" style="margin-top:12px"><button class="btn" data-act="acesair">Sair</button>'+
+    '<button class="btn pri" data-act="aceok" style="margin-left:auto">Aceitar e entrar</button></div>'+
+    '</div></div>';
+}
+views.docs=function(){
+  const lista=['uso','priv','com','resp'];
+  if(lista.indexOf(ACETAB)<0)ACETAB='uso';
+  const quando=(ACEITES||[]).length?'<p class="muted sm">Você aceitou a versão '+DOCV+' destes documentos.</p>':'';
+  return '<div class="row" style="justify-content:flex-end;margin-bottom:12px" id="relact"><button class="btn" data-act="relprint">Imprimir ou salvar em PDF</button></div>'+
+    docAbas(lista,'doctab')+quando+'<div class="card" id="rel">'+docCorpo(ACETAB)+'</div>';
+};
+/* ---------- alunos menores de idade ---------- */
+function idadeAluno(st){
+  const n=st&&st.nasc;if(!n||!/^\d{4}-\d{2}-\d{2}$/.test(n))return null;
+  const d=new Date(n+'T12:00:00'),h=new Date();
+  if(isNaN(d.getTime()))return null;
+  let i=h.getFullYear()-d.getFullYear();
+  const m=h.getMonth()-d.getMonth();
+  if(m<0||(m===0&&h.getDate()<d.getDate()))i--;
+  return (i>=0&&i<120)?i:null;
+}
+function ehMenor(st){const i=idadeAluno(st);return i!==null&&i<18}
+function autorizado(st){return !!(st&&st.aut&&st.aut.em)}
+function podeComunidade(st){return !ehMenor(st)||!!(st&&st.aut&&st.aut.em&&st.aut.com)}
+function pendentesAut(){return (S&&S.students||[]).filter(st=>ehMenor(st)&&!autorizado(st))}
+function pillAut(st){
+  if(!ehMenor(st))return '';
+  if(!autorizado(st))return '<span class="pill bad">autorização pendente</span>';
+  return '<span class="pill '+(st.aut.com?"ok":"warn")+'">menor · '+(st.aut.com?'pode publicar':'sem Comunidade')+'</span>';
+}
+function blocoMenor(o){
+  if(!ehMenor(o))return '';
+  const rs=o.resp||{},au=o.aut||{},i=idadeAluno(o);
+  return '<div class="note" style="margin:10px 0"><b>Aluno menor de idade'+(i!==null?' · '+i+' anos':'')+'.</b> '+
+    'A conta só é liberada com a autorização do pai, da mãe ou do responsável legal. '+
+    (i!==null&&i<16?'Abaixo de 16 anos, a conta fica vinculada ao responsável indicado aqui.':'')+'</div>'+
+    '<div class="fg">'+fld('Nome do responsável legal','s-rn',rs.nome||'','text',null,'full')+
+    fld('E-mail do responsável','s-re',rs.email||'','email')+
+    fld('Telefone do responsável','s-rt',rs.tel||'','text')+
+    fld('Parentesco','s-rp',rs.par||'','select',[['Mãe','Mãe'],['Pai','Pai'],['Responsável legal','Responsável legal']])+'</div>'+
+    '<label class="chk"><input type="checkbox" id="s-ra"'+(au.em?' checked':'')+'><span>Recebi e arquivei a autorização assinada pelo responsável.'+(au.em?' Registrada em '+fmtD(au.em)+'.':'')+'</span></label>'+
+    '<label class="chk"><input type="checkbox" id="s-rc"'+(au.com?' checked':'')+'><span>O responsável autoriza o aluno a publicar na Comunidade e o uso da imagem dele nas publicações.</span></label>'+
+    '<p class="muted sm">O texto da autorização está em Termos e privacidade, na aba Autorização do Responsável.</p>';
+}
+function motivoPostar(){
+  if(!UI.user)return 'Entre para publicar.';
+  if(UI.user.role!=='aluno')return '';
+  const st=R(UI.user.id);
+  if(!st)return '';
+  if(ehMenor(st)&&!autorizado(st))return 'A sua conta é de aluno menor de idade e ainda não tem a autorização do responsável registrada. Fale com a hípica para liberar a publicação.';
+  if(ehMenor(st)&&!st.aut.com)return 'O seu responsável autorizou o acesso ao sistema, mas não a publicação na Comunidade. Você pode ler tudo por aqui.';
+  return '';
+}
+
 /* ---------- visitantes e relatorio mensal ---------- */
 let MENSAL=null,MENSALST='';
 function meuDispositivo(){
@@ -2292,6 +2571,11 @@ views.o_cfg=function(){
   return '<div class="grid g2"><div class="card"><h3>Chave PIX da plataforma</h3><p class="muted">Aparece para as hípicas na área Meu plano.</p><input id="ow-pix" value="'+esc(G.owner.pix)+'" aria-label="Chave PIX"><label class="f" style="margin-top:10px">Seu celular / WhatsApp (as hípicas veem no Suporte)<input id="ow-tel" type="tel" value="'+esc(G.owner.tel)+'" placeholder="(61) 99999-9999"></label></div>'+
    '<div class="card"><h3>Valores padrão dos planos</h3><p class="muted">Usados como sugestão ao cadastrar uma hípica. O valor de cada cliente pode ser ajustado na ficha dele.</p>'+
    Object.keys(G.planos).map(k=>'<label class="f">'+esc(G.planos[k].n)+' (R$ por mês)<input id="pl-'+k+'" type="number" min="0" step="1" value="'+G.planos[k].v+'"></label>').join('')+'<p class="muted sm">Personalizado: valor e limites de alunos e cavalos combinados caso a caso.</p><p class="muted sm">Limites: Light 30 · Standard 60 · Full 80 alunos e cavalos.</p></div>'+
+   '<div class="card"><h3>Dados da empresa nos documentos</h3><p class="muted">Aparecem nos Termos de Uso e na Política de Privacidade. Preencha quando o CNPJ sair.</p>'+
+   '<label class="f">Razão social<input id="ow-rz" value="'+esc(G.owner.razao||'')+'" placeholder="EquiAltaris Tecnologia LTDA"></label>'+
+   '<label class="f">CNPJ<input id="ow-cn" value="'+esc(G.owner.cnpj||'')+'" placeholder="00.000.000/0001-00"></label>'+
+   '<label class="f">Endereço da sede<input id="ow-en" value="'+esc(G.owner.end||'')+'" placeholder="Brasília/DF"></label>'+
+   '<label class="f">E-mail para privacidade e denúncias<input id="ow-em" type="email" value="'+esc(G.owner.email||'')+'" placeholder="contato@equialtaris.com.br"></label></div>'+
    '<div class="card"><h3>Dados deste navegador</h3><p class="muted">Tudo fica salvo apenas neste navegador.</p><button class="btn danger" data-act="reset">Restaurar dados de exemplo</button></div></div>';
 };
 /* ---------- área da hípica: plano e pagamento do sistema ---------- */
@@ -2795,18 +3079,33 @@ function pagCard(st){
 views.alunos=function(){
   const fin=UI.user.role==='staff';
   const rows=S.students.length?S.students.map(a=>{const hr=S.horses.find(h=>h.studentId===a.id);const pg=S.pag.find(p=>p.student===a.id&&p.ref===TODAY.slice(0,7));
-    const ua=ultimoAcesso(a.id);return '<tr><td><b>'+esc(a.name)+'</b><br><span class="muted sm">'+esc(a.tel||'')+'</span></td><td>'+esc(a.nivel||'—')+'</td>'+(fin?'<td class="sm">'+(ua?((Date.now()-new Date(ua).getTime())<ONLINE_MS?'<span class="pill ok">online agora</span>':fmtS(ymd(new Date(ua)))):'<span class="muted">nunca entrou</span>')+'</td>':'')+(fin?'<td class="sm">'+esc(a.email)+'</td><td>'+esc(a.plano)+'<br><span class="muted sm">'+brl(a.valor)+'/mês</span></td>':'')+'<td>'+(hr?esc(hr.name):'<span class="muted">—</span>')+'</td><td class="n">'+S.aulas.filter(x=>x.student===a.id&&x.date.slice(0,7)===TODAY.slice(0,7)&&x.status!=='cancelada').length+'</td><td class="n">'+S.provas.filter(p=>p.rider===a.id&&p.done).length+'</td>'+(fin?'<td>'+(pg?payPill(pg):'<span class="muted">Não gerada</span>')+'</td><td class="n">'+chipAcesso(a.email)+' <button class="btn sm" data-act="acesso" data-e="'+esc(a.email)+'" data-n="'+esc(a.name)+'" data-p="aluno" data-r="'+a.id+'">Acesso</button> <button class="btn sm" data-act="sedit" data-id="'+a.id+'">Editar</button></td>':'')+'</tr>'}).join(''):'<tr><td colspan="9">'+empty('Nenhum aluno cadastrado.')+'</td></tr>';
-  return '<div class="tw"><table><thead><tr><th>Aluno</th><th>Altura</th>'+(fin?'<th>Último acesso</th>':'')+(fin?'<th>Acesso</th><th>Plano</th>':'')+'<th>Cavalo próprio</th><th class="n">Aulas no mês</th><th class="n">Provas</th>'+(fin?'<th>Mensalidade atual</th><th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+    const ua=ultimoAcesso(a.id);return '<tr><td><b>'+esc(a.name)+'</b>'+(ehMenor(a)?' '+pillAut(a):'')+'<br><span class="muted sm">'+esc(a.tel||'')+'</span></td><td>'+esc(a.nivel||'—')+'</td>'+(fin?'<td class="sm">'+(ua?((Date.now()-new Date(ua).getTime())<ONLINE_MS?'<span class="pill ok">online agora</span>':fmtS(ymd(new Date(ua)))):'<span class="muted">nunca entrou</span>')+'</td>':'')+(fin?'<td class="sm">'+esc(a.email)+'</td><td>'+esc(a.plano)+'<br><span class="muted sm">'+brl(a.valor)+'/mês</span></td>':'')+'<td>'+(hr?esc(hr.name):'<span class="muted">—</span>')+'</td><td class="n">'+S.aulas.filter(x=>x.student===a.id&&x.date.slice(0,7)===TODAY.slice(0,7)&&x.status!=='cancelada').length+'</td><td class="n">'+S.provas.filter(p=>p.rider===a.id&&p.done).length+'</td>'+(fin?'<td>'+(pg?payPill(pg):'<span class="muted">Não gerada</span>')+'</td><td class="n">'+chipAcesso(a.email)+' <button class="btn sm" data-act="acesso" data-e="'+esc(a.email)+'" data-n="'+esc(a.name)+'" data-p="aluno" data-r="'+a.id+'">Acesso</button> <button class="btn sm" data-act="sedit" data-id="'+a.id+'">Editar</button></td>':'')+'</tr>'}).join(''):'<tr><td colspan="9">'+empty('Nenhum aluno cadastrado.')+'</td></tr>';
+  const pend=pendentesAut();
+  const avisoP=(fin&&pend.length)?'<div class="note bad" style="margin-bottom:14px"><b>'+pend.length+' aluno'+(pend.length>1?'s menores sem autorização do responsável':' menor sem autorização do responsável')+':</b> '+esc(pend.map(x=>x.name).join(', '))+'. Enquanto a autorização não for registrada na ficha, a conta não publica na Comunidade.</div>':'';
+  return avisoP+'<div class="tw"><table><thead><tr><th>Aluno</th><th>Altura</th>'+(fin?'<th>Último acesso</th>':'')+(fin?'<th>Acesso</th><th>Plano</th>':'')+'<th>Cavalo próprio</th><th class="n">Aulas no mês</th><th class="n">Provas</th>'+(fin?'<th>Mensalidade atual</th><th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
 };
 function alunoModal(a){
   const isNew=!a;const o=a||{name:'',email:'',tel:'',plano:'Mensalidade · 4 aulas',valor:360};
   const cur=a?(S.horses.find(h=>h.studentId===a.id)||{}).id||'':'';
+  const rs=o.resp||{},au=o.aut||{};
   modal({title:isNew?'Novo aluno':'Editar aluno',wide:true,
    body:'<div class="fg">'+fld('Nome','s-n',o.name,'text',null,'full')+fld('E-mail','s-e',o.email,'email')+fld('Telefone','s-t',o.tel,'text')+fld('Altura de trabalho','s-n2',o.nivel||'','text')+fld('Plano','s-pl',o.plano,'text')+fld('Mensalidade (R$)','s-v',o.valor,'number','min="0" step="1"')+
-    fld('Cavalo próprio (libera o painel do cavalo)','s-h',cur,'select',[['','Sem cavalo próprio']].concat(S.horses.filter(h=>!h.studentId||h.studentId===(a&&a.id)).map(h=>[h.id,h.name])),'full')+'</div><p class="muted sm">Para alunos menores de idade, use o e-mail do responsável. O acesso do aluno ao portal é liberado pelo EquiAltaris.</p><div class="err" id="lm-err" role="alert"></div>',
+    fld('Data de nascimento','s-nasc',o.nasc||'','date')+
+    fld('Cavalo próprio (libera o painel do cavalo)','s-h',cur,'select',[['','Sem cavalo próprio']].concat(S.horses.filter(h=>!h.studentId||h.studentId===(a&&a.id)).map(h=>[h.id,h.name])),'full')+'</div>'+
+    '<div id="s-menor" style="margin-top:4px">'+blocoMenor(o)+'</div>'+
+    '<p class="muted sm">Para alunos menores de idade, use o e-mail do responsável. O acesso do aluno ao portal é liberado pelo EquiAltaris.</p><div class="err" id="lm-err" role="alert"></div>',
+   after:function(){const d=document.getElementById('s-nasc');if(d)d.addEventListener('change',function(){
+     const box=document.getElementById('s-menor');if(box)box.innerHTML=blocoMenor({nasc:d.value,resp:(a&&a.resp)||{},aut:(a&&a.aut)||{}})})},
    del:isNew?null:()=>{S.horses.forEach(h=>{if(h.studentId===a.id)delete h.studentId});S.students=S.students.filter(x=>x!==a);S.aulas=S.aulas.filter(x=>x.student!==a.id);S.pag=S.pag.filter(x=>x.student!==a.id)},
-   save:()=>{const v={name:V('s-n').trim(),email:V('s-e').trim().toLowerCase(),tel:V('s-t'),nivel:V('s-n2'),plano:V('s-pl'),valor:+V('s-v')||0};
+   save:()=>{const v={name:V('s-n').trim(),email:V('s-e').trim().toLowerCase(),tel:V('s-t'),nivel:V('s-n2'),plano:V('s-pl'),valor:+V('s-v')||0,nasc:V('s-nasc')||''};
      if(!v.name||!EMAIL_RE.test(v.email)){$('#lm-err').textContent='Informe o nome e um e-mail válido.';return false}
+     if(ehMenor(v)){
+       v.resp={nome:V('s-rn').trim(),email:V('s-re').trim().toLowerCase(),tel:V('s-rt'),par:V('s-rp')};
+       if(CK('s-ra')){
+         if(!v.resp.nome||!EMAIL_RE.test(v.resp.email)){$('#lm-err').textContent='Para registrar a autorização, informe o nome e o e-mail do responsável.';return false}
+         v.aut={em:(a&&a.aut&&a.aut.em)||TODAY,com:CK('s-rc')};
+       }else v.aut=null;
+     }else{v.resp=null;v.aut=null}
      if(emailTaken(v.email,a))return false;
      if(isNew){const L=hipLim(HIP());if(S.students.length>=L.a){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.a+' alunos. Fale com o EquiAltaris para ampliar.';return false}}
      let st=a;if(isNew){st=Object.assign({id:uid()},v);S.students.push(st)}else Object.assign(st,v);
@@ -2943,6 +3242,17 @@ const act={
   verperf:d=>{PERFVER=d.id;UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(d.id).then(()=>{if(UI.view==='perfil')render()})},
   perfedit:()=>perfilModal(),
   relprint:()=>{try{window.print()}catch(e){}},
+  acetab:d=>{ACETAB=d.k;ACEERR='';telaAceite()},
+  doctab:d=>{ACETAB=d.k;render()},
+  acesair:()=>{logout()},
+  aceok:()=>{
+    if(!CK('ace-ok')){ACEERR='Marque a caixa para confirmar que leu e aceita.';telaAceite();return}
+    ACEERR='';
+    const b=document.querySelector('[data-act=aceok]');if(b){b.textContent='Registrando…';b.disabled=true}
+    gravarAceite().then(function(ok){
+      if(!ok){ACEERR='Não consegui registrar o aceite agora. Verifique a conexão e tente de novo.';telaAceite();return}
+      render();
+    });},
   usod:d=>{USODIAS=+d.d||30;USOST='carregando';render();
     Promise.all([loadPresenca(),loadUso(USODIAS)]).then(function(){if(UI.view==='o_uso')render()})},
   vercav:d=>cavaloModal(+d.i),
@@ -3080,6 +3390,10 @@ document.addEventListener('change',e=>{
   if(t.id==='pc-f'){const f=t.files[0];if(!f)return;readPhoto(f,1600).then(d=>{PCF=d;$('#pc-prev').innerHTML='<img src="'+d+'" alt="Pré-visualização">';$('#pc-err').textContent=''}).catch(m=>{$('#pc-err').textContent=m});return}
   if(t.id==='ow-tel'){G.owner.tel=telFmt(t.value.trim());save();return}
   if(t.id==='ow-pix'){G.owner.pix=t.value.trim();save();return}
+  if(t.id==='ow-rz'){G.owner.razao=t.value.trim();save();return}
+  if(t.id==='ow-cn'){G.owner.cnpj=t.value.trim();save();return}
+  if(t.id==='ow-en'){G.owner.end=t.value.trim();save();return}
+  if(t.id==='ow-em'){G.owner.email=t.value.trim();save();return}
   if(t.id&&t.id.indexOf('pl-')===0&&G.planos[t.id.slice(3)]){G.planos[t.id.slice(3)].v=+t.value||0;save();return}
   if(t.id==='hp-pl'){const p=G.planos[t.value];if(p)$('#hp-v').value=p.v;hpLimUi();return}
   if(t.id==='ip-f'){const f=t.files[0];if(!f)return;readImage(f).then(d=>{IPF={name:f.name,data:d};$('#ip-prev').innerHTML='<img class="rcp" style="max-height:240px" src="'+d+'" alt="Pré-visualização do comprovante">';$('#ip-err').textContent=''}).catch(m=>{IPF=null;$('#ip-prev').innerHTML='';$('#ip-err').textContent=m});return}
