@@ -296,6 +296,16 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .note{background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-top:6px}
 .note.bad{background:var(--bad-bg);color:var(--bad)}
 .note.ok{background:var(--ok-bg);color:var(--ok)}
+.mwrap{position:relative;display:inline-block}
+.mpop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:0 14px 36px rgba(10,16,30,.22);padding:6px;min-width:250px;z-index:60;display:flex;flex-direction:column}
+.mpop button{text-align:left;background:none;border:0;color:inherit;font:inherit;font-size:14px;padding:9px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.mpop button:hover,.mpop button:focus-visible{background:var(--surface2)}
+table.exph td,table.exph th{padding:7px 8px}
+table.exph select{min-width:104px}
+tr.fechdia{opacity:.5}
+.tr.fx{opacity:.92}
+.tr.fx button b{font-weight:600}
+th.hd s{display:block;text-decoration:none;color:var(--muted);font-size:10.5px;letter-spacing:.04em;margin-top:2px}
 .gr table{min-width:760px}
 .gr th{background:var(--side);color:#fff;text-align:center;font-size:12px;letter-spacing:.05em}
 .gr td{padding:0;border:1px solid var(--line);text-align:center;height:34px}
@@ -452,37 +462,69 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261019-0110';
+const APPV='20261019-0320';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
 const PLN={lite:'Light',standard:'Standard',full:'Full',personalizado:'Personalizado'};
 const DEMO_INSTRS=()=>[];
 function blankTenant(h){return {horses:[],croquis:[],treinos:[],provas:[],fin:[],seq:1,students:[],aulas:[],vagas:[],remarc:[],msgs:[],insc:[],inscPed:[],pag:[],files:{},pix:'',staff:{email:h.login,name:'Administrador'},instrs:[]}}
+function faixaDia(d,pi,pf){
+  let i=Math.min(22,Math.max(0,isFinite(+d.ini)?+d.ini:pi));
+  let f=Math.min(23,Math.max(1,isFinite(+d.fim)?+d.fim:pf));
+  if(f<=i)f=Math.min(23,i+1);
+  return {on:d.on?1:0,ini:i,fim:f};
+}
 function expCfg(T){
   const e=(T||S||{}).exp||{};
-  const ini=Math.min(23,Math.max(0,isFinite(+e.ini)?+e.ini:9));
-  let fim=Math.min(23,Math.max(1,isFinite(+e.fim)?+e.fim:18));
-  if(fim<=ini)fim=Math.min(23,ini+1);
-  return {ini:ini,fim:fim,passo:(+e.passo===30?30:60),
-          dias:(Array.isArray(e.dias)&&e.dias.length===7)?e.dias:[1,1,1,1,1,1,1]};
+  const passo=(+e.passo===30?30:60);
+  const pi=Math.min(22,Math.max(0,isFinite(+e.ini)?+e.ini:9));
+  let pf=Math.min(23,Math.max(1,isFinite(+e.fim)?+e.fim:18));
+  if(pf<=pi)pf=Math.min(23,pi+1);
+  let dias;
+  if(Array.isArray(e.dias)&&e.dias.length===7&&e.dias[0]&&typeof e.dias[0]==='object'){
+    dias=e.dias.map(d=>faixaDia(d||{},pi,pf));
+  }else{
+    const velho=(Array.isArray(e.dias)&&e.dias.length===7)?e.dias:[1,1,1,1,1,1,1];
+    dias=velho.map(v=>({on:v?1:0,ini:pi,fim:pf}));
+  }
+  const ab=dias.filter(d=>d.on);
+  return {passo:passo,dias:dias,
+    ini:ab.length?Math.min.apply(null,ab.map(d=>d.ini)):pi,
+    fim:ab.length?Math.max.apply(null,ab.map(d=>d.fim)):pf};
 }
+function abreEm(c,i,hhmm){
+  const dd=c.dias[i];
+  if(!dd||!dd.on)return false;
+  const q=String(hhmm||'').split(':');
+  const m=(+q[0])*60+(+q[1]||0);
+  if(!isFinite(m))return false;
+  return m>=dd.ini*60&&m<dd.fim*60;
+}
+function faixaTxt(dd){return dd&&dd.on?pad(dd.ini)+':00 às '+pad(dd.fim)+':00':'fechado'}
 function expModal(){
   const c=expCfg();
-  const horas=Array.from({length:24},(_,i)=>[String(i),pad(i)+':00']);
+  const horas=k=>Array.from({length:24},(_,i)=>'<option value="'+i+'"'+(i===k?' selected':'')+'>'+pad(i)+':00</option>').join('');
+  const linha=(i)=>{const d=c.dias[i];
+    return '<tr'+(d.on?'':' class="fechdia"')+'><td><label class="row sm" style="gap:7px;align-items:center;margin:0">'+
+      '<input type="checkbox" style="width:auto" id="ex-on'+i+'" '+(d.on?'checked':'')+'><b>'+DIA_LONGO[i]+'</b></label></td>'+
+      '<td><select id="ex-i'+i+'">'+horas(d.ini)+'</select></td>'+
+      '<td><select id="ex-f'+i+'">'+horas(d.fim)+'</select></td></tr>';
+  };
   modal({title:'Horário de funcionamento',wide:true,
-   body:'<div class="fg">'+fld('Abre às','ex-i',String(c.ini),'select',horas)+fld('Fecha às','ex-f',String(c.fim),'select',horas)+
-     fld('Intervalo da grade','ex-p',String(c.passo),'select',[['60','De 1 em 1 hora'],['30','De 30 em 30 minutos']])+'</div>'+
-     '<p class="f" style="margin:12px 0 4px">Dias de funcionamento</p><div class="row">'+
-     DOW.map((d,i)=>'<label class="row sm" style="gap:5px;align-items:center"><input type="checkbox" style="width:auto" id="ex-d'+i+'" '+(c.dias[i]?'checked':'')+'>'+d+'</label>').join('')+'</div>'+
-     '<p class="muted sm" style="margin-top:10px">A grade da Programação passa a mostrar só esse período. Treinos fora do horário continuam aparecendo, em linhas separadas no topo e no fim.</p>'+
+   body:'<p class="muted" style="margin-top:-6px">Cada dia pode ter o seu horário. Desmarque o dia em que a hípica não abre.</p>'+
+     '<div class="tw"><table class="exph"><thead><tr><th>Dia</th><th>Abre às</th><th>Fecha às</th></tr></thead><tbody>'+
+     [0,1,2,3,4,5,6].map(linha).join('')+'</tbody></table></div>'+
+     '<div class="row" style="margin:10px 0 2px"><button type="button" class="btn sm" data-act="excopy">Repetir a segunda em todos os dias</button></div>'+
+     '<div class="fg" style="margin-top:10px">'+fld('Intervalo da grade','ex-p',String(c.passo),'select',[['60','De 1 em 1 hora'],['30','De 30 em 30 minutos']])+'</div>'+
+     '<p class="muted sm" style="margin-top:10px">A grade da Programação mostra as faixas de cada dia. O que estiver marcado fora do horário continua aparecendo, em linhas separadas no topo e no fim.</p>'+
      '<div class="err" id="ex-err" role="alert"></div>',
    save:()=>{
-     const i=+V('ex-i'),f=+V('ex-f');
-     if(f<=i){$('#ex-err').textContent='O horário de fechar precisa ser depois do de abrir.';return false}
-     const ds=DOW.map((_,k)=>$('#ex-d'+k).checked?1:0);
-     if(!ds.some(Boolean)){$('#ex-err').textContent='Marque pelo menos um dia.';return false}
-     S.exp={ini:i,fim:f,passo:(+V('ex-p')===30?30:60),dias:ds};
+     const ds=[0,1,2,3,4,5,6].map(i=>({on:$('#ex-on'+i).checked?1:0,ini:+V('ex-i'+i),fim:+V('ex-f'+i)}));
+     const ruim=ds.findIndex(d=>d.on&&d.fim<=d.ini);
+     if(ruim>=0){$('#ex-err').textContent='Em '+DIA_LONGO[ruim]+', o horário de fechar precisa ser depois do de abrir.';return false}
+     if(!ds.some(d=>d.on)){$('#ex-err').textContent='Marque pelo menos um dia.';return false}
+     S.exp={passo:(+V('ex-p')===30?30:60),dias:ds};
    }});
 }
 function normT(T,demo){
@@ -902,7 +944,11 @@ function croquiSVG(c,o){
 const views={};
 const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Configurações, documentos e senha'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_uso:['Uso e parcerias','Quem está usando e quanto o sistema é usado'],o_rel:['Relatório mensal','Números mês a mês para apresentar a parceiros'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
 const topActs={
-  prog:()=>(UI.alTab==='lista'?'<button class="btn pri" data-act="anew">Nova aula</button>':(UI.user.role==='staff'?'<button class="btn" data-act="expcfg">Horário de funcionamento</button>':'')+'<button class="btn" data-act="relTreinos">Relatório de treinos</button><button class="btn brass" data-act="amanha">Programação para amanhã</button><button class="btn" data-act="anew">Nova aula</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>'),
+  prog:()=>(UI.alTab==='lista'?'<button class="btn pri" data-act="anew">Nova aula</button>':
+    menuTopo([UI.user.role==='staff'?['expcfg','Horário de funcionamento']:null,
+              ['relTreinos','Relatório de treinos'],
+              ['amanha','Programação para amanhã']])+
+    '<button class="btn" data-act="anew">Nova aula</button><button class="btn pri" data-act="tnew" data-d="'+TODAY+'">Novo treino</button>'),
   cavalos:()=>{const h=UI.user.hid&&HIP();return (h?limChip(S.horses.length,hipLim(h).c):'')+'<button class="btn pri" data-act="hnew">Novo cavalo</button>'},
   croquis:()=>UI.cq?'<button class="btn" data-act="cqBack">Voltar à biblioteca</button>':'<button class="btn pri" data-act="cqnew">Novo croqui de salto</button>',
   provas:()=>'<button class="btn pri" data-act="pnew">Nova prova</button>',
@@ -1003,10 +1049,95 @@ views.prog=function(){
   const tabs='<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(UI.alTab!=='lista')+'" data-act="altab" data-t="grade">Semana</button><button role="tab" aria-selected="'+(UI.alTab==='lista')+'" data-act="altab" data-t="lista">Lista de aulas</button></div>';
   return tabs+(UI.alTab==='lista'?aulasLista():semanaHTML());
 };
+/* ---------- aulas fixas semanais e menu do topo ---------- */
+const DIA_LONGO=['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+function alunoAtivo(st){return !!st&&st.ativo!==false}
+function fixosDe(st){return (st&&Array.isArray(st.fixo))?st.fixo:[]}
+function fixoTxt(st){
+  const l=fixosDe(st);
+  if(!l.length)return '';
+  return l.map(f=>DIA_LONGO[+f.dow||0]+' '+(f.time||'')).join(' · ');
+}
+function aulasFixasDoDia(d){
+  const i=(dt(d).getDay()+6)%7,out=[];
+  (S.students||[]).forEach(st=>{
+    if(!alunoAtivo(st))return;
+    fixosDe(st).forEach(f=>{
+      if(+f.dow!==i)return;
+      if(f.desde&&d<f.desde)return;
+      if(S.aulas.some(a=>a.student===st.id&&a.date===d&&a.time===f.time))return;
+      out.push({id:'fx|'+st.id+'|'+f.dow+'|'+f.time+'|'+d,student:st.id,horse:f.horse||'',
+        date:d,time:f.time,instrutor:f.instrutor||'',tipo:f.tipo||'Aula fixa',
+        valor:+f.valor||0,status:'agendada',fixa:true});
+    });
+  });
+  return out;
+}
+function aulasEntre(ini,fim,stId){
+  const out=S.aulas.filter(a=>a.date>=ini&&a.date<=fim&&(!stId||a.student===stId));
+  let d=ini,guarda=0;
+  while(d<=fim&&guarda++<400){
+    aulasFixasDoDia(d).forEach(a=>{if(!stId||a.student===stId)out.push(a)});
+    d=addDays(d,1);
+  }
+  return out;
+}
+function materializarFixa(id){
+  const p=String(id||'').split('|');
+  if(p[0]!=='fx')return null;
+  const st=R(p[1]);if(!st)return null;
+  const hora=p[3],d=p[4];
+  let a=S.aulas.find(x=>x.student===st.id&&x.date===d&&x.time===hora);
+  if(a)return a;
+  const f=fixosDe(st).find(x=>String(x.dow)===p[2]&&x.time===hora)||{};
+  a={id:uid(),student:st.id,horse:f.horse||'',date:d,time:hora,
+     instrutor:f.instrutor||'',tipo:f.tipo||'Aula fixa',valor:+f.valor||0,status:'agendada',deFixa:true};
+  S.aulas.push(a);save();
+  return a;
+}
+function fixoRow(f){
+  return '<div class="row fxrow" style="gap:8px;align-items:flex-end;margin-bottom:8px">'+
+    '<label class="f" style="margin:0;max-width:160px">Dia da semana<select class="fxd">'+
+      DIA_LONGO.map((d,i)=>'<option value="'+i+'"'+((f&&+f.dow===i)?' selected':'')+'>'+d+'</option>').join('')+
+    '</select></label>'+
+    '<label class="f" style="margin:0;max-width:140px">Horário<input class="fxt" type="time" value="'+esc((f&&f.time)||'17:00')+'"></label>'+
+    '<button type="button" class="btn sm" data-act="fxdel">Remover</button></div>';
+}
+function blocoFixo(o){
+  const l=fixosDe(o);
+  return '<div class="note" style="margin:14px 0 8px"><b>Aula fixa na semana.</b> O aluno passa a aparecer na Programação toda semana nesse horário, sem precisar lançar aula por aula. Deixe vazio se ele não tem horário fixo.</div>'+
+    '<div id="s-fixos">'+(l.length?l.map(fixoRow).join(''):'')+'</div>'+
+    '<button type="button" class="btn sm" data-act="fxadd">+ adicionar horário fixo</button>'+
+    '<div class="fg" style="margin-top:12px">'+
+      fld('Tipo da aula fixa','s-ftipo',(l[0]&&l[0].tipo)||'Aula de salto','list',['Aula de salto','Aula de ginástica','Aula de adestramento','Aula de iniciação'])+
+      fld('Instrutor da aula fixa','s-finst',(l[0]&&l[0].instrutor)||'','select',[['','A definir']].concat(S.instrs.map(x=>[x.name,x.name])))+
+    '</div>';
+}
+function lerFixos(antigos){
+  const rows=[].slice.call(document.querySelectorAll('#s-fixos .fxrow'));
+  const tipo=V('s-ftipo')||'Aula de salto',inst=V('s-finst')||'';
+  const old=antigos||[];
+  return rows.map(r=>{
+    const dw=+r.querySelector('.fxd').value||0,hora=r.querySelector('.fxt').value||'';
+    if(!hora)return null;
+    const ant=old.find(x=>+x.dow===dw&&x.time===hora);
+    return {dow:dw,time:hora,tipo:tipo,instrutor:inst,horse:'',desde:(ant&&ant.desde)||TODAY};
+  }).filter(Boolean);
+}
+/* ---------- menu "Mais" do topo ---------- */
+function menuTopo(itens){
+  const l=itens.filter(Boolean);
+  if(!l.length)return '';
+  return '<div class="mwrap"><button class="btn" data-act="tmenu" aria-haspopup="true" aria-expanded="'+(UI.menu?'true':'false')+'">Mais ▾</button>'+
+    (UI.menu?'<div class="mpop" role="menu">'+l.map(x=>'<button role="menuitem" data-act="'+x[0]+'"'+(x[2]||'')+'>'+esc(x[1])+'</button>').join('')+'</div>':'')+
+    '</div>';
+}
+
 function agItens(d){
   const out=[];
   S.treinos.forEach(t=>{if(t.date===d)out.push({k:'t',o:t,time:t.time||'00:00'})});
   S.aulas.forEach(a=>{if(a.date===d&&a.status!=='cancelada')out.push({k:'a',o:a,time:a.time||'00:00'})});
+  aulasFixasDoDia(d).forEach(a=>out.push({k:'a',o:a,time:a.time||'00:00'}));
   return out.sort((x,y)=>x.time.localeCompare(y.time));
 }
 function agCard(it){
@@ -1015,6 +1146,7 @@ function agCard(it){
       (t.croqui&&CQ(t.croqui)?'<button class="pill" style="margin:-2px 0 5px" data-act="cqview" data-id="'+t.croqui+'">croqui: '+esc(CQ(t.croqui).name.slice(0,18))+'</button>':'');
   }
   const a=it.o;
+  if(a.fixa)return '<div class="tr au fx"><input type="checkbox" data-act="afixdone" data-id="'+a.id+'" aria-label="Aula realizada"><button data-act="afix" data-id="'+a.id+'"><b>'+a.time+' \u00b7 '+esc(stName(a.student).split(' ')[0])+'</b><span class="muted">'+esc(a.tipo)+(a.horse?' \u00b7 '+esc(hn(a.horse)):'')+'</span><em>fixa</em></button></div>';
   return '<div class="tr au'+(a.status==='realizada'?' done':'')+'"><input type="checkbox" data-act="adone" data-id="'+a.id+'" '+(a.status==='realizada'?'checked':'')+' aria-label="Aula realizada"><button data-act="aedit" data-id="'+a.id+'"><b>'+a.time+' \u00b7 '+esc(stName(a.student).split(' ')[0])+'</b><span class="muted">'+esc(a.tipo)+' \u00b7 '+esc(hn(a.horse))+'</span>'+(a.orig?'<em>remarcada</em>':'')+'</button></div>';
 }
 function semanaHTML(){
@@ -1030,10 +1162,10 @@ function semanaHTML(){
   const nt=days.map(d=>agItens(d));
   if(telaEstreita()){
     h+='<div class="agenda">'+days.map((d,i)=>{
-      const its=nt[i],aberto=c.dias[i]!==0;
-      const rot0=rot(c.ini*60);
+      const its=nt[i],dd=c.dias[i],aberto=!!dd.on;
+      const rot0=rot(dd.ini*60);
       return '<div class="ag'+(d===TODAY?' hoje':'')+(aberto?'':' fech')+'">'+
-        '<div class="agh"><b>'+DOW[i]+'</b><span>'+fmtS(d)+'</span>'+
+        '<div class="agh"><b>'+DOW[i]+'</b><span>'+fmtS(d)+(aberto?' \u00b7 '+faixaTxt(dd):'')+'</span>'+
           (aberto?(its.length?'<u>'+its.length+(its.length>1?' marcações':' marcação')+'</u>':'<u class="off">livre</u>'):'<u class="off">fechado</u>')+'</div>'+
         its.map(agCard).join('')+
         (aberto?'<div class="addw"><button class="addt" data-act="tnew" data-d="'+d+'" data-t="'+rot0+'">+ treino</button><button class="addt" data-act="anew" data-d="'+d+'" data-t="'+rot0+'">+ aula</button></div>':'')+
@@ -1046,18 +1178,18 @@ function semanaHTML(){
   if(wkI.some(x=>hr(x.time)==='cedo'))rows.push(['cedo','Antes das '+pad(c.ini)+':00',rot(Math.max(0,c.ini*60-60))]);
   hrs.forEach(x=>rows.push([x,x,x]));
   if(wkI.some(x=>hr(x.time)==='tarde'))rows.push(['tarde','Ap\u00f3s '+pad(c.fim)+':00',rot(Math.min(23*60+30,c.fim*60+60))]);
-  const lbl=i=>{if(!c.dias[i])return '<u class="off">fechado</u>';
+  const lbl=i=>{if(!c.dias[i].on)return '<u class="off">fechado</u>';
     const a=nt[i].filter(x=>x.k==='a').length,t=nt[i].filter(x=>x.k==='t').length;
     if(!a&&!t)return '<u class="off">livre</u>';
     return '<u>'+[a?a+(a>1?' aulas':' aula'):'',t?t+(t>1?' treinos':' treino'):''].filter(Boolean).join(' \u00b7 ')+'</u>'};
   h+='<div class="tw nolim"><table class="wk"><thead><tr><th>Hor\u00e1rio</th>'+days.map((d,i)=>
-      '<th class="hd'+(d===TODAY?' today':'')+(c.dias[i]?'':' fech')+'">'+DOW[i].toUpperCase()+
-      '<i>'+fmtS(d)+'</i>'+lbl(i)+'</th>').join('')+'</tr></thead><tbody>';
+      '<th class="hd'+(d===TODAY?' today':'')+(c.dias[i].on?'':' fech')+'">'+DOW[i].toUpperCase()+
+      '<i>'+fmtS(d)+'</i>'+lbl(i)+(c.dias[i].on?'<s>'+faixaTxt(c.dias[i])+'</s>':'')+'</th>').join('')+'</tr></thead><tbody>';
   rows.forEach(r=>{
     h+='<tr><td class="hz"><b>'+r[1]+'</b></td>';
     days.forEach((d,i)=>{
       const its=nt[i].filter(x=>hr(x.time)===r[0]);
-      const aberto=c.dias[i]!==0;
+      const aberto=(r[0]==='cedo'||r[0]==='tarde')?false:abreEm(c,i,r[0]);
       h+='<td class="cell'+(d===TODAY?' tdy':'')+(aberto?'':' fech')+'">'+its.map(agCard).join('')+
         (aberto||its.length?'<div class="addw"><button class="addt" data-act="tnew" data-t="'+r[2]+'" data-d="'+d+'">+ treino</button><button class="addt" data-act="anew" data-t="'+r[2]+'" data-d="'+d+'">+ aula</button></div>':'')+'</td>';
     });
@@ -1960,7 +2092,7 @@ const exPill=x=>'<span class="pill '+(x.status==='normal'?'ok':x.status==='alter
 /* ---------- portal do aluno ---------- */
 views.s_inicio=function(){
   const st=me(),hr=myHorse();
-  const prox=S.aulas.filter(a=>a.student===st.id&&a.status==='agendada'&&a.date>=TODAY).sort(byTime);
+  const prox=aulasEntre(TODAY,addDays(TODAY,60),st.id).filter(a=>a.status==='agendada').sort(byTime);
   const pend=S.pag.filter(p=>p.student===st.id&&(p.status==='pendente'||p.status==='recusado')).sort((a,b)=>a.venc.localeCompare(b.venc));
   const aguard=S.pag.filter(p=>p.student===st.id&&p.status==='enviado');
   const n=prox[0];
@@ -1973,7 +2105,7 @@ views.s_inicio=function(){
    '<div class="card"><h3>Pagamentos</h3>'+(pend.length||aguard.length?'<ul class="hz-list">'+pend.concat(aguard).map(p=>'<li><span><b>'+esc(p.desc)+'</b> · '+monthLabel(p.ref)+'<br><span class="muted sm">vence em '+fmtD(p.venc)+' · '+brl(p.valor)+'</span></span>'+payPill(p)+'</li>').join('')+'</ul><div class="row" style="margin-top:12px"><button class="btn pri" data-act="nav" data-v="s_pag">Ir para pagamentos</button></div>':'<p class="muted">Tudo certo, nenhum pagamento pendente.</p>')+'</div></div>';
 };
 views.s_aulas=function(){
-  const st=me();const all=S.aulas.filter(a=>a.student===st.id);
+  const st=me();const all=S.aulas.filter(a=>a.student===st.id).concat(aulasEntre(TODAY,addDays(TODAY,60),st.id).filter(a=>a.fixa));
   const myR=S.remarc.filter(r=>r.student===st.id).sort((a,b)=>b.at-a.at);
   const T=[['prox','Próximas'],['hist','Histórico'],['remarc','Remarcações'+(myR.some(r=>r.status==='pendente')?' ●':'')]];
   const tabs='<div class="tabs" role="tablist">'+T.map(t=>'<button role="tab" aria-selected="'+(UI.aTab===t[0])+'" data-act="atab" data-t="'+t[0]+'">'+t[1]+'</button>').join('')+'</div>';
@@ -1985,8 +2117,8 @@ views.s_aulas=function(){
   const list=UI.aTab==='prox'?all.filter(a=>a.date>=TODAY&&a.status!=='realizada').sort(byTime):all.filter(a=>a.date<TODAY||a.status==='realizada').sort((a,b)=>byTime(b,a));
   return tabs+(list.length?'<div class="tw"><table><thead><tr><th>Quando</th><th>Aula</th><th>Cavalo</th><th>Instrutor</th><th>Situação</th><th></th></tr></thead><tbody>'+
    list.map(a=>{const pr=S.remarc.find(r=>r.aula===a.id&&r.status==='pendente');
-    return '<tr><td><b>'+whenTxt(a)+'</b>'+(a.orig?' <span class="pill yl">remarcada'+(a.rem==='pendente'?' · aguardando confirmação':'')+'</span>':'')+'</td><td>'+esc(a.tipo)+(a.nota?'<div class="note"><b>Observação do instrutor:</b> '+esc(a.nota)+'</div>':'')+'</td><td>'+esc(hn(a.horse))+'</td><td>'+esc(a.instrutor)+'</td><td>'+aulaPill(a)+'</td><td class="n" style="white-space:nowrap">'+
-     (a.status==='agendada'?(pr?'<span class="pill warn">Remarcação em análise</span> ':(canResched(a)?'<button class="btn sm" data-act="remarcar" data-id="'+a.id+'">Remarcar</button> ':'<button class="btn sm" disabled title="Só é possível remarcar até 1 hora antes da aula">Remarcar</button> '))+'<button class="btn sm danger" data-act="acancel" data-id="'+a.id+'">Cancelar</button>':'')+'</td></tr>'}).join('')+'</tbody></table></div>'+(UI.aTab==='prox'?'<p class="muted sm">Você pode pedir remarcação até 1 hora antes da aula, escolhendo um dos horários liberados pela hípica.</p>':''):empty(UI.aTab==='prox'?'Nenhuma aula agendada.':'Sem aulas no histórico.'));
+    return '<tr><td><b>'+whenTxt(a)+'</b>'+(a.fixa?' <span class="pill">horário fixo</span>':'')+(a.orig?' <span class="pill yl">remarcada'+(a.rem==='pendente'?' · aguardando confirmação':'')+'</span>':'')+'</td><td>'+esc(a.tipo)+(a.nota?'<div class="note"><b>Observação do instrutor:</b> '+esc(a.nota)+'</div>':'')+'</td><td>'+esc(hn(a.horse))+'</td><td>'+esc(a.instrutor)+'</td><td>'+aulaPill(a)+'</td><td class="n" style="white-space:nowrap">'+
+     (a.fixa?'<span class="muted sm">aula da sua rotina</span>':a.status==='agendada'?(pr?'<span class="pill warn">Remarcação em análise</span> ':(canResched(a)?'<button class="btn sm" data-act="remarcar" data-id="'+a.id+'">Remarcar</button> ':'<button class="btn sm" disabled title="Só é possível remarcar até 1 hora antes da aula">Remarcar</button> '))+'<button class="btn sm danger" data-act="acancel" data-id="'+a.id+'">Cancelar</button>':'')+'</td></tr>'}).join('')+'</tbody></table></div>'+(UI.aTab==='prox'?'<p class="muted sm">Você pode pedir remarcação até 1 hora antes da aula, escolhendo um dos horários liberados pela hípica.</p>':''):empty(UI.aTab==='prox'?'Nenhuma aula agendada.':'Sem aulas no histórico.'));
 };
 views.s_pag=function(){
   const st=me();const list=S.pag.filter(p=>p.student===st.id).sort((a,b)=>b.ref.localeCompare(a.ref));
@@ -3115,7 +3247,7 @@ function pagCard(st){
 views.alunos=function(){
   const fin=UI.user.role==='staff';
   const rows=S.students.length?S.students.map(a=>{const hr=S.horses.find(h=>h.studentId===a.id);const pg=S.pag.find(p=>p.student===a.id&&p.ref===TODAY.slice(0,7));
-    const ua=ultimoAcesso(a.id);return '<tr><td><b>'+esc(a.name)+'</b>'+(ehMenor(a)?' '+pillAut(a):'')+'<br><span class="muted sm">'+esc(a.tel||'')+'</span></td><td>'+esc(a.nivel||'—')+'</td>'+(fin?'<td class="sm">'+(ua?((Date.now()-new Date(ua).getTime())<ONLINE_MS?'<span class="pill ok">online agora</span>':fmtS(ymd(new Date(ua)))):'<span class="muted">nunca entrou</span>')+'</td>':'')+(fin?'<td class="sm">'+esc(a.email)+'</td><td>'+esc(a.plano)+'<br><span class="muted sm">'+brl(a.valor)+'/mês</span></td>':'')+'<td>'+(hr?esc(hr.name):'<span class="muted">—</span>')+'</td><td class="n">'+S.aulas.filter(x=>x.student===a.id&&x.date.slice(0,7)===TODAY.slice(0,7)&&x.status!=='cancelada').length+'</td><td class="n">'+S.provas.filter(p=>p.rider===a.id&&p.done).length+'</td>'+(fin?'<td>'+(pg?payPill(pg):'<span class="muted">Não gerada</span>')+'</td><td class="n">'+chipAcesso(a.email)+' <button class="btn sm" data-act="acesso" data-e="'+esc(a.email)+'" data-n="'+esc(a.name)+'" data-p="aluno" data-r="'+a.id+'">Acesso</button> <button class="btn sm" data-act="sedit" data-id="'+a.id+'">Editar</button></td>':'')+'</tr>'}).join(''):'<tr><td colspan="9">'+empty('Nenhum aluno cadastrado.')+'</td></tr>';
+    const ua=ultimoAcesso(a.id);return '<tr><td><b>'+esc(a.name)+'</b>'+(alunoAtivo(a)?'':' <span class="pill">inativo</span>')+(ehMenor(a)?' '+pillAut(a):'')+'<br><span class="muted sm">'+esc(fixoTxt(a)||a.tel||'')+'</span></td><td>'+esc(a.nivel||'—')+'</td>'+(fin?'<td class="sm">'+(ua?((Date.now()-new Date(ua).getTime())<ONLINE_MS?'<span class="pill ok">online agora</span>':fmtS(ymd(new Date(ua)))):'<span class="muted">nunca entrou</span>')+'</td>':'')+(fin?'<td class="sm">'+esc(a.email)+'</td><td>'+esc(a.plano)+'<br><span class="muted sm">'+brl(a.valor)+'/mês</span></td>':'')+'<td>'+(hr?esc(hr.name):'<span class="muted">—</span>')+'</td><td class="n">'+S.aulas.filter(x=>x.student===a.id&&x.date.slice(0,7)===TODAY.slice(0,7)&&x.status!=='cancelada').length+'</td><td class="n">'+S.provas.filter(p=>p.rider===a.id&&p.done).length+'</td>'+(fin?'<td>'+(pg?payPill(pg):'<span class="muted">Não gerada</span>')+'</td><td class="n">'+chipAcesso(a.email)+' <button class="btn sm" data-act="acesso" data-e="'+esc(a.email)+'" data-n="'+esc(a.name)+'" data-p="aluno" data-r="'+a.id+'">Acesso</button> <button class="btn sm" data-act="sedit" data-id="'+a.id+'">Editar</button></td>':'')+'</tr>'}).join(''):'<tr><td colspan="9">'+empty('Nenhum aluno cadastrado.')+'</td></tr>';
   const pend=pendentesAut();
   const avisoP=(fin&&pend.length)?'<div class="note bad" style="margin-bottom:14px"><b>'+pend.length+' aluno'+(pend.length>1?'s menores sem autorização do responsável':' menor sem autorização do responsável')+':</b> '+esc(pend.map(x=>x.name).join(', '))+'. Enquanto a autorização não for registrada na ficha, a conta não publica na Comunidade.</div>':'';
   return avisoP+'<div class="tw"><table><thead><tr><th>Aluno</th><th>Altura</th>'+(fin?'<th>Último acesso</th>':'')+(fin?'<th>Acesso</th><th>Plano</th>':'')+'<th>Cavalo próprio</th><th class="n">Aulas no mês</th><th class="n">Provas</th>'+(fin?'<th>Mensalidade atual</th><th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
@@ -3129,11 +3261,13 @@ function alunoModal(a){
     fld('Data de nascimento','s-nasc',o.nasc||'','date')+
     fld('Cavalo próprio (libera o painel do cavalo)','s-h',cur,'select',[['','Sem cavalo próprio']].concat(S.horses.filter(h=>!h.studentId||h.studentId===(a&&a.id)).map(h=>[h.id,h.name])),'full')+'</div>'+
     '<div id="s-menor" style="margin-top:4px">'+blocoMenor(o)+'</div>'+
+    '<label class="chk"><input type="checkbox" id="s-ativo"'+(o.ativo===false?'':' checked')+'><span>Aluno ativo. Desmarque para tirar da Programação sem apagar o histórico.</span></label>'+
+    blocoFixo(o)+
     '<p class="muted sm">Para alunos menores de idade, use o e-mail do responsável. O acesso do aluno ao portal é liberado pelo EquiAltaris.</p><div class="err" id="lm-err" role="alert"></div>',
    after:function(){const d=document.getElementById('s-nasc');if(d)d.addEventListener('change',function(){
      const box=document.getElementById('s-menor');if(box)box.innerHTML=blocoMenor({nasc:d.value,resp:(a&&a.resp)||{},aut:(a&&a.aut)||{}})})},
    del:isNew?null:()=>{S.horses.forEach(h=>{if(h.studentId===a.id)delete h.studentId});S.students=S.students.filter(x=>x!==a);S.aulas=S.aulas.filter(x=>x.student!==a.id);S.pag=S.pag.filter(x=>x.student!==a.id)},
-   save:()=>{const v={name:V('s-n').trim(),email:V('s-e').trim().toLowerCase(),tel:V('s-t'),nivel:V('s-n2'),plano:V('s-pl'),valor:+V('s-v')||0,nasc:V('s-nasc')||''};
+   save:()=>{const v={name:V('s-n').trim(),email:V('s-e').trim().toLowerCase(),tel:V('s-t'),nivel:V('s-n2'),plano:V('s-pl'),valor:+V('s-v')||0,nasc:V('s-nasc')||'',ativo:CK('s-ativo'),fixo:lerFixos(a&&a.fixo)};
      if(!v.name||!EMAIL_RE.test(v.email)){$('#lm-err').textContent='Informe o nome e um e-mail válido.';return false}
      if(ehMenor(v)){
        v.resp={nome:V('s-rn').trim(),email:V('s-re').trim().toLowerCase(),tel:V('s-rt'),par:V('s-rp')};
@@ -3150,10 +3284,10 @@ function alunoModal(a){
 }
 function aulasLista(){
   const sel='<label class="f" style="max-width:240px;margin-bottom:14px">Aluno<select data-chg="alFil"><option value="">Todos</option>'+S.students.map(a=>'<option value="'+a.id+'"'+(UI.alFil===a.id?' selected':'')+'>'+esc(a.name)+'</option>').join('')+'</select></label>';
-  const list=S.aulas.filter(a=>!UI.alFil||a.student===UI.alFil).sort(byTime).filter(a=>a.date>=addDays(TODAY,-14)&&a.date<=addDays(TODAY,21));
+  const list=aulasEntre(addDays(TODAY,-14),addDays(TODAY,21),UI.alFil||'').sort(byTime);
   const nm=id=>(S.students.find(x=>x.id===id)||{name:'—'}).name;
   return sel+(list.length?'<div class="tw"><table><thead><tr><th>Quando</th><th>Aluno</th><th>Aula</th><th>Cavalo</th><th>Instrutor</th><th>Situação</th><th></th></tr></thead><tbody>'+
-   list.map(a=>'<tr><td><b>'+whenTxt(a)+'</b>'+(a.orig?' <span class="pill yl">remarcada</span>':'')+'</td><td>'+esc(nm(a.student))+'</td><td>'+esc(a.tipo)+(a.nota?'<div class="note">'+esc(a.nota)+'</div>':'')+'</td><td>'+esc(hn(a.horse))+'</td><td>'+esc(a.instrutor)+'</td><td>'+aulaPill(a)+'</td><td class="n"><button class="btn sm" data-act="aedit" data-id="'+a.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div><p class="muted sm">Mostrando de 14 dias atrás até 21 dias à frente.</p>':empty('Nenhuma aula neste período.'));
+   list.map(a=>'<tr><td><b>'+whenTxt(a)+'</b>'+(a.fixa?' <span class="pill">fixa</span>':'')+(a.orig?' <span class="pill yl">remarcada</span>':'')+'</td><td>'+esc(nm(a.student))+'</td><td>'+esc(a.tipo)+(a.nota?'<div class="note">'+esc(a.nota)+'</div>':'')+'</td><td>'+esc(hn(a.horse))+'</td><td>'+esc(a.instrutor)+'</td><td>'+aulaPill(a)+'</td><td class="n"><button class="btn sm" data-act="'+(a.fixa?'afix':'aedit')+'" data-id="'+a.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div><p class="muted sm">Mostrando de 14 dias atrás até 21 dias à frente.</p>':empty('Nenhuma aula neste período.'));
 };
 function aulaModal(a,pre){
   const isNew=!a;const q=pre||{};const o=a||{student:S.students[0]&&S.students[0].id,horse:S.horses[0]&&S.horses[0].id,date:q.date||TODAY,time:q.time||'18:00',instrutor:'Instrutor Demo',tipo:'Aula de salto',valor:80,status:'agendada'};
@@ -3281,6 +3415,15 @@ const act={
   relprint:()=>{try{window.print()}catch(e){}},
   acetab:d=>{ACETAB=d.k;ACEERR='';telaAceite()},
   contab:d=>{CONTAB=d.k;SENHAOK='';render()},
+  tmenu:()=>{UI.menu=!UI.menu;render()},
+  afix:d=>{const a=materializarFixa(d.id);if(a){render();aulaModal(a)}},
+  afixdone:d=>{const a=materializarFixa(d.id);if(a){a.status='realizada';save();render()}},
+  fxadd:(d,b)=>{const box=document.getElementById('s-fixos');if(box)box.insertAdjacentHTML('beforeend',fixoRow(null))},
+  fxdel:(d,b)=>{const r=b.closest('.fxrow');if(r)r.remove()},
+  excopy:()=>{const on=document.getElementById('ex-on0'),i=V('ex-i0'),f=V('ex-f0');
+    for(let k=1;k<7;k++){const c=document.getElementById('ex-on'+k);if(c)c.checked=on?on.checked:false;
+      const a=document.getElementById('ex-i'+k),b2=document.getElementById('ex-f'+k);
+      if(a)a.value=i;if(b2)b2.value=f}},
   snsave:()=>{
     const a=V('sn-a'),b=V('sn-b'),e=$('#sn-err');
     const err=m=>{if(e)e.textContent=m};
@@ -3373,7 +3516,9 @@ function horseModal(h){const isNew=!h;const o=h||{name:'',owner:'',nasc:'',salto
 
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');
-  if(!b||b.closest('#stg'))return;
+  if(!b){if(UI.menu&&!e.target.closest('.mwrap')){UI.menu=false;render()}return}
+  if(b.closest('#stg'))return;
+  if(UI.menu&&b.dataset.act!=='tmenu')UI.menu=false;
   if(b.tagName==='INPUT'&&b.type==='checkbox'){act[b.dataset.act](b.dataset,b,e);return}
   if(act[b.dataset.act])act[b.dataset.act](b.dataset,b,e);
 });
