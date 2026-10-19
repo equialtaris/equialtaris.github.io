@@ -501,7 +501,7 @@ const INSUMOS=['Utilização do ambiente','Baia','Piquete','Feno','Tratador','Ra
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261019-1810';
+const APPV='20261019-2010';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -843,7 +843,7 @@ function alunoPorNome(n){
 }
 
 const UI={com:null,lgMode:'',ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'grade',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
-  cobOwner:'',cobMonth:TODAY.slice(0,7),repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true,zoom:1};
+  cobOwner:'',cobMonth:TODAY.slice(0,7),fecMes:TODAY.slice(0,7),repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true,zoom:1};
 
 /* ---------- ícones ---------- */
 const IC={
@@ -1862,8 +1862,9 @@ function penModal(p){
 }
 
 views.fin=function(){
-  const tabs='<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(UI.finTab==='gastos')+'" data-act="ftab" data-t="gastos">Gastos</button><button role="tab" aria-selected="'+(UI.finTab==='cob')+'" data-act="ftab" data-t="cob">Cobranças</button></div>';
+  const tabs='<div class="tabs" role="tablist"><button role="tab" aria-selected="'+(UI.finTab==='gastos')+'" data-act="ftab" data-t="gastos">Gastos</button><button role="tab" aria-selected="'+(UI.finTab==='cob')+'" data-act="ftab" data-t="cob">Cobranças</button><button role="tab" aria-selected="'+(UI.finTab==='fech')+'" data-act="ftab" data-t="fech">Ganhos e custos</button></div>';
   if(UI.finTab==='cob')return tabs+cobView();
+  if(UI.finTab==='fech')return tabs+fechView();
   const list=S.fin.filter(f=>(!UI.finHorse||f.horse===UI.finHorse)&&(!UI.finForn||f.forn===UI.finForn)).sort((a,b)=>b.pag.localeCompare(a.pag));
   const tot=list.reduce((s,f)=>s+total(f),0),pg=list.filter(f=>f.pago).reduce((s,f)=>s+total(f),0);
   const forns=[...new Set(S.fin.map(f=>f.forn))].sort();
@@ -1873,6 +1874,125 @@ views.fin=function(){
    (list.length?'<div class="tw"><table><thead><tr><th>Pagamento</th><th>Fornecedor</th><th>Insumo</th><th>Cavalo</th><th>Descrição</th><th class="n">Qtd</th><th class="n">Unitário</th><th class="n">Total</th><th>Situação</th><th></th></tr></thead><tbody>'+
     list.map(f=>'<tr><td>'+fmtD(f.pag)+'</td><td>'+esc(f.forn)+'</td><td>'+esc(f.ins)+'</td><td>'+esc(f.horse?hn(f.horse):'Geral')+'</td><td>'+esc(f.desc)+'</td><td class="n">'+f.qtd+'</td><td class="n">'+brl(f.unit)+'</td><td class="n"><b>'+brl(total(f))+'</b></td><td><button class="pill '+(f.pago?'ok':'warn')+'" data-act="fpago" data-id="'+f.id+'" title="Alternar situação">'+(f.pago?'Pago':'Em aberto')+'</button></td><td><button class="btn sm" data-act="fedit" data-id="'+f.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div>':empty('Nenhum lançamento.'));
 };
+/* ---------- fechamento do mês: ganhos e custos ---------- */
+async function saveBlob(blob,filename){
+  try{const dl=window.claude&&await window.claude.use('downloads');if(dl){await dl.save({filename:filename,data:blob});return}}
+  catch(e){if(e&&(e.code==='declined'||e.code==='rate_limited'))return}
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+}
+function fechamento(m){
+  const mens=S.pag.filter(p=>p.ref===m);
+  const vMens=mens.reduce((s,p)=>s+(+p.valor||0),0);
+  const rMens=mens.filter(p=>p.status==='confirmado').reduce((s,p)=>s+(+p.valor||0),0);
+  const prop=partHorses().map(h=>({h:h,r:resumoMes(h.id,m)})).filter(x=>x.r.tot>0);
+  const vProp=prop.reduce((s,x)=>s+x.r.tot,0);
+  const rProp=prop.reduce((s,x)=>s+(x.r.tot-x.r.aberto),0);
+  const saidas=S.fin.filter(f=>f.comp===m).sort((a,b)=>String(a.pag).localeCompare(String(b.pag)));
+  const vSai=saidas.reduce((s,f)=>s+total(f),0);
+  const rSai=saidas.filter(f=>f.pago).reduce((s,f)=>s+total(f),0);
+  const porIns={},porForn={};
+  saidas.forEach(f=>{porIns[f.ins||'—']=(porIns[f.ins||'—']||0)+total(f);porForn[f.forn||'—']=(porForn[f.forn||'—']||0)+total(f)});
+  return {m:m,mens:mens,prop:prop,saidas:saidas,porIns:porIns,porForn:porForn,
+    vMens:vMens,rMens:rMens,vProp:vProp,rProp:rProp,
+    vEnt:vMens+vProp,rEnt:rMens+rProp,vSai:vSai,rSai:rSai,
+    res:(vMens+vProp)-vSai,resCaixa:(rMens+rProp)-rSai};
+}
+function mesesDoAno(ano){
+  const l=[];for(let i=1;i<=12;i++)l.push(ano+'-'+pad(i));return l;
+}
+function csvFech(m){
+  const f=fechamento(m),sep=';';
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const num=v=>'"'+(+v||0).toFixed(2).replace('.',',')+'"';
+  const L=[['Tipo','Data','Competência','Origem ou fornecedor','Categoria','Cavalo','Descrição','Quantidade','Valor unitário','Valor total','Situação'].map(q).join(sep)];
+  f.mens.forEach(p=>L.push(['Entrada',p.paidAt?fmtD(p.paidAt):'',monthLabel(p.ref),stName(p.student),'Mensalidade de aluno','',p.desc||'Mensalidade',1,p.valor,p.valor,
+    p.status==='confirmado'?'Recebido':p.status==='enviado'?'A conferir':'Em aberto'].map((v,i)=>(i>=7&&i<=9)?num(v):q(v)).join(sep)));
+  f.prop.forEach(x=>x.r.l.forEach(y=>L.push(['Entrada',y.pag?fmtD(y.pag):'',monthLabel(m),x.h.owner||x.h.name,'Conta de proprietário · '+(y.ins||''),x.h.name,y.desc||y.ins,y.qtd||1,y.unit,total(y),
+    y.pago?'Recebido':'Em aberto'].map((v,i)=>(i>=7&&i<=9)?num(v):q(v)).join(sep))));
+  f.saidas.forEach(y=>L.push(['Saída',y.pag?fmtD(y.pag):'',monthLabel(y.comp),y.forn||'',y.ins||'',y.horse?hn(y.horse):'Geral',y.desc||'',y.qtd||1,y.unit,total(y),
+    y.pago?'Pago':'Em aberto'].map((v,i)=>(i>=7&&i<=9)?num(v):q(v)).join(sep)));
+  L.push('');
+  L.push([q('Resumo'),q(''),q(''),q(''),q(''),q(''),q(''),q(''),q(''),q(''),q('')].join(sep));
+  [['Entradas previstas',f.vEnt],['Entradas recebidas',f.rEnt],['Saídas lançadas',f.vSai],['Saídas pagas',f.rSai],['Resultado do mês',f.res],['Resultado de caixa',f.resCaixa]]
+    .forEach(r=>L.push([q(r[0]),q(''),q(''),q(''),q(''),q(''),q(''),q(''),q(''),num(r[1]),q('')].join(sep)));
+  const blob=new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  return saveBlob(blob,'lancamentos-'+slug((HIP()||{}).fantasia||'hipica')+'-'+m+'.csv');
+}
+function relContabil(m){
+  const f=fechamento(m),hip=(HIP()||{}).fantasia||'',d=PDF(hip,'Ganhos e custos');
+  d.h1('Ganhos e custos de '+monthLabel(m),hip+(((HIP()||{}).cnpj)?' · CNPJ '+HIP().cnpj:'')+' · emitido em '+fmtD(TODAY));
+  d.kpis([['Entradas',brl(f.vEnt),GREEN],['Saídas',brl(f.vSai),RED],
+          ['Resultado',brl(f.res),f.res>=0?GREEN:RED],['Recebido no mês',brl(f.rEnt)]]);
+  d.h2('Entradas');
+  d.table([{t:'Origem',w:230},{t:'Previsto',w:90,a:'r'},{t:'Recebido',w:90,a:'r'},{t:'Em aberto',w:90,a:'r'}],
+    [[{t:'Mensalidades de alunos',b:1},brl(f.vMens),brl(f.rMens),brl(f.vMens-f.rMens)],
+     [{t:'Contas de proprietários',b:1},brl(f.vProp),brl(f.rProp),brl(f.vProp-f.rProp)],
+     [{t:'Total',b:1},{t:brl(f.vEnt),b:1},{t:brl(f.rEnt),b:1},{t:brl(f.vEnt-f.rEnt),b:1}]]);
+  d.h2('Mensalidades de alunos');
+  d.table([{t:'Aluno',w:200},{t:'Vencimento',w:80},{t:'Situação',w:90},{t:'Valor',w:80,a:'r'}],
+    f.mens.map(p=>[{t:stName(p.student),b:1},p.venc?fmtD(p.venc):'—',pagStat(p),brl(p.valor)]),
+    'Nenhuma mensalidade no mês.');
+  d.h2('Contas de proprietários');
+  d.table([{t:'Cavalo',w:140},{t:'Proprietário',w:150},{t:'Em aberto',w:85,a:'r'},{t:'Total',w:85,a:'r'}],
+    f.prop.map(x=>[{t:x.h.name,b:1},x.h.owner||'—',brl(x.r.aberto),{t:brl(x.r.tot),b:1}]),
+    'Nenhum cavalo particular com conta no mês.');
+  d.pageBreak();
+  d.h1('Saídas de '+monthLabel(m),'Lançamentos do Financeiro por competência');
+  d.h2('Por categoria');
+  d.table([{t:'Categoria',w:300},{t:'Valor',w:110,a:'r'}],
+    Object.keys(f.porIns).sort((a,b)=>f.porIns[b]-f.porIns[a]).map(k=>[{t:k,b:1},brl(f.porIns[k])]),
+    'Nenhuma saída no mês.');
+  d.h2('Por fornecedor');
+  d.table([{t:'Fornecedor',w:300},{t:'Valor',w:110,a:'r'}],
+    Object.keys(f.porForn).sort((a,b)=>f.porForn[b]-f.porForn[a]).map(k=>[{t:k,b:1},brl(f.porForn[k])]),
+    'Nenhuma saída no mês.');
+  d.h2('Lançamentos');
+  d.table([{t:'Pago em',w:58},{t:'Fornecedor',w:105},{t:'Categoria',w:95},{t:'Cavalo',w:80},{t:'Descrição',w:120},{t:'Valor',w:65,a:'r'},{t:'Situação',w:60}],
+    f.saidas.map(x=>[x.pag?fmtD(x.pag):'—',x.forn||'—',x.ins||'—',x.horse?hn(x.horse):'Geral',x.desc||'',brl(total(x)),
+      x.pago?{t:'Pago',c:GREEN,b:1}:{t:'Em aberto',c:AMBER,b:1}]),
+    'Nenhum lançamento no mês.');
+  d.gap&&d.gap(6);
+  d.p('Observação para a contabilidade: itens comprados pela hípica e repassados ao proprietário de cavalo particular aparecem nas duas colunas — como saída, no pagamento ao fornecedor, e como entrada, na conta do proprietário. A mensalidade fixa de cada cavalo particular vem do cadastro e é reconhecida por competência.',8.5,GREY);
+  return savePDF(d,'ganhos-e-custos-'+slug(hip)+'-'+m+'.pdf');
+}
+function fechView(){
+  const m=UI.fecMes||TODAY.slice(0,7);
+  const f=fechamento(m),ano=m.slice(0,4);
+  const barra='<div class="row" style="margin-bottom:14px;align-items:flex-end">'+
+    '<label class="f" style="min-width:180px">Competência<input type="month" value="'+m+'" data-chg="fecMes"></label>'+
+    '<button class="btn brass" data-act="fecPdf">Relatório para a contabilidade</button>'+
+    '<button class="btn" data-act="fecCsv">Lançamentos em CSV</button></div>';
+  const kpi='<div class="grid g4" style="margin-bottom:16px">'+
+    '<div class="card kpi"><span>Entradas</span><b style="color:var(--ok)">'+brl(f.vEnt)+'</b><small>'+brl(f.rEnt)+' já recebido</small></div>'+
+    '<div class="card kpi"><span>Saídas</span><b style="color:var(--bad)">'+brl(f.vSai)+'</b><small>'+brl(f.rSai)+' já pago</small></div>'+
+    '<div class="card kpi"><span>Resultado</span><b style="color:var(--'+(f.res>=0?'ok':'bad')+')">'+brl(f.res)+'</b><small>por competência</small></div>'+
+    '<div class="card kpi"><span>Caixa do mês</span><b>'+brl(f.resCaixa)+'</b><small>recebido menos pago</small></div></div>';
+  const linhas=(obj)=>{const ks=Object.keys(obj).sort((a,b)=>obj[b]-obj[a]);
+    if(!ks.length)return '<p class="muted" style="margin:0">Nada no mês.</p>';
+    const mx=Math.max.apply(null,ks.map(k=>obj[k]));
+    return '<ul class="barras">'+ks.map(k=>linhaBarra(k,obj[k],mx,'',brl(obj[k]))).join('')+'</ul>'};
+  const ent='<div class="card"><h3>De onde veio</h3><ul class="hz-list">'+
+    '<li><span>Mensalidades de alunos</span><b>'+brl(f.vMens)+'</b></li>'+
+    '<li><span>Contas de proprietários</span><b>'+brl(f.vProp)+'</b></li>'+
+    '<li><b>Total</b><b>'+brl(f.vEnt)+'</b></li></ul>'+
+    (f.prop.length?'<p class="muted sm" style="margin:10px 0 4px">Por cavalo particular</p><ul class="hz-list">'+
+      f.prop.map(x=>'<li><span>'+esc(x.h.name)+' <span class="muted">· '+esc(x.h.owner||'—')+'</span></span><b>'+brl(x.r.tot)+'</b></li>').join('')+'</ul>':'')+
+    '</div>';
+  const sai='<div class="card"><h3>Para onde foi</h3>'+linhas(f.porIns)+'</div>';
+  const forn='<div class="card"><h3>Por fornecedor</h3>'+linhas(f.porForn)+'</div>';
+  const meses=mesesDoAno(ano).map(k=>{const x=fechamento(k);return {k:k,e:x.vEnt,s:x.vSai,r:x.res}}).filter(x=>x.e||x.s);
+  const tab=meses.length?'<div class="tw"><table><thead><tr><th>Mês</th><th class="n">Entradas</th><th class="n">Saídas</th><th class="n">Resultado</th></tr></thead><tbody>'+
+    meses.map(x=>'<tr'+(x.k===m?' class="secrow"':'')+'><td><b>'+monthLabel(x.k)+'</b></td><td class="n">'+brl(x.e)+'</td><td class="n">'+brl(x.s)+'</td><td class="n"><b style="color:var(--'+(x.r>=0?'ok':'bad')+')">'+brl(x.r)+'</b></td></tr>').join('')+
+    '<tr><td><b>Ano de '+ano+'</b></td><td class="n"><b>'+brl(meses.reduce((s,x)=>s+x.e,0))+'</b></td><td class="n"><b>'+brl(meses.reduce((s,x)=>s+x.s,0))+'</b></td><td class="n"><b>'+brl(meses.reduce((s,x)=>s+x.r,0))+'</b></td></tr>'+
+    '</tbody></table></div>':empty('Sem movimento em '+ano+'.');
+  return barra+kpi+'<div class="grid g2" style="margin-bottom:16px">'+ent+sai+'</div>'+
+    '<div style="margin-bottom:16px">'+forn+'</div>'+
+    '<h3 style="margin:0 0 10px">Mês a mês de '+ano+'</h3>'+tab+
+    '<p class="muted sm" style="margin-top:12px">O que a hípica compra e repassa ao dono de cavalo particular conta dos dois lados: como saída no pagamento ao fornecedor e como entrada na conta do proprietário. O resultado é por competência; o caixa é o que efetivamente entrou menos o que já foi pago.</p>';
+}
+
 function finModal(f,pre){
   const isNew=!f;const o=f||Object.assign({forn:'',ins:'Serviços',horse:'',desc:'',pag:TODAY,comp:TODAY.slice(0,7),unit:'',qtd:1,pago:false},pre||{});
   modal({wide:true,title:isNew?'Novo lançamento':'Editar lançamento',
@@ -1944,9 +2064,13 @@ const ehPart=h=>!!(h&&h.part);
 const partHorses=()=>S.horses.filter(ehPart);
 const GRUPO_INS={'Baia':'Baia','Ração':'Alimentação','Feno':'Alimentação','Veterinário':'Saúde','Ferragens':'Casqueamento e ferragens'};
 const grupoIns=i=>GRUPO_INS[i]||'Outros';
+function mensVale(h,m){
+  const ini=(h&&h.mensDesde)||TODAY.slice(0,7);
+  return m>=ini&&m<=TODAY.slice(0,7);
+}
 function despMes(hid,m){
   const manuais=S.fin.filter(f=>f.horse===hid&&f.comp===m);
-  const h=H(hid),mens=mensDe(h),hipN=(HIP()||{}).fantasia||'';
+  const h=H(hid),mens=mensVale(h,m)?mensDe(h):{},hipN=(HIP()||{}).fantasia||'';
   const auto=[];
   const monta=(par,bloco)=>par.forEach(x=>{
     const v=+mens[x[0]]||0;
@@ -2442,10 +2566,10 @@ async function loadUso(d){
     USO=await r.json();USODIAS=d||30;USOST='ok';
   }catch(e){USOST='erro'}
 }
-function linhaBarra(rot,n,max,sub){
+function linhaBarra(rot,n,max,sub,rotN){
   const p=max>0?Math.round(n/max*100):0;
   return '<li><span class="bl">'+esc(rot)+'</span><span class="bb"><i style="width:'+p+'%"></i></span>'+
-    '<span class="bn"><b>'+n+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span></li>';
+    '<span class="bn"><b>'+esc(rotN==null?n:rotN)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</span></li>';
 }
 /* ---------- documentos jurídicos, aceite e menores ---------- */
 const DOCV='1.0';
@@ -3152,6 +3276,8 @@ views.rels=function(){
       '<button class="btn" data-act="rpCav">Relatório do cavalo</button><button class="btn" data-act="rpExt">Extrato do proprietário</button>')+
     bloco('Treinos','O que foi feito na semana, por cavalo.',
       '<button class="btn" data-act="relTreinos">Treinos da semana</button>')+
+    bloco('Contabilidade','Ganhos, custos e todos os lançamentos do mês, prontos para o contador.',
+      '<button class="btn brass" data-act="fecPdf">Ganhos e custos (PDF)</button><button class="btn" data-act="fecCsv">Lançamentos em CSV</button>')+
   '</div><p class="muted sm">Precisa de um relatório que não está aqui? Peça que a gente acrescenta nesta tela.</p>';
 };
 function reportsCard(){
@@ -3684,6 +3810,8 @@ const act={
       go:()=>relExtrato(V('rp-h'),V('rp-m')||UI.repMonth)})},
   pvabrir:d=>{UI.repHorse=d.id;render()},
   pvtodos:()=>{UI.repHorse='';render()},
+  fecPdf:()=>{const r=relContabil(UI.fecMes||TODAY.slice(0,7));if(r&&r.catch)r.catch(e=>console.error(e))},
+  fecCsv:()=>{const r=csvFech(UI.fecMes||TODAY.slice(0,7));if(r&&r.catch)r.catch(e=>console.error(e))},
   pvdesp:d=>finModal(null,{horse:d.id,comp:UI.repMonth}),
   pvpdf:d=>{const r=relExtrato(d.id,UI.repMonth);if(r&&r.catch)r.catch(e=>console.error(e))},
   rpSaude:()=>rpModal({title:'Relatório de saúde dos animais',body:'<div class="fg">'+fld('Animal','rp-h','todos','select',[['todos','Todos (um por página)']].concat(S.horses.map(h=>[h.id,h.name])),'full')+'</div><p class="muted sm">Doenças e tratamentos, exames, vacinas, peso, ferrageamento e observações.</p>',go:()=>relSaude(V('rp-h'))}),
@@ -3817,6 +3945,7 @@ function tabelaMens(o){
     ITENS_OPC.map(x=>lin(x[0],x[1])).join('')+
     '<tr class="totrow"><td><b>Total por mês</b></td><td class="n"><b id="hm-tot">'+brl(totalMens(m))+'</b></td></tr>'+
     '</tbody></table></div>'+
+    '<div class="fg" style="margin-top:10px">'+fld('Cobrança começa em','hm-desde',(o&&o.mensDesde)||TODAY.slice(0,7),'month')+'</div>'+
     '<p class="muted sm" style="margin:6px 0 0">Esses valores entram sozinhos na conta do proprietário todo mês. Exames, extras de veterinário, transporte para prova e material de limpeza são lançados no Financeiro quando acontecerem.</p>';
 }
 function lerMens(){
@@ -3840,7 +3969,7 @@ function horseModal(h){const isNew=!h;const o=h||{name:'',owner:'',nasc:'',salto
    after:()=>{const c=document.getElementById('h-part');if(c)c.onchange=()=>{const b=document.getElementById('h-pbox');if(b)b.hidden=!c.checked};
      const up=()=>{const t=document.getElementById('hm-tot');if(t)t.textContent=brl(totalMens(lerMens()))};
      [].slice.call(document.querySelectorAll('.mval')).forEach(i=>i.addEventListener('input',up));},
-   save:()=>{const n=V('h-n').trim();if(!n)return false;if(isNew){const L=hipLim(HIP());if(S.horses.length>=L.c){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.c+' cavalos. Fale com o EquiAltaris para ampliar.';return false}}const dados={name:n,owner:V('h-o').trim(),nasc:+V('h-an')||'',salto:V('h-s').trim(),cm:+V('h-a')||'',part:CK('h-part'),mens:CK('h-part')?lerMens():{},baia:0};
+   save:()=>{const n=V('h-n').trim();if(!n)return false;if(isNew){const L=hipLim(HIP());if(S.horses.length>=L.c){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.c+' cavalos. Fale com o EquiAltaris para ampliar.';return false}}const dados={name:n,owner:V('h-o').trim(),nasc:+V('h-an')||'',salto:V('h-s').trim(),cm:+V('h-a')||'',part:CK('h-part'),mens:CK('h-part')?lerMens():{},mensDesde:(CK('h-part')&&V('hm-desde'))||(h&&h.mensDesde)||TODAY.slice(0,7),baia:0};
      let alvo=h;
      if(isNew){alvo=Object.assign({id:uid(),peso:[],ferr:[]},dados);S.horses.push(alvo)}else Object.assign(alvo,dados);
      const al=alunoPorNome(dados.owner);
