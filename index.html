@@ -451,7 +451,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261018-2320';
+const APPV='20261019-0010';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -2141,7 +2141,7 @@ const DOCV='1.0';
 const DOCDATA='18 de outubro de 2026';
 function empNome(){return (G.owner&&G.owner.razao)||'EquiAltaris'}
 function empCnpj(){return (G.owner&&G.owner.cnpj)||''}
-function empMail(){return (G.owner&&G.owner.email)||'contato@equialtaris.com.br'}
+function empMail(){return (G.owner&&G.owner.email)||'equialtaris@gmail.com'}
 function empEnd(){return (G.owner&&G.owner.end)||''}
 function idEmp(){
   const c=empCnpj(),e=empEnd(),n=empNome();
@@ -2575,7 +2575,7 @@ views.o_cfg=function(){
    '<label class="f">Razão social<input id="ow-rz" value="'+esc(G.owner.razao||'')+'" placeholder="EquiAltaris Tecnologia LTDA"></label>'+
    '<label class="f">CNPJ<input id="ow-cn" value="'+esc(G.owner.cnpj||'')+'" placeholder="00.000.000/0001-00"></label>'+
    '<label class="f">Endereço da sede<input id="ow-en" value="'+esc(G.owner.end||'')+'" placeholder="Brasília/DF"></label>'+
-   '<label class="f">E-mail para privacidade e denúncias<input id="ow-em" type="email" value="'+esc(G.owner.email||'')+'" placeholder="contato@equialtaris.com.br"></label></div>'+
+   '<label class="f">E-mail para privacidade e denúncias<input id="ow-em" type="email" value="'+esc(G.owner.email||'')+'" placeholder="equialtaris@gmail.com"></label></div>'+
    '<div class="card"><h3>Dados deste navegador</h3><p class="muted">Tudo fica salvo apenas neste navegador.</p><button class="btn danger" data-act="reset">Restaurar dados de exemplo</button></div></div>';
 };
 /* ---------- área da hípica: plano e pagamento do sistema ---------- */
