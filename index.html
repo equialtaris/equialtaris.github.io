@@ -296,6 +296,16 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .note{background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-top:6px}
 .note.bad{background:var(--bad-bg);color:var(--bad)}
 .note.ok{background:var(--ok-bg);color:var(--ok)}
+.scrollbox{max-height:min(64vh,660px);overflow-y:auto;padding:2px 8px 2px 2px;scrollbar-width:thin;scrollbar-color:var(--line) transparent;overscroll-behavior:contain}
+.scrollbox::-webkit-scrollbar{width:9px}
+.scrollbox::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
+.scrollbox::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+.pcard{margin:0}
+table.mens td,table.mens th{padding:6px 10px}
+table.mens input{width:120px;text-align:right}
+tr.secrow td{background:var(--surface2);font-size:12px;color:var(--muted)}
+tr.totrow td{border-top:2px solid var(--line);font-size:15px}
+.pcard .vlr{font-family:var(--f-display);font-size:21px;font-variant-numeric:tabular-nums}
 .plate{position:relative;display:flex;align-items:stretch;border-radius:14px;overflow:hidden;background:#0d1526;color:#fff;min-height:104px;margin-bottom:14px;box-shadow:inset 0 0 0 1px rgba(201,162,74,.34),0 6px 20px rgba(10,16,30,.14)}
 .plate .pic{position:absolute;inset:0;background-size:cover;background-position:center}
 .plate .veil{position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,14,26,.97) 0%,rgba(9,14,26,.92) 40%,rgba(9,14,26,.45) 74%,rgba(9,14,26,.12) 100%)}
@@ -487,11 +497,11 @@ const ABORD=['Entrada de linha','Meio da linha','Saída de linha reta','Saída d
 const OBST=['Vertical','Parelha','Triplo','Muro','Rio','Combinação'];
 const MEMBRO=['Mão','Pé','Refugo','Queda'];
 const TURNOS=['Manhã','Tarde','Noite'];
-const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos Diversos'];
+const INSUMOS=['Utilização do ambiente','Baia','Piquete','Feno','Tratador','Ração','Veterinário','Ferrageamento','Treinamento','Exame AIE e Mormo','Extras veterinários','Extras medicamentos','Extras procedimento','Transporte para prova','Diária do tratador em prova','Material de limpeza do cavalo','Material de limpeza de couro','Serviços','Insumos Diversos'];
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261019-1430';
+const APPV='20261019-1720';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -842,7 +852,7 @@ const IC={
  chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.2A8 8 0 1 1 21 12z"/>',
  conta:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
  sair:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M15 12H5"/>'};
-const NAV=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietário','prop'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
+const NAV=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietários','prop'],['rels','Relatórios','prova'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
 const NAV_S=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav'],['conta','Minha conta','conta']];
 const NAV_I=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova'],['conta','Minha conta','conta']];
 const VKEY={painel:'painel',prog:'prog',cavalos:'cavalos',cavaleiros:'cavaleiros',croquis:'croquis',provas:'provas',fin:'fin',prop:'prop',conta:'conta'};
@@ -971,7 +981,7 @@ function croquiSVG(c,o){
 
 /* ---------- views ---------- */
 const views={};
-const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Relatório do proprietário','Prestação de contas mensal de cada cavalo'],conta:['Minha conta','Configurações, documentos e senha'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_uso:['Uso e parcerias','Quem está usando e quanto o sistema é usado'],o_rel:['Relatório mensal','Números mês a mês para apresentar a parceiros'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
+const meta={painel:['Painel','Visão geral da cocheira hoje'],prog:['Programação','Treinos da semana por cavalo e horário'],cavalos:['Cavalos','Fichas com peso e ferrageamento'],s_provas:['Provas','Inscrições abertas e seus pedidos'],croquis:['Croquis','Desenhe a pista com medidas reais'],feed:['Comunidade','Novidades, provas e conquistas das hípicas'],perfil:['Perfil','Foto, cavalos e publicações'],o_feed:['Comunidade','Tudo o que foi publicado na rede'],provas:['Provas','Calendário, resultados e análise de penalidades'],fin:['Financeiro','Gastos por cavalo e cobrança dos proprietários'],prop:['Proprietários','Cavalos particulares e a conta de cada proprietário'],rels:['Relatórios','Tudo o que dá para gerar em PDF'],conta:['Minha conta','Configurações, documentos e senha'],alunos:['Alunos','Cadastro, plano e acesso ao portal'],plano:['Meu plano','Plano contratado e pagamento do sistema'],suporte:['Suporte','Converse com a administração do EquiAltaris'],o_chat:['Mensagens','Conversas com as hípicas clientes'],blocked:['Acesso suspenso','O sistema está bloqueado'],o_dash:['Dashboard','Hípicas, receita e inadimplência'],o_parc:['Parcerias','Fotos que aparecem no login e nas áreas dos cavalos e dos alunos'],o_hip:['Hípicas','Clientes cadastrados na plataforma'],o_uso:['Uso e parcerias','Quem está usando e quanto o sistema é usado'],o_rel:['Relatório mensal','Números mês a mês para apresentar a parceiros'],o_cob:['Cobranças','Mensalidades do sistema cobradas das hípicas'],o_cfg:['Configurações','Chave PIX e valores dos planos'],instrs:['Instrutores','Equipe com acesso à área do instrutor'],aulas:['Aulas','Agenda de aulas dos alunos'],remarc:['Remarcações','Horários liberados e pedidos dos alunos'],chat:['Mensagens','Conversas com os alunos'],s_chat:['Mensagens','Fale com o instrutor ou com a hípica'],pagto:['Mensalidades','Conferência dos comprovantes enviados pelos alunos'],s_inicio:['Início','Resumo das suas aulas e pagamentos'],s_aulas:['Minhas aulas','Próximas aulas e histórico'],s_pag:['Pagamentos','Pague por PIX e envie o comprovante'],s_cavalo:['Meu cavalo','Rotina, alimentação, saúde e relatórios']};
 const topActs={
   prog:()=>(UI.alTab==='lista'?'<button class="btn pri" data-act="anew">Nova aula</button>':
     menuTopo([UI.user.role==='staff'?['expcfg','Horário de funcionamento']:null,
@@ -1857,8 +1867,8 @@ views.fin=function(){
    (list.length?'<div class="tw"><table><thead><tr><th>Pagamento</th><th>Fornecedor</th><th>Insumo</th><th>Cavalo</th><th>Descrição</th><th class="n">Qtd</th><th class="n">Unitário</th><th class="n">Total</th><th>Situação</th><th></th></tr></thead><tbody>'+
     list.map(f=>'<tr><td>'+fmtD(f.pag)+'</td><td>'+esc(f.forn)+'</td><td>'+esc(f.ins)+'</td><td>'+esc(f.horse?hn(f.horse):'Geral')+'</td><td>'+esc(f.desc)+'</td><td class="n">'+f.qtd+'</td><td class="n">'+brl(f.unit)+'</td><td class="n"><b>'+brl(total(f))+'</b></td><td><button class="pill '+(f.pago?'ok':'warn')+'" data-act="fpago" data-id="'+f.id+'" title="Alternar situação">'+(f.pago?'Pago':'Em aberto')+'</button></td><td><button class="btn sm" data-act="fedit" data-id="'+f.id+'">Editar</button></td></tr>').join('')+'</tbody></table></div>':empty('Nenhum lançamento.'));
 };
-function finModal(f){
-  const isNew=!f;const o=f||{forn:'',ins:'Serviços',horse:'',desc:'',pag:TODAY,comp:TODAY.slice(0,7),unit:'',qtd:1,pago:false};
+function finModal(f,pre){
+  const isNew=!f;const o=f||Object.assign({forn:'',ins:'Serviços',horse:'',desc:'',pag:TODAY,comp:TODAY.slice(0,7),unit:'',qtd:1,pago:false},pre||{});
   modal({wide:true,title:isNew?'Novo lançamento':'Editar lançamento',
    body:'<div class="fg">'+fld('Fornecedor','f-f',o.forn,'list',[...new Set(S.fin.map(x=>x.forn))])+fld('Insumo','f-i',o.ins,'list',[...new Set(INSUMOS.concat(S.fin.map(x=>x.ins)))])+
     fld('Cavalo (opcional)','f-h',o.horse,'select',[['','Geral, sem cavalo']].concat(S.horses.map(h=>[h.id,h.name])))+fld('Descrição','f-d',o.desc,'text')+
@@ -1894,11 +1904,7 @@ function cobText(){
   return s+'TOTAL: '+brl(d.tot);
 }
 
-views.prop=function(){
-  if(!UI.repHorse||!S.horses.some(h=>h.id===UI.repHorse))UI.repHorse=S.horses[0]?S.horses[0].id:'';
-  const h=S.horses.find(x=>x.id===UI.repHorse);if(!h)return empty('Cadastre um cavalo.');
-  const m=UI.repMonth;
-  const sel='<div class="row" style="margin-bottom:14px">'+(UI.user&&UI.user.role==='aluno'?'':'<label class="f" style="min-width:220px">Cavalo<select data-chg="repHorse">'+S.horses.map(x=>'<option value="'+x.id+'"'+(x.id===h.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>')+'<label class="f">Mês<input type="month" value="'+m+'" data-chg="repMonth"></label></div>';
+function propRel(h,m){
   const tr=S.treinos.filter(t=>t.horse===h.id&&t.date.slice(0,7)===m&&t.done);
   const c={};tr.forEach(t=>c[t.tipo]=(c[t.tipo]||0)+1);
   const pe=h.peso.slice().sort((a,b)=>a.d.localeCompare(b.d));
@@ -1906,12 +1912,118 @@ views.prop=function(){
   const fn=S.fin.filter(f=>f.horse===h.id&&f.comp===m);
   let sp='';if(pe.length>1){const mn=Math.min(...pe.map(x=>x.kg))-3,mx=Math.max(...pe.map(x=>x.kg))+3;sp='<svg class="spark" style="height:90px" viewBox="0 0 300 90" preserveAspectRatio="none" role="img" aria-label="Curva de peso"><polyline points="'+pe.map((x,i)=>(6+i*(288/(pe.length-1)))+','+(84-(x.kg-mn)/(mx-mn)*76)).join(' ')+'" fill="none" stroke="var(--primary)" stroke-width="2.5" vector-effect="non-scaling-stroke"/></svg>'}
   const f=h.ferr.slice().sort((a,b)=>a.d.localeCompare(b.d)).pop();
-  return sel+'<div class="card rep"><div class="hd"><h2>'+esc(h.name)+'</h2><span class="muted">Relatório de '+monthLabel(m)+' · Proprietário: '+esc(h.owner||'—')+'</span></div>'+
+  return '<div class="card rep"><div class="hd"><h2>'+esc(h.name)+'</h2><span class="muted">Relatório de '+monthLabel(m)+' · Proprietário: '+esc(h.owner||'—')+'</span></div>'+
    '<section><h4>Treinos realizados ('+tr.length+')</h4>'+(tr.length?'<div class="bars">'+Object.keys(c).sort((a,b)=>c[b]-c[a]).map(k=>'<div class="bar"><span>'+esc(k)+'</span><i style="width:'+(c[k]/Math.max(...Object.values(c))*100)+'%"></i><b>'+c[k]+'</b></div>').join('')+'</div>':'<p class="muted">Nenhum treino realizado neste mês.</p>')+'</section>'+
    '<section><h4>Curva de peso corporal</h4>'+sp+'<p class="muted sm">Último peso: <b>'+(pe.length?pe[pe.length-1].kg+' kg':'—')+'</b></p></section>'+
    '<section><h4>Ferrageamento</h4><p>'+(f?'Último em '+fmtD(f.d)+' · próximo em '+fmtD(f.prox)+' ('+esc(f.ferrador||'')+')':'Sem registro.')+'</p></section>'+
    '<section><h4>Competições</h4>'+(pv.length?'<ul class="hz-list">'+pv.map(p=>'<li><span>'+fmtS(p.date)+' · '+esc(p.local)+' · '+esc(p.altura)+'</span>'+(p.pen.length?'<span class="pill warn">'+p.pen.length+' falta(s)</span>':'<span class="pill ok">Pista limpa</span>')+'</li>').join('')+'</ul>':'<p class="muted">Sem provas no mês.</p>')+'</section>'+
-   '<section><h4>Despesas do mês</h4>'+(fn.length?'<ul class="hz-list">'+fn.map(x=>'<li><span>'+esc(x.desc)+' <span class="muted">· '+esc(x.forn)+'</span></span><b>'+brl(total(x))+'</b></li>').join('')+'<li><b>Total</b><b>'+brl(fn.reduce((s,x)=>s+total(x),0))+'</b></li></ul>':'<p class="muted">Sem lançamentos.</p>')+'</section></div>';
+   (ehPart(h)?'<section><h4>Conta do proprietário</h4>'+propDespesas(h,m)+'</section></div>'
+            :'<section><h4>Despesas do mês</h4>'+(fn.length?'<ul class="hz-list">'+fn.map(x=>'<li><span>'+esc(x.desc)+' <span class="muted">· '+esc(x.forn)+'</span></span><b>'+brl(total(x))+'</b></li>').join('')+'<li><b>Total</b><b>'+brl(fn.reduce((s,x)=>s+total(x),0))+'</b></li></ul>':'<p class="muted">Sem lançamentos.</p>')+'</section></div>');
+}
+
+/* ---------- cavalos particulares e a conta do proprietário ---------- */
+const ITENS_FIXOS=[['amb','Utilização do ambiente'],['baia','Baia'],['piq','Piquete'],
+  ['feno','Feno'],['trat','Tratador'],['racao','Ração']];
+const ITENS_OPC=[['vet','Veterinário'],['ferr','Ferrageamento'],['trein','Treinamento']];
+const ADICIONAIS=['Exame AIE e Mormo','Extras veterinários','Extras medicamentos','Extras procedimento',
+  'Transporte para prova','Diária do tratador em prova','Material de limpeza do cavalo','Material de limpeza de couro'];
+const NOME_ITEM={};ITENS_FIXOS.concat(ITENS_OPC).forEach(x=>NOME_ITEM[x[0]]=x[1]);
+function mensDe(h){
+  const m=Object.assign({},(h&&h.mens)||{});
+  if(!m.baia&&+((h||{}).baia)>0)m.baia=+h.baia;   /* compatível com a versão anterior */
+  return m;
+}
+function totalMens(m){return ITENS_FIXOS.concat(ITENS_OPC).reduce((t,x)=>t+(+m[x[0]]||0),0)}
+const ehPart=h=>!!(h&&h.part);
+const partHorses=()=>S.horses.filter(ehPart);
+const GRUPO_INS={'Baia':'Baia','Ração':'Alimentação','Feno':'Alimentação','Veterinário':'Saúde','Ferragens':'Casqueamento e ferragens'};
+const grupoIns=i=>GRUPO_INS[i]||'Outros';
+function despMes(hid,m){
+  const manuais=S.fin.filter(f=>f.horse===hid&&f.comp===m);
+  const h=H(hid),mens=mensDe(h),hipN=(HIP()||{}).fantasia||'';
+  const auto=[];
+  const monta=(par,bloco)=>par.forEach(x=>{
+    const v=+mens[x[0]]||0;
+    if(v<=0)return;
+    if(manuais.some(f=>f.ins===x[1]))return;       /* lançamento à mão manda */
+    auto.push({id:'au-'+x[0]+'-'+hid+'-'+m,ins:x[1],desc:x[1],forn:hipN,horse:hid,comp:m,
+               pag:'',unit:v,qtd:1,pago:false,auto:true,bloco:bloco});
+  });
+  monta(ITENS_FIXOS,'fixo');monta(ITENS_OPC,'opc');
+  const marcados=manuais.map(f=>Object.assign({},f,{bloco:blocoDoIns(f.ins)}));
+  return auto.concat(marcados);
+}
+function blocoDoIns(ins){
+  if(ITENS_FIXOS.some(x=>x[1]===ins))return 'fixo';
+  if(ITENS_OPC.some(x=>x[1]===ins))return 'opc';
+  return 'add';
+}
+const BLOCO_NOME={fixo:'Mensalidade fixa',opc:'Opcionais',add:'Adicionais do mês'};
+function resumoMes(hid,m){
+  const l=despMes(hid,m),g={fixo:0,opc:0,add:0};let t=0,ab=0;
+  l.forEach(x=>{const v=total(x);t+=v;if(!x.pago)ab+=v;const b=x.bloco||'add';g[b]=(g[b]||0)+v});
+  return {l:l,g:g,tot:t,aberto:ab,
+    por:b=>l.filter(x=>(x.bloco||'add')===b)};
+}
+function propDespesas(h,m){
+  const r=resumoMes(h.id,m);
+  if(!r.l.length)return '<p class="muted" style="margin:0">Sem lançamentos em '+monthLabel(m)+'. Preencha a mensalidade na ficha do cavalo ou lance uma despesa.</p>';
+  const kpi=['fixo','opc','add'].map(b=>'<div class="card kpi"><span>'+BLOCO_NOME[b]+'</span><b>'+brl(r.g[b]||0)+'</b></div>').join('');
+  const linha=x=>'<tr><td><b>'+esc(x.desc||x.ins)+'</b>'+(x.auto?' <span class="pill">automático</span>':'')+'</td><td>'+esc(x.forn||'—')+'</td><td class="n"><b>'+brl(total(x))+'</b></td><td>'+(x.pago?'<span class="pill ok">pago</span>':'<span class="pill warn">em aberto</span>')+'</td></tr>';
+  const sec=b=>{const l=r.por(b);if(!l.length)return '';
+    return '<tr class="secrow"><td colspan="4"><b>'+BLOCO_NOME[b]+'</b> · '+brl(r.g[b]||0)+'</td></tr>'+l.map(linha).join('')};
+  return '<div class="grid g4" style="margin-bottom:14px">'+kpi+
+      '<div class="card kpi"><span>Total do mês</span><b>'+brl(r.tot)+'</b>'+(r.aberto?'<small style="color:var(--bad)">'+brl(r.aberto)+' em aberto</small>':'<small>quitado</small>')+'</div></div>'+
+    '<div class="tw"><table><thead><tr><th>Item</th><th>Fornecedor</th><th class="n">Valor</th><th>Situação</th></tr></thead><tbody>'+
+    sec('fixo')+sec('opc')+sec('add')+
+    '<tr><td colspan="2"><b>Total do mês</b></td><td class="n"><b>'+brl(r.tot)+'</b></td><td>'+(r.aberto?'<b style="color:var(--bad)">'+brl(r.aberto)+' em aberto</b>':'<span class="pill ok">quitado</span>')+'</td></tr>'+
+    '</tbody></table></div>';
+}
+function cardPart(h,m){
+  const r=resumoMes(h.id,m);
+  return '<div class="card pcard">'+
+    '<div class="row" style="justify-content:space-between;align-items:flex-start;gap:10px">'+
+      '<div style="min-width:0"><h3 style="margin:0 0 2px">'+esc(h.name)+'</h3>'+
+      '<span class="muted sm">'+esc(h.owner||'sem proprietário')+(h.studentId&&R(h.studentId)?' · aluno':'')+'</span></div>'+
+      '<div style="text-align:right;flex:none"><b class="vlr">'+brl(r.tot)+'</b><br>'+
+      (r.aberto?'<span class="pill warn">'+brl(r.aberto)+' em aberto</span>':(r.tot?'<span class="pill ok">quitado</span>':'<span class="pill">sem conta</span>'))+'</div>'+
+    '</div>'+
+    (r.tot?'<ul class="hz-list" style="margin-top:10px">'+['fixo','opc','add'].filter(b=>r.g[b]).map(b=>'<li><span>'+BLOCO_NOME[b]+'</span><b>'+brl(r.g[b])+'</b></li>').join('')+'</ul>'
+          :'<p class="muted sm" style="margin:10px 0 0">Sem conta em '+monthLabel(m)+'.</p>')+
+    '<div class="row" style="margin-top:12px;gap:6px">'+
+      '<button class="btn sm" data-act="pvabrir" data-id="'+h.id+'">Relatório</button>'+
+      '<button class="btn sm" data-act="pvdesp" data-id="'+h.id+'">Lançar despesa</button>'+
+      (r.tot?'<button class="btn sm brass" data-act="pvpdf" data-id="'+h.id+'">Extrato</button>':'')+
+    '</div></div>';
+}
+views.prop=function(){
+  const m=UI.repMonth;
+  const mes='<label class="f" style="min-width:170px">Mês<input type="month" value="'+m+'" data-chg="repMonth"></label>';
+  if(UI.user&&UI.user.role==='aluno'){
+    const h=H(UI.repHorse);
+    if(!h||!h.id)return empty('Nenhum cavalo.');
+    return '<div class="row" style="margin-bottom:14px">'+mes+'</div>'+propRel(h,m);
+  }
+  const l=partHorses();
+  const sel='<div class="row" style="margin-bottom:14px;align-items:flex-end">'+
+    '<label class="f" style="min-width:230px">Cavalo<select data-chg="repHorse"><option value="">Todos os particulares</option>'+
+      l.map(x=>'<option value="'+x.id+'"'+(x.id===UI.repHorse?' selected':'')+'>'+esc(x.name)+'</option>').join('')+
+    '</select></label>'+mes+'</div>';
+  if(!l.length)return sel+empty('Nenhum cavalo marcado como particular. Abra a ficha em Cavalos e marque “cavalo particular do proprietário”.');
+  const h=l.find(x=>x.id===UI.repHorse);
+  if(h)return sel+'<div class="row" style="margin-bottom:12px;gap:6px"><button class="btn sm" data-act="pvtodos">‹ Ver todos</button>'+
+    '<button class="btn sm" data-act="pvdesp" data-id="'+h.id+'">Lançar despesa</button>'+
+    '<button class="btn sm brass" data-act="pvpdf" data-id="'+h.id+'">Extrato em PDF</button></div>'+
+    propRel(h,m);
+  let tot=0,ab=0;
+  l.forEach(x=>{const r=resumoMes(x.id,m);tot+=r.tot;ab+=r.aberto});
+  return sel+'<div class="grid g4" style="margin-bottom:16px">'+
+     '<div class="card kpi"><span>Cavalos particulares</span><b>'+l.length+'</b><small>de '+S.horses.length+' na cocheira</small></div>'+
+     '<div class="card kpi"><span>A receber no mês</span><b>'+brl(tot)+'</b><small>'+monthLabel(m)+'</small></div>'+
+     '<div class="card kpi"><span>Em aberto</span><b style="color:'+(ab?'var(--bad)':'var(--ok)')+'">'+brl(ab)+'</b></div>'+
+     '<div class="card kpi"><span>Com mensalidade</span><b>'+l.filter(x=>totalMens(mensDe(x))>0).length+'</b><small>valores na ficha</small></div>'+
+   '</div><div class="scrollbox"><div class="grid g2">'+l.map(x=>cardPart(x,m)).join('')+'</div></div>'+
+   '<p class="muted sm" style="margin-top:12px">Role a lista para ver os demais. A mensalidade (ambiente, baia, piquete, feno, tratador, ração e os opcionais) entra sozinha pelos valores da ficha do cavalo. Os adicionais do mês vêm dos lançamentos do Financeiro.</p>';
 };
 let CONTAB='cfg',SENHAOK='';
 function abasConta(){
@@ -3007,12 +3119,41 @@ function relCavalo(hid,de,ate){
   d.table([{t:'Data',w:66},{t:'Descrição',w:166},{t:'Fornecedor',w:120},{t:'Categoria',w:70},{t:'Valor',w:70,a:'r'}],fin.map(f=>[fmtD(f.pag),f.desc,f.forn,f.ins||'—',brl(total(f))]).concat([[{t:'Total',b:1},'','','',{t:brl(gt),b:1}]]),'Nenhum lançamento no período.');
   return savePDF(d,'relatorio-'+slug(h.name)+'-'+de+'-a-'+ate+'.pdf');
 }
+function relExtrato(hid,m){
+  const h=H(hid),hip=(HIP()||{}).fantasia||'',d=PDF(hip,'Extrato do proprietário');
+  const r=resumoMes(hid,m);
+  d.h1(h.name,'Conta de '+monthLabel(m)+' · proprietário: '+(h.owner||'—')+' · emitido em '+fmtD(TODAY));
+  d.kpis([['Total do mês',brl(r.tot)],['Em aberto',brl(r.aberto),r.aberto?RED:GREEN],['Lançamentos',String(r.l.length)]]);
+  ['fixo','opc','add'].forEach(b=>{
+    const l=r.por(b);if(!l.length)return;
+    d.h2(BLOCO_NOME[b]+' · '+brl(r.g[b]||0));
+    d.table([{t:'Item',w:200},{t:'Fornecedor',w:120},{t:'Pago em',w:62},{t:'Valor',w:70,a:'r'},{t:'Situação',w:62}],
+      l.map(x=>[{t:x.desc||x.ins,b:1},x.forn||'—',x.pag?fmtD(x.pag):'—',brl(total(x)),
+        x.pago?{t:'Pago',c:GREEN,b:1}:{t:'Em aberto',c:AMBER,b:1}]),'—');
+  });
+  d.gap&&d.gap(6);
+  d.p('A mensalidade fixa e os opcionais vêm dos valores cadastrados na ficha do cavalo. Os adicionais são lançamentos do Financeiro da hípica no mês.',8.5,GREY);
+  return savePDF(d,'extrato-'+slug(h.name)+'-'+m+'.pdf');
+}
+views.rels=function(){
+  const bloco=(titulo,sub,bts)=>'<div class="card" style="margin-bottom:16px"><h3>'+titulo+'</h3><p class="muted" style="margin:-4px 0 12px">'+sub+'</p><div class="row" style="gap:8px;flex-wrap:wrap">'+bts+'</div></div>';
+  return '<div class="grid g2">'+
+    bloco('Alunos e mensalidades','Quem pagou, quem deve e quanto entrou no mês.',
+      '<button class="btn" data-act="rpPag">Pagamentos</button><button class="btn" data-act="rpInad">Quem deixou de pagar</button>')+
+    bloco('Animais','Saúde, vacinas, exames e ocorrências de cada cavalo.',
+      '<button class="btn" data-act="rpSaude">Saúde dos animais</button>')+
+    bloco('Proprietários','Prestação de contas e extrato de quem tem cavalo particular.',
+      '<button class="btn" data-act="rpCav">Relatório do cavalo</button><button class="btn" data-act="rpExt">Extrato do proprietário</button>')+
+    bloco('Treinos','O que foi feito na semana, por cavalo.',
+      '<button class="btn" data-act="relTreinos">Treinos da semana</button>')+
+  '</div><p class="muted sm">Precisa de um relatório que não está aqui? Peça que a gente acrescenta nesta tela.</p>';
+};
 function reportsCard(){
   return '<div class="card" style="margin-bottom:16px"><h3>Relatórios em PDF</h3><p class="muted" style="margin:-4px 0 10px">Gere, baixe e envie para os alunos e proprietários.</p><div class="row">'+
    '<button class="btn" data-act="rpPag">Pagamentos</button><button class="btn" data-act="rpInad">Quem deixou de pagar</button><button class="btn" data-act="rpSaude">Saúde dos animais</button><button class="btn pri" data-act="rpCav">Relatório do cavalo (proprietário)</button></div></div>';
 }
 const _painel=views.painel;
-views.painel=function(){return (UI.user.role==='staff'?reportsCard():'')+_painel()};
+views.painel=function(){return _painel()};
 function rpModal(o){
   modal(Object.assign({label:'Gerar PDF'},o,{save:()=>{const r=o.go();if(r&&r.catch)r.catch(e=>console.error(e));return true}}));
 }
@@ -3530,6 +3671,15 @@ const act={
   opixcopy:(d,b)=>{try{navigator.clipboard.writeText(G.owner.pix).then(()=>{b.textContent='Chave copiada'},()=>{b.textContent='Copie a chave acima'})}catch(e){b.textContent='Copie a chave acima'}},
   rpPag:()=>{const refs=[...new Set(S.pag.map(p=>p.ref).concat([TODAY.slice(0,7)]))].sort().reverse();rpModal({title:'Relatório de pagamentos',body:'<div class="fg">'+fld('Período','rp-m','','select',refs.map(r=>[r,monthLabel(r)]).concat([['todos','Todos os meses']]).map((x,i)=>x),'full')+'</div><p class="muted sm">Inclui o resumo, a situação de cada aluno e a lista de quem deixou de pagar.</p>',go:()=>relPagamentos(V('rp-m'))})},
   rpInad:()=>relPagamentos('',true),
+  rpExt:()=>{const l=partHorses();
+    if(!l.length){modal({title:'Extrato do proprietário',body:'<p>Marque pelo menos um cavalo como particular na ficha dele, em Cavalos.</p>'});return}
+    rpModal({title:'Extrato do proprietário',
+      body:'<div class="fg">'+fld('Cavalo','rp-h',l[0].id,'select',l.map(h=>[h.id,h.name+(h.owner?' · '+h.owner:'')]),'full')+fld('Mês','rp-m',UI.repMonth,'month')+'</div>',
+      go:()=>relExtrato(V('rp-h'),V('rp-m')||UI.repMonth)})},
+  pvabrir:d=>{UI.repHorse=d.id;render()},
+  pvtodos:()=>{UI.repHorse='';render()},
+  pvdesp:d=>finModal(null,{horse:d.id,comp:UI.repMonth}),
+  pvpdf:d=>{const r=relExtrato(d.id,UI.repMonth);if(r&&r.catch)r.catch(e=>console.error(e))},
   rpSaude:()=>rpModal({title:'Relatório de saúde dos animais',body:'<div class="fg">'+fld('Animal','rp-h','todos','select',[['todos','Todos (um por página)']].concat(S.horses.map(h=>[h.id,h.name])),'full')+'</div><p class="muted sm">Doenças e tratamentos, exames, vacinas, peso, ferrageamento e observações.</p>',go:()=>relSaude(V('rp-h'))}),
   rpCav:()=>{if(!S.horses.length){modal({title:'Relatório do cavalo',body:'<p>Cadastre um cavalo primeiro.</p>'});return}rpModal({title:'Relatório do cavalo para o proprietário',body:'<div class="fg">'+fld('Cavalo','rp-h',S.horses[0].id,'select',S.horses.map(h=>[h.id,h.name]),'full')+fld('De','rp-d',addDays(TODAY,-90),'date')+fld('Até','rp-a',TODAY,'date')+'</div><p class="muted sm">Reúne treinos, provas, saúde, peso, ferrageamento, alimentação e custos do período.</p>',go:()=>{const de=V('rp-d')||addDays(TODAY,-90),ate=V('rp-a')||TODAY;return relCavalo(V('rp-h'),de<=ate?de:ate,de<=ate?ate:de)}})},
   chtab:d=>{UI.chCanal=d.t;render()},chinst:d=>{UI.chInst=d.id;render()},xnew:()=>instrModal(),xedit:d=>instrModal(IN(d.id)),chstu:d=>{UI.chStu=d.id;render()},
@@ -3652,15 +3802,38 @@ const act={
 };
 function idadeDe(h){const a=+(h&&h.nasc);if(!a||a<1950)return null;const i=new Date().getFullYear()-a;return (i>=0&&i<60)?i:null}
 function pesoAtual(h){const p=(h&&h.peso||[]).slice().sort((a,b)=>a.d.localeCompare(b.d)).pop();return p?p.kg:''}
-function horseModal(h){const isNew=!h;const o=h||{name:'',owner:'',nasc:'',salto:'',cm:''};
+function tabelaMens(o){
+  const m=mensDe(o);
+  const lin=(k,rot)=>'<tr><td>'+esc(rot)+'</td><td class="n"><input class="mval" id="hm-'+k+'" type="number" min="0" step="1" value="'+((+m[k]||0)||'')+'" placeholder="0" aria-label="'+esc(rot)+'"></td></tr>';
+  return '<div class="tw"><table class="mens"><thead><tr><th>Mensalidade do cavalo</th><th class="n">R$ por mês</th></tr></thead><tbody>'+
+    ITENS_FIXOS.map(x=>lin(x[0],x[1])).join('')+
+    '<tr class="secrow"><td colspan="2"><b>Opcionais</b> · deixe zerado o que não for cobrado</td></tr>'+
+    ITENS_OPC.map(x=>lin(x[0],x[1])).join('')+
+    '<tr class="totrow"><td><b>Total por mês</b></td><td class="n"><b id="hm-tot">'+brl(totalMens(m))+'</b></td></tr>'+
+    '</tbody></table></div>'+
+    '<p class="muted sm" style="margin:6px 0 0">Esses valores entram sozinhos na conta do proprietário todo mês. Exames, extras de veterinário, transporte para prova e material de limpeza são lançados no Financeiro quando acontecerem.</p>';
+}
+function lerMens(){
+  const m={};
+  ITENS_FIXOS.concat(ITENS_OPC).forEach(x=>{m[x[0]]=+V('hm-'+x[0])||0});
+  return m;
+}
+function horseModal(h){const isNew=!h;const o=h||{name:'',owner:'',nasc:'',salto:'',cm:'',part:false,baia:0};
   modal({title:isNew?'Novo cavalo':'Editar cavalo',wide:true,
    body:'<div class="fg">'+fld('Nome','h-n',o.name,'text',null,'full')+fld('Proprietário','h-o',o.owner,'list',owners(),'full')+
     fld('Ano de nascimento','h-an',o.nasc||'','number','min="1950" max="'+new Date().getFullYear()+'" step="1" placeholder="2017"')+
     fld('Altura que salta','h-s',o.salto||'','text','placeholder="1,20 m"')+
     fld('Altura do cavalo (cm)','h-a',o.cm||'','number','min="80" max="200" step="1" placeholder="168"')+
     fld('Peso (kg)','h-p',pesoAtual(o),'number','min="100" max="1200" step="1" placeholder="520"')+
+    '</div>'+
+    '<label class="chk"><input type="checkbox" id="h-part"'+(o.part?' checked':'')+'><span><b>Cavalo particular do proprietário.</b> Ele passa a aparecer na área Proprietários, com a conta do mês: baia, feno, ração, remédio e o que mais for lançado.</span></label>'+
+    '<div id="h-pbox"'+(o.part?'':' hidden')+'>'+tabelaMens(o)+'</div>'+
+    '<div class="fg">'+
     '</div><p class="muted sm">A idade é calculada pelo ano de nascimento, então não envelhece errado com o tempo. O peso entra no histórico com a data de hoje; para acompanhar a evolução, use Registrar peso na ficha.</p><div class="err" id="lm-err" role="alert"></div>',del:isNew?null:()=>{S.horses=S.horses.filter(x=>x!==h);S.treinos=S.treinos.filter(t=>t.horse!==h.id)},
-   save:()=>{const n=V('h-n').trim();if(!n)return false;if(isNew){const L=hipLim(HIP());if(S.horses.length>=L.c){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.c+' cavalos. Fale com o EquiAltaris para ampliar.';return false}}const dados={name:n,owner:V('h-o').trim(),nasc:+V('h-an')||'',salto:V('h-s').trim(),cm:+V('h-a')||''};
+   after:()=>{const c=document.getElementById('h-part');if(c)c.onchange=()=>{const b=document.getElementById('h-pbox');if(b)b.hidden=!c.checked};
+     const up=()=>{const t=document.getElementById('hm-tot');if(t)t.textContent=brl(totalMens(lerMens()))};
+     [].slice.call(document.querySelectorAll('.mval')).forEach(i=>i.addEventListener('input',up));},
+   save:()=>{const n=V('h-n').trim();if(!n)return false;if(isNew){const L=hipLim(HIP());if(S.horses.length>=L.c){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.c+' cavalos. Fale com o EquiAltaris para ampliar.';return false}}const dados={name:n,owner:V('h-o').trim(),nasc:+V('h-an')||'',salto:V('h-s').trim(),cm:+V('h-a')||'',part:CK('h-part'),mens:CK('h-part')?lerMens():{},baia:0};
      let alvo=h;
      if(isNew){alvo=Object.assign({id:uid(),peso:[],ferr:[]},dados);S.horses.push(alvo)}else Object.assign(alvo,dados);
      const kg=+V('h-p')||0;
