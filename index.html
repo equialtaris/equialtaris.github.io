@@ -296,6 +296,35 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .note{background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-top:6px}
 .note.bad{background:var(--bad-bg);color:var(--bad)}
 .note.ok{background:var(--ok-bg);color:var(--ok)}
+.plate{position:relative;display:flex;align-items:stretch;border-radius:14px;overflow:hidden;background:#0d1526;color:#fff;min-height:104px;margin-bottom:14px;box-shadow:inset 0 0 0 1px rgba(201,162,74,.34),0 6px 20px rgba(10,16,30,.14)}
+.plate .pic{position:absolute;inset:0;background-size:cover;background-position:center}
+.plate .veil{position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,14,26,.97) 0%,rgba(9,14,26,.92) 40%,rgba(9,14,26,.45) 74%,rgba(9,14,26,.12) 100%)}
+.plate.comfoto .veil{background:linear-gradient(90deg,rgba(9,14,26,.96) 0%,rgba(9,14,26,.9) 44%,rgba(9,14,26,.5) 76%,rgba(9,14,26,.18) 100%)}
+.plate .ico{position:relative;width:96px;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border-right:1px solid rgba(201,162,74,.3)}
+.plate .ico img{width:68px;height:68px;object-fit:contain;border-radius:10px}
+.plate .ico span{font-family:var(--f-display);font-size:26px;color:rgba(255,255,255,.72)}
+.plate .inf{position:relative;padding:14px 18px;display:flex;flex-direction:column;justify-content:center;min-width:0;flex:1}
+.plate .org{font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:#d7b46a;margin-bottom:3px}
+.plate h4{font-family:var(--f-display);font-size:22px;margin:0;line-height:1.12;color:#fff}
+.plate .sub{color:rgba(255,255,255,.74);font-size:12.5px;margin-top:3px}
+.plate .cats{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.plate .cats span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:2px 10px;font-size:11px}
+.plate .act{position:relative;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:8px;padding:14px 18px;flex:none}
+.plate .act .pill{background:rgba(255,255,255,.16);color:#fff;border:0}
+.plate .act .btn{background:rgba(255,255,255,.13);color:#fff;border:1px solid rgba(255,255,255,.26)}
+.plate .act .btn:hover{background:rgba(255,255,255,.22)}
+.plate .act .btn.pri{background:var(--primary);border-color:transparent;color:#fff}
+.plate .act .pill.ok{background:rgba(42,170,114,.3);color:#9df0c6}
+.plate .act .pill.brass{background:rgba(201,162,74,.28);color:#e7c680}
+.plprev{width:190px;height:72px;border-radius:10px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--surface2);flex:none}
+.plprev img{width:100%;height:100%;object-fit:cover}
+@media (max-width:720px){
+  .plate{flex-wrap:wrap}
+  .plate .ico{width:70px}
+  .plate .inf{padding:12px 13px;flex:1 1 150px}
+  .plate h4{font-size:18px}
+  .plate .act{width:100%;flex-direction:row;align-items:center;justify-content:flex-start;flex-wrap:wrap;padding:0 13px 13px}
+}
 .mwrap{position:relative;display:inline-block}
 .mpop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:11px;box-shadow:0 14px 36px rgba(10,16,30,.22);padding:6px;min-width:250px;z-index:60;display:flex;flex-direction:column}
 .mpop button{text-align:left;background:none;border:0;color:inherit;font:inherit;font-size:14px;padding:9px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
@@ -462,7 +491,7 @@ const INSUMOS=['Serviços','Ração','Feno','Ferragens','Veterinário','Insumos 
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261019-0320';
+const APPV='20261019-1430';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -3131,23 +3160,136 @@ function instrModal(i){
 }
 
 /* ---------- inscrições em provas ---------- */
+/* ---------- competições abertas para outras hípicas ---------- */
+let EVPUB=[],EVST='',IEF=null;
+async function loadEventos(){
+  EVST='carregando';
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/eventos?select=id,hipica_id,hipica_nome,data&order=criado_em.desc&limit=200',{headers:sbH()});
+    if(!r.ok){EVST=r.status===404?'preparando':'erro';return}
+    const l=await r.json();
+    EVPUB=(l||[]).map(x=>Object.assign({},x.data||{},{id:x.id,hipica_id:x.hipica_id,hipica_nome:x.hipica_nome}));
+    EVST='ok';
+  }catch(e){EVST='erro'}
+}
+async function pubEvento(e){
+  const hip=HIP();if(!hip)return false;
+  const row={id:e.id,hipica_id:hip.id,hipica_nome:hip.fantasia,
+    data:{nome:e.nome,date:e.date,local:e.local,cats:e.cats,prazo:e.prazo,taxa:e.taxa,
+          status:e.status,foto:e.foto||'',contato:e.contato||'',logo:hip.logo||''}};
+  try{
+    const h=sbH();h.Prefer='resolution=merge-duplicates';
+    const r=await fetch(SB_URL+'/rest/v1/eventos',{method:'POST',headers:h,body:JSON.stringify([row])});
+    return r.ok;
+  }catch(x){return false}
+}
+async function despubEvento(id){
+  try{
+    const r=await fetch(SB_URL+'/rest/v1/eventos?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:sbH()});
+    return r.ok;
+  }catch(x){return false}
+}
+function sincEvento(e){
+  if(!e)return;
+  const p=e.aberta?pubEvento(e):despubEvento(e.id);
+  Promise.resolve(p).then(ok=>{
+    if(!ok){avisoSync(true);return}
+    loadEventos().then(()=>{if(UI.view==='provas'||UI.view==='s_provas')render()});
+  });
+}
+function plateFoto(src){
+  return src?'<div class="pic" style="background-image:url(&quot;'+src+'&quot;)"></div>':'';
+}
+function plateIcone(logo,nome){
+  return '<div class="ico">'+(logo?'<img src="'+logo+'" alt="">':'<span>'+esc((nome||'?').slice(0,2).toUpperCase())+'</span>')+'</div>';
+}
+function plateEvento(e,opts){
+  const o=opts||{};
+  const cats=(e.cats||[]).slice(0,6).map(c=>'<span>'+esc(c)+'</span>').join('');
+  const prazo=e.prazo?'inscrições até '+fmtD(e.prazo):'';
+  return '<div class="plate'+(e.foto?' comfoto':'')+'">'+plateFoto(e.foto)+'<div class="veil"></div>'+
+    plateIcone(o.logo,o.hipica)+
+    '<div class="inf">'+
+      (o.hipica?'<span class="org">'+esc(o.hipica)+'</span>':'')+
+      '<h4>'+esc(e.nome||'Competição')+'</h4>'+
+      '<span class="sub">'+(e.date?dowOf(e.date)+' '+fmtD(e.date):'')+(e.local?' · '+esc(e.local):'')+'</span>'+
+      (cats?'<div class="cats">'+cats+'</div>':'')+
+      (prazo||e.taxa?'<span class="sub" style="margin-top:4px">'+prazo+(e.taxa?' · taxa '+brl(e.taxa):'')+'</span>':'')+
+    '</div>'+
+    '<div class="act">'+(o.acoes||'')+'</div></div>';
+}
+function evAbertoTxt(e){
+  return inscAberta(e)?'<span class="pill ok">Inscrições abertas</span>':'<span class="pill">Encerradas</span>';
+}
+function eventosDeFora(){
+  const meu=(HIP()||{}).id;
+  return EVPUB.filter(e=>e.hipica_id!==meu&&e.status==='aberta'&&(!e.prazo||e.prazo>=TODAY))
+    .sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+}
+function listaDeFora(titulo){
+  const l=eventosDeFora();
+  const cab='<h3 style="margin:22px 0 10px">'+titulo+'</h3>';
+  if(EVST==='carregando')return cab+empty('Carregando…');
+  if(EVST==='preparando')return cab+empty('A troca de competições entre hípicas ainda não foi liberada no servidor.');
+  if(EVST==='erro')return cab+empty('Não consegui carregar as competições de outras hípicas agora.');
+  if(!l.length)return cab+empty('Nenhuma hípica abriu competição para fora no momento.');
+  return cab+l.map(e=>plateEvento(e,{logo:e.logo,hipica:e.hipica_nome,
+    acoes:evAbertoTxt(e)+(e.contato?'<button class="btn sm" data-act="evcont" data-id="'+esc(e.id)+'">Como participar</button>':'')})).join('');
+}
+
 const inscPill=x=>x.status==='confirmada'?'<span class="pill ok">Confirmada</span>':x.status==='recusada'?'<span class="pill bad">Recusada</span>':'<span class="pill warn">Em análise</span>';
 const inscAberta=e=>e.status==='aberta'&&e.prazo>=TODAY;
+function parseCats(txt){
+  const t=String(txt||'').trim();
+  const l=/[;\n]/.test(t)?t.split(/[;\n]+/):t.split(/,\s+|,(?=\D)/);
+  return l.map(x=>x.trim()).filter(Boolean);
+}
 function inscHTML(){
   const hip=UI.user.role==='staff';
   const evs=S.insc.slice().sort((a,b)=>a.date.localeCompare(b.date));
   const top='<div class="row" style="margin-bottom:14px">'+(hip?'<button class="btn brass" data-act="inew">Abrir inscrições</button>':'')+'<span class="muted sm">Os alunos pedem a inscrição pelo portal. Ao confirmar, a prova entra no calendário do cavalo.</span></div>';
-  if(!evs.length)return top+empty('Nenhuma inscrição aberta.'+(hip?' Use “Abrir inscrições” para criar a primeira.':''));
+  const fora=listaDeFora('Competições abertas por outras hípicas');
+  if(!evs.length)return top+empty('Nenhuma inscrição aberta.'+(hip?' Use “Abrir inscrições” para criar a primeira.':''))+fora;
   return top+evs.map(e=>{const ps=S.inscPed.filter(x=>x.insc===e.id).sort((a,b)=>b.at-a.at);
-    return '<div class="card" style="margin-bottom:16px"><div class="hero" style="margin-bottom:10px"><div><h3 style="margin-bottom:2px">'+esc(e.nome)+'</h3><span class="muted">'+dowOf(e.date)+' '+fmtD(e.date)+' · '+esc(e.local)+'</span><br><span class="muted sm">Categorias: '+esc(e.cats.join(', '))+' · inscrições até '+fmtD(e.prazo)+(hip&&e.taxa?' · taxa '+brl(e.taxa):'')+'</span></div><div class="row">'+(inscAberta(e)?'<span class="pill ok">Inscrições abertas</span>':'<span class="pill">Encerradas</span>')+(hip?'<button class="btn sm" data-act="iedit" data-id="'+e.id+'">Editar</button><button class="btn sm" data-act="itoggle" data-id="'+e.id+'">'+(e.status==='aberta'?'Encerrar':'Reabrir')+'</button>':'')+'</div></div>'+
-     (ps.length?'<div class="tw"><table><thead><tr><th>Aluno</th><th>Cavalo</th><th>Categoria</th><th>Observação</th><th>Situação</th><th></th></tr></thead><tbody>'+ps.map(x=>'<tr><td><b>'+esc(stName(x.student))+'</b></td><td>'+esc(hn(x.horse))+'</td><td>'+esc(x.cat)+'</td><td class="sm">'+esc(x.obs||'—')+'</td><td>'+inscPill(x)+(x.status==='recusada'&&x.motivo?'<div class="note bad">'+esc(x.motivo)+'</div>':'')+'</td><td class="n" style="white-space:nowrap">'+(x.status==='pendente'?'<button class="btn sm danger" data-act="ipno" data-id="'+x.id+'">Recusar</button> <button class="btn sm pri" data-act="ipok" data-id="'+x.id+'">Confirmar</button>':'')+'</td></tr>').join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">Nenhum pedido de inscrição ainda.</p>')+'</div>'}).join('');
+    return '<div class="card" style="margin-bottom:16px">'+
+     plateEvento(e,{logo:(HIP()||{}).logo,hipica:(HIP()||{}).fantasia,
+       acoes:(e.aberta?'<span class="pill brass">aberta para fora</span>':'')+evAbertoTxt(e)+
+         (hip?'<div class="row" style="gap:6px"><button class="btn sm" data-act="iedit" data-id="'+e.id+'">Editar</button><button class="btn sm" data-act="itoggle" data-id="'+e.id+'">'+(e.status==='aberta'?'Encerrar':'Reabrir')+'</button></div>':'')})+
+     (ps.length?'<div class="tw"><table><thead><tr><th>Aluno</th><th>Cavalo</th><th>Categoria</th><th>Observação</th><th>Situação</th><th></th></tr></thead><tbody>'+ps.map(x=>'<tr><td><b>'+esc(stName(x.student))+'</b></td><td>'+esc(hn(x.horse))+'</td><td>'+esc(x.cat)+'</td><td class="sm">'+esc(x.obs||'—')+'</td><td>'+inscPill(x)+(x.status==='recusada'&&x.motivo?'<div class="note bad">'+esc(x.motivo)+'</div>':'')+'</td><td class="n" style="white-space:nowrap">'+(x.status==='pendente'?'<button class="btn sm danger" data-act="ipno" data-id="'+x.id+'">Recusar</button> <button class="btn sm pri" data-act="ipok" data-id="'+x.id+'">Confirmar</button>':'')+'</td></tr>').join('')+'</tbody></table></div>':'<p class="muted" style="margin:0">Nenhum pedido de inscrição ainda.</p>')+'</div>'}).join('')+fora;
 }
 function inscEventModal(e){
   const isNew=!e;const o=e||{nome:'',date:addDays(TODAY,21),local:'',cats:['1,00 m','1,10 m','1,20 m'],prazo:addDays(TODAY,14),taxa:0,status:'aberta'};
+  IEF=null;
   modal({title:isNew?'Abrir inscrições':'Editar inscrições',wide:true,
-   body:'<div class="fg">'+fld('Nome da prova','ie-n',o.nome,'text',null,'full')+fld('Data da prova','ie-d',o.date,'date')+fld('Local','ie-l',o.local,'text')+fld('Categorias (separe por vírgula)','ie-c',o.cats.join(', '),'text',null,'full')+fld('Inscrições até','ie-p',o.prazo,'date')+fld('Taxa de inscrição (R$)','ie-t',o.taxa,'number','min="0" step="1"')+'</div>',
-   del:isNew?null:()=>{S.insc=S.insc.filter(x=>x!==e);S.inscPed=S.inscPed.filter(x=>x.insc!==e.id)},
-   save:()=>{const v={nome:V('ie-n').trim(),date:V('ie-d'),local:V('ie-l').trim(),cats:V('ie-c').split(',').map(x=>x.trim()).filter(Boolean),prazo:V('ie-p'),taxa:+V('ie-t')||0};if(!v.nome||!v.date||!v.cats.length||!v.prazo)return false;if(isNew)S.insc.push(Object.assign({id:uid(),status:'aberta'},v));else Object.assign(e,v)}});
+   body:'<div class="fg">'+fld('Nome da prova','ie-n',o.nome,'text',null,'full')+fld('Data da prova','ie-d',o.date,'date')+fld('Local','ie-l',o.local,'text')+fld('Categorias (separe por ponto e vírgula)','ie-c',o.cats.join('; '),'text','placeholder="1,00 m; 1,10 m; 1,20 m"','full')+fld('Inscrições até','ie-p',o.prazo,'date')+fld('Taxa de inscrição (R$)','ie-t',o.taxa,'number','min="0" step="1"')+'</div>'+
+     '<p class="f" style="margin:14px 0 6px">Foto do cartaz</p>'+
+     '<div class="row" style="align-items:center;gap:12px"><div class="plprev" id="ie-prev">'+(o.foto?'<img src="'+o.foto+'" alt="Foto da competição">':'<span class="muted sm">sem foto</span>')+'</div>'+
+       '<div><label class="btn" style="cursor:pointer">Escolher foto<input id="ie-f" type="file" accept="image/*" hidden></label>'+
+       (o.foto?' <button type="button" class="btn danger" data-act="ievrm">Remover</button>':'')+
+       '<p class="muted sm" style="margin:8px 0 0;max-width:380px">Ela vira o fundo do cartão da competição. Horizontal, pelo menos 1200 px de largura.</p></div></div>'+
+     '<label class="chk" style="margin-top:14px"><input type="checkbox" id="ie-ab"'+(o.aberta?' checked':'')+'><span><b>Abrir esta competição para outras hípicas.</b> O cartão passa a aparecer para as outras hípicas e para os alunos delas dentro do EquiAltaris.</span></label>'+
+     '<div id="ie-cbox"'+(o.aberta?'':' hidden')+'>'+fld('Como gente de fora se inscreve (telefone, e-mail ou link)','ie-ct',o.contato||'','text',null,'full')+'</div>'+
+     '<div class="err" id="ie-err" role="alert"></div>',
+   after:()=>{
+     const fi=document.getElementById('ie-f');
+     if(fi)fi.onchange=()=>{const f=fi.files[0];if(!f)return;
+       readPhoto(f,1600).then(d=>{IEF=d;document.getElementById('ie-prev').innerHTML='<img src="'+d+'" alt="Foto da competição">';$('#ie-err').textContent=''})
+         .catch(m=>{IEF=null;$('#ie-err').textContent=m})};
+     const cb=document.getElementById('ie-ab');
+     if(cb)cb.onchange=()=>{const b=document.getElementById('ie-cbox');if(b)b.hidden=!cb.checked};
+   },
+   del:isNew?null:()=>{despubEvento(e.id);S.insc=S.insc.filter(x=>x!==e);S.inscPed=S.inscPed.filter(x=>x.insc!==e.id)},
+   save:()=>{
+     const v={nome:V('ie-n').trim(),date:V('ie-d'),local:V('ie-l').trim(),cats:parseCats(V('ie-c')),prazo:V('ie-p'),taxa:+V('ie-t')||0,
+              aberta:CK('ie-ab'),contato:V('ie-ct').trim()};
+     if(!v.nome||!v.date||!v.cats.length||!v.prazo){$('#ie-err').textContent='Preencha o nome, a data, as categorias e o prazo.';return false}
+     if(v.aberta&&!v.contato){$('#ie-err').textContent='Para abrir para fora, diga como gente de outra hípica se inscreve.';return false}
+     if(IEF)v.foto=IEF; else if(IEF===''){v.foto=''}
+     let alvo=e;
+     if(isNew){alvo=Object.assign({id:uid(),status:'aberta',foto:''},v);S.insc.push(alvo)}
+     else Object.assign(alvo,v);
+     IEF=null;sincEvento(alvo);
+   }});
 }
 function inscModal(e){
   const st=me();const own=S.horses.filter(h=>h.studentId===st.id),sch=S.horses.filter(h=>!h.studentId);
@@ -3162,10 +3304,11 @@ function inscModal(e){
 views.s_provas=function(){
   const st=me();const ab=S.insc.filter(inscAberta).sort((a,b)=>a.date.localeCompare(b.date));
   const meus=S.inscPed.filter(x=>x.student===st.id).sort((a,b)=>b.at-a.at);
-  const cards=ab.length?'<div class="grid g2" style="margin-bottom:22px">'+ab.map(e=>{const m=meus.find(x=>x.insc===e.id&&x.status!=='recusada');
-    return '<div class="card"><h3 style="margin-bottom:2px">'+esc(e.nome)+'</h3><span class="muted">'+dowOf(e.date)+' '+fmtD(e.date)+' · '+esc(e.local)+'</span><p class="muted sm" style="margin:8px 0">Categorias: '+esc(e.cats.join(', '))+'<br>Inscrições até '+fmtD(e.prazo)+(e.taxa?' · taxa '+brl(e.taxa):'')+'</p>'+(m?inscPill(m):'<button class="btn pri" data-act="ireq" data-id="'+e.id+'">Pedir inscrição</button>')+'</div>'}).join('')+'</div>':empty('Nenhuma prova com inscrições abertas no momento.');
+  const cards=ab.length?ab.map(e=>{const m=meus.find(x=>x.insc===e.id&&x.status!=='recusada');
+    return plateEvento(e,{logo:(HIP()||{}).logo,hipica:(HIP()||{}).fantasia,
+      acoes:(m?inscPill(m):'<button class="btn pri sm" data-act="ireq" data-id="'+e.id+'">Pedir inscrição</button>')})}).join(''):empty('Nenhuma prova com inscrições abertas no momento.');
   const tb=meus.length?'<div class="tw"><table><thead><tr><th>Prova</th><th>Data</th><th>Cavalo</th><th>Categoria</th><th>Situação</th><th></th></tr></thead><tbody>'+meus.map(x=>{const e=S.insc.find(y=>y.id===x.insc)||{nome:'—',date:''};return '<tr><td><b>'+esc(e.nome)+'</b></td><td>'+fmtD(e.date)+'</td><td>'+esc(hn(x.horse))+'</td><td>'+esc(x.cat)+'</td><td>'+inscPill(x)+(x.status==='recusada'&&x.motivo?'<div class="note bad">'+esc(x.motivo)+'</div>':'')+'</td><td class="n">'+(x.status==='pendente'?'<button class="btn sm danger" data-act="ipcancel" data-id="'+x.id+'">Cancelar pedido</button>':'')+'</td></tr>'}).join('')+'</tbody></table></div>':empty('Você ainda não pediu nenhuma inscrição.');
-  return '<h3 style="margin:0 0 10px">Inscrições abertas</h3>'+cards+'<h3 style="margin:0 0 10px">Meus pedidos</h3>'+tb;
+  return '<h3 style="margin:0 0 10px">Inscrições abertas na sua hípica</h3>'+cards+listaDeFora('Competições de outras hípicas')+'<h3 style="margin:22px 0 10px">Meus pedidos</h3>'+tb;
 };
 
 /* ---------- remarcação de aulas ---------- */
@@ -3353,6 +3496,8 @@ const act={
   lgvolta:()=>{UI.lgMode='';RECTOK=null;RECMSG='';showLogin()},
   nav:d=>{if(d.v==='logout'){logout();return}if(d.v==='senha'){senhaModal();return}
     if(d.v==='conta'){UI.view='conta';SENHAOK='';render();return}
+    if(d.v==='provas'||d.v==='s_provas'){UI.view=d.v;if(EVST!=='ok')EVST='carregando';render();
+      loadEventos().then(function(){if(UI.view===d.v)render()});return}
     if(d.v==='aulas'){UI.view='prog';UI.alTab='lista';render();return}
     if(d.v==='feed'||d.v==='o_feed'){UI.view=d.v;render();loadFeed().then(function(){if(UI.view===d.v)render()});return}
     if(d.v==='perfil'){PERFVER=meuUid();UI.view='perfil';PERFST='';PERFPOSTS=[];render();loadPerfilView(PERFVER).then(function(){if(UI.view==='perfil')render()});return}
@@ -3362,7 +3507,7 @@ const act={
       Promise.all([loadPresenca(),loadUso(USODIAS)]).then(function(){if(UI.view==='o_uso')render()});return}
     if(d.v==='o_hip'||d.v==='alunos'){UI.view=d.v;render();loadPresenca().then(function(){if(UI.view===d.v)render()});return}UI.view=d.v;if(d.v!=='croquis')UI.cq=null;render()},
   inew:()=>inscEventModal(),iedit:d=>inscEventModal(S.insc.find(x=>x.id===d.id)),
-  itoggle:d=>{const e=S.insc.find(x=>x.id===d.id);e.status=e.status==='aberta'?'encerrada':'aberta';save();render()},
+  itoggle:d=>{const e=S.insc.find(x=>x.id===d.id);e.status=e.status==='aberta'?'encerrada':'aberta';save();render();if(e.aberta)sincEvento(e)},
   ireq:d=>inscModal(S.insc.find(x=>x.id===d.id)),
   ipcancel:d=>{S.inscPed=S.inscPed.filter(x=>x.id!==d.id);save();render()},
   ipok:d=>{const x=S.inscPed.find(y=>y.id===d.id),e=S.insc.find(y=>y.id===x.insc);x.status='confirmada';
@@ -3416,6 +3561,12 @@ const act={
   acetab:d=>{ACETAB=d.k;ACEERR='';telaAceite()},
   contab:d=>{CONTAB=d.k;SENHAOK='';render()},
   tmenu:()=>{UI.menu=!UI.menu;render()},
+  ievrm:()=>{IEF='';const p=document.getElementById('ie-prev');if(p)p.innerHTML='<span class="muted sm">sem foto</span>'},
+  evcont:d=>{const e=EVPUB.find(x=>String(x.id)===String(d.id));if(!e)return;
+    modal({title:'Como participar',body:'<p style="margin-top:-6px"><b>'+esc(e.nome||'')+'</b><br><span class="muted">'+esc(e.hipica_nome||'')+(e.date?' · '+fmtD(e.date):'')+(e.local?' · '+esc(e.local):'')+'</span></p>'+
+      '<p>A inscrição é feita direto com a hípica que organiza:</p><div class="pixbox"><div><span>Contato</span><br><code>'+esc(e.contato||'')+'</code></div>'+
+      telLinks(e.contato,'Olá! Quero inscrever um atleta em '+(e.nome||'sua competição')+'.')+'</div>'+
+      '<p class="muted sm" style="margin-top:12px">O EquiAltaris mostra a competição, mas quem confirma a vaga é a hípica organizadora.</p>'})},
   afix:d=>{const a=materializarFixa(d.id);if(a){render();aulaModal(a)}},
   afixdone:d=>{const a=materializarFixa(d.id);if(a){a.status='realizada';save();render()}},
   fxadd:(d,b)=>{const box=document.getElementById('s-fixos');if(box)box.insertAdjacentHTML('beforeend',fixoRow(null))},
@@ -3490,7 +3641,9 @@ const act={
   pathend:()=>finishPath(),autopath:()=>autoPath(),
   delsel:()=>delSel(),
   cqdel:()=>{const c=CQ(UI.cq);modal({title:'Excluir croqui?',body:'<p>“'+esc(c.name)+'” será removido, e os treinos ligados a ele ficam sem croqui.</p>',label:'Excluir',save:()=>{S.croquis=S.croquis.filter(x=>x!==c);S.treinos.forEach(t=>{if(t.croqui===c.id)t.croqui=''});UI.cq=null}})},
-  ptab:d=>{UI.provTab=d.t;render()},pnew:()=>provaModal(),pedit:d=>provaModal(S.provas.find(p=>p.id===d.id)),ppen:d=>penModal(S.provas.find(p=>p.id===d.id)),
+  ptab:d=>{UI.provTab=d.t;render();
+    if(d.t==='insc'&&EVST!=='ok'&&EVST!=='carregando'){EVST='carregando';render();
+      loadEventos().then(function(){if(UI.view==='provas')render()})}},pnew:()=>provaModal(),pedit:d=>provaModal(S.provas.find(p=>p.id===d.id)),ppen:d=>penModal(S.provas.find(p=>p.id===d.id)),
   ftab:d=>{UI.finTab=d.t;render()},fnew:()=>finModal(),fedit:d=>finModal(S.fin.find(f=>f.id===d.id)),
   fpago:d=>{const f=S.fin.find(x=>x.id===d.id);f.pago=!f.pago;save();render()},
   cobPick:()=>{UI.finTab='cob';UI.view='fin';render()},
