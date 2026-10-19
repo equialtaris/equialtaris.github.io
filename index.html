@@ -296,6 +296,10 @@ pre.zap{background:var(--surface2);border:1px solid var(--line);border-radius:10
 .note{background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:12.5px;margin-top:6px}
 .note.bad{background:var(--bad-bg);color:var(--bad)}
 .note.ok{background:var(--ok-bg);color:var(--ok)}
+#side nav button.nsub{padding-left:30px;font-size:13.5px;opacity:.92}
+#side nav button.nsub svg{width:15px;height:15px;opacity:.8}
+#side nav button .chev{margin-left:auto;width:0;height:0;border-left:4.5px solid currentColor;border-top:3.5px solid transparent;border-bottom:3.5px solid transparent;transition:transform .16s ease;flex:none}
+#side nav button .chev.ab{transform:rotate(90deg)}
 .scrollbox{max-height:min(64vh,660px);overflow-y:auto;padding:2px 8px 2px 2px;scrollbar-width:thin;scrollbar-color:var(--line) transparent;overscroll-behavior:contain}
 .scrollbox::-webkit-scrollbar{width:9px}
 .scrollbox::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
@@ -501,11 +505,11 @@ const INSUMOS=['Utilização do ambiente','Baia','Piquete','Feno','Tratador','Ra
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261019-2010';
+const APPV='20261020-0030';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
-const PLN={lite:'Light',standard:'Standard',full:'Full',personalizado:'Personalizado'};
+const PLN={lite:'Instrutor',standard:'Essencial',full:'Completo',signature:'Signature',personalizado:'Personalizado'};
 const DEMO_INSTRS=()=>[];
 function blankTenant(h){return {horses:[],croquis:[],treinos:[],provas:[],fin:[],seq:1,students:[],aulas:[],vagas:[],remarc:[],msgs:[],insc:[],inscPed:[],pag:[],files:{},pix:'',staff:{email:h.login,name:'Administrador'},instrs:[]}}
 function faixaDia(d,pi,pf){
@@ -585,7 +589,7 @@ function seedG(){
   const tenants={h5:normT(blankTenant(hips[0]))};
   const pbn=(a,b,t)=>'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+a+'"/><stop offset="1" stop-color="'+b+'"/></linearGradient></defs><rect width="1600" height="900" fill="url(#g)"/><circle cx="1250" cy="260" r="380" fill="#fff" opacity=".07"/><circle cx="300" cy="780" r="300" fill="#fff" opacity=".06"/><text x="800" y="470" text-anchor="middle" font-family="Georgia,serif" font-size="96" fill="#fff" opacity=".92">'+t+'</text></svg>');
   const parc=[];
-  return {v:1,parc,chat:[],owner:{email:'equialtaris@gmail.com',nome:'EquiAltaris',tel:'',pix:''},planos:{lite:{n:'Light',v:99},standard:{n:'Standard',v:199},full:{n:'Full',v:349}},hips,cob,files,tenants};
+  return {v:1,parc,chat:[],owner:{email:'equialtaris@gmail.com',nome:'EquiAltaris',tel:'',pix:''},planos:{lite:{n:'Instrutor',v:690},standard:{n:'Essencial',v:1690},full:{n:'Completo',v:2900},signature:{n:'Signature',v:6500}},hips,cob,files,tenants};
 }
 function loadG(){
   try{const r=localStorage.getItem(GKEY);if(r){const o=JSON.parse(r);if(o&&o.hips&&o.tenants)return o}}catch(e){}
@@ -696,7 +700,7 @@ function podeEscrever(t){
   return t==='tenant_data'||t==='cobrancas'||t==='plat_files'||t==='chat_plataforma';
 }
 function emptyG(){return {v:1,parc:[],chat:[],owner:{email:'',nome:'EquiAltaris',tel:'',pix:''},
-  planos:{lite:{n:'Light',v:99},standard:{n:'Standard',v:199},full:{n:'Full',v:349}},hips:[],cob:[],files:{},tenants:{}}}
+  planos:{lite:{n:'Instrutor',v:690},standard:{n:'Essencial',v:1690},full:{n:'Completo',v:2900},signature:{n:'Signature',v:6500}},hips:[],cob:[],files:{},tenants:{}}}
 /* monta as linhas que esta máquina quer gravar, por tabela */
 function linhasLocais(t){
   const mh=minhaHip();
@@ -821,10 +825,10 @@ const hipCobs=id=>G.cob.filter(c=>c.hip===id);
 const hipDebt=id=>hipCobs(id).filter(cobOver);
 const hipOwe=id=>hipDebt(id).reduce((t,c)=>t+(+c.valor||0),0);
 const hipOf=id=>G.hips.find(h=>h.id===id)||{fantasia:'—'};
-const PLIM={lite:30,standard:60,full:80};
-const hipLim=h=>h.plano==='personalizado'?{a:Math.max(1,+h.limA||100),c:Math.max(1,+h.limC||100)}:{a:PLIM[h.plano]||30,c:PLIM[h.plano]||30};
+const PLIM={lite:{a:30,c:15},standard:{a:60,c:40},full:{a:150,c:90},signature:{a:9999,c:9999}};
+const hipLim=h=>h.plano==='personalizado'?{a:Math.max(1,+h.limA||100),c:Math.max(1,+h.limC||100)}:(PLIM[h.plano]||PLIM.lite);
 const limChip=(n,l)=>'<span class="pill '+(n>=l?'bad':n>=l*.9?'warn':'ok')+'" style="margin-right:8px">'+n+' de '+l+'</span>';
-const planTxt=h=>(PLN[h.plano]||'Personalizado')+' · '+brl(h.valor)+'/mês';
+const planTxt=h=>(PLN[h.plano]||'Personalizado');
 function hipPill(h){return h.status==='bloqueada'?'<span class="pill bad">Bloqueada</span>':hipDebt(h.id).length?'<span class="pill warn">Inadimplente</span>':hipCobs(h.id).some(c=>c.status==='enviado')?'<span class="pill warn">Pagamento a conferir</span>':'<span class="pill ok">Em dia</span>'}
 function cobPill(c){return c.status==='pago'?'<span class="pill ok">Paga</span>':c.status==='enviado'?'<span class="pill warn">A conferir</span>':c.status==='recusado'?'<span class="pill bad">Recusada</span>'+(cobOver(c)?' <span class="pill bad">Vencida</span>':''):cobOver(c)?'<span class="pill bad">Vencida</span>':'<span class="pill">Aberta</span>'}
 function hipRelease(h){if(h.status==='bloqueada'&&!hipDebt(h.id).length){h.status='ativa';delete h.bloqEm}}
@@ -843,7 +847,7 @@ function alunoPorNome(n){
 }
 
 const UI={com:null,lgMode:'',ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'grade',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
-  cobOwner:'',cobMonth:TODAY.slice(0,7),fecMes:TODAY.slice(0,7),repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true,zoom:1};
+  cobOwner:'',cobMonth:TODAY.slice(0,7),fecMes:TODAY.slice(0,7),navFin:false,repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true,zoom:1};
 
 /* ---------- ícones ---------- */
 const IC={
@@ -858,9 +862,12 @@ const IC={
  chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.2A8 8 0 1 1 21 12z"/>',
  conta:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
  sair:'<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M15 12H5"/>'};
-const NAV=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['pagto','Mensalidades','fin'],['croquis','Croquis','croq'],['provas','Provas','prova'],['fin','Financeiro','fin'],['prop','Proprietários','prop'],['rels','Relatórios','prova'],['plano','Meu plano','fin'],['suporte','Suporte','chat'],['conta','Minha conta','conta']];
-const NAV_S=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav'],['conta','Minha conta','conta']];
-const NAV_I=[['feed','Comunidade','chat'],['perfil','Meu perfil','conta'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova'],['conta','Minha conta','conta']];
+const NAV=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['instrs','Instrutores','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova'],
+  ['fin','Financeiro','fin'],['pagto','Mensalidades','fin','sub'],['prop','Proprietários','prop','sub'],['rels','Relatórios','prova','sub'],['plano','Meu plano','fin','sub'],
+  ['suporte','Suporte','chat'],['conta','Minha conta','conta']];
+const GRUPO_FIN=['pagto','prop','rels','plano'];
+const NAV_S=[['feed','Comunidade','chat'],['s_inicio','Início','painel'],['s_aulas','Minhas aulas','prog'],['s_pag','Pagamentos','fin'],['s_chat','Mensagens','chat'],['s_provas','Provas','prova'],['s_cavalo','Meu cavalo','cav'],['conta','Minha conta','conta']];
+const NAV_I=[['feed','Comunidade','chat'],['painel','Painel','painel'],['prog','Programação','prog'],['cavalos','Cavalos','cav'],['alunos','Alunos','pess'],['remarc','Remarcações','prog'],['chat','Mensagens','chat'],['croquis','Croquis','croq'],['provas','Provas','prova'],['conta','Minha conta','conta']];
 const VKEY={painel:'painel',prog:'prog',cavalos:'cavalos',cavaleiros:'cavaleiros',croquis:'croquis',provas:'provas',fin:'fin',prop:'prop',conta:'conta'};
 
 /* ---------- modal ---------- */
@@ -1036,9 +1043,11 @@ function render(){
   const cbadge=st?S.msgs.filter(m=>m.student===UI.user.id&&m.from==='staff'&&!m.read).length:S.msgs.filter(m=>m.from==='aluno'&&!m.read&&(!inst||(m.canal==='instrutor'&&mi(m)===UI.user.id))).length;
   const sbadge=gUnread(hip.id,'owner');
   const pbadge=st?0:S.inscPed.filter(x=>x.status==='pendente').length;
-  $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='pagto'&&badge?'<span class="badge">'+badge+'</span>':'')+(n[0]==='remarc'&&rbadge?'<span class="badge">'+rbadge+'</span>':'')+(n[0]==='suporte'&&sbadge?'<span class="badge">'+sbadge+'</span>':'')+(n[0]==='provas'&&pbadge?'<span class="badge">'+pbadge+'</span>':'')+(n[0]==='feed'&&AVISOS.length?'<span class="badge">!</span>':'')+((n[0]==='chat'||n[0]==='s_chat')&&cbadge?'<span class="badge">'+cbadge+'</span>':'')+'</button>').join('');
+  const grpAberto=!!UI.navFin||GRUPO_FIN.indexOf(UI.view)>=0;
+  nav=nav.filter(n=>n[3]!=='sub'||grpAberto);
+  $('#nav').innerHTML=nav.map(n=>'<button class="'+(n[3]==='sub'?'nsub':'')+'" data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='pagto'&&badge?'<span class="badge">'+badge+'</span>':'')+(n[0]==='remarc'&&rbadge?'<span class="badge">'+rbadge+'</span>':'')+(n[0]==='suporte'&&sbadge?'<span class="badge">'+sbadge+'</span>':'')+(n[0]==='provas'&&pbadge?'<span class="badge">'+pbadge+'</span>':'')+(n[0]==='feed'&&AVISOS.length?'<span class="badge">!</span>':'')+((n[0]==='chat'||n[0]==='s_chat')&&cbadge?'<span class="badge">'+cbadge+'</span>':'')+(n[0]==='fin'?'<i class="chev'+(grpAberto?' ab':'')+'" aria-hidden="true"></i>':'')+'</button>').join('');
   $('#st1').textContent=st?'Aluno':'Centro';$('#st2').textContent=st?stu.name:hip.fantasia;
-  $('#who').innerHTML=st?'<b>Portal do aluno</b><br>Dúvidas? Fale com a hípica.':(inst?'<b>'+esc(IN(UI.user.id).name)+'</b><br>Área do instrutor.':'<b>Plano '+esc(PLN[hip.plano]||'Personalizado')+'</b><br>'+brl(hip.valor)+'/mês');
+  $('#who').innerHTML=st?'<b>Portal do aluno</b><br>Dúvidas? Fale com a hípica.':(inst?'<b>'+esc(IN(UI.user.id).name)+'</b><br>Área do instrutor.':'<b>Plano '+esc(PLN[hip.plano]||'Personalizado')+'</b><br>'+esc(hip.fantasia));
   const m=meta[UI.view];$('#ttl').textContent=m[0];$('#sub').textContent=m[1];
   $('#topact').innerHTML=topActs[UI.view]?topActs[UI.view]():'';
   mostrarView();
@@ -2159,6 +2168,7 @@ let CONTAB='cfg',SENHAOK='';
 function abasConta(){
   const l=[];
   if(UI.user&&(UI.user.role==='owner'||UI.user.role==='staff'))l.push(['cfg',UI.user.role==='owner'?'Configurações':'Dados da hípica']);
+  if(UI.user&&UI.user.role!=='owner')l.push(['perfil','Meu perfil']);
   l.push(['docs','Termos e privacidade']);
   l.push(['senha','Trocar senha']);
   return l;
@@ -2182,6 +2192,7 @@ views.conta=function(){
     '<button role="tab" aria-selected="'+(CONTAB===x[0])+'" data-act="contab" data-k="'+x[0]+'">'+esc(x[1])+'</button>').join('')+'</div>';
   if(CONTAB==='senha')return abas+senhaHTML();
   if(CONTAB==='docs')return abas+docsHTML();
+  if(CONTAB==='perfil')return abas+views.perfil();
   return abas+(UI.user.role==='owner'?cfgOwnerHTML():cfgHipHTML());
 };
 function cfgHipHTML(){
@@ -2974,7 +2985,7 @@ function hipModal(h){
   const isNew=!h;const o=h||{fantasia:'',cnpj:'',plano:'standard',valor:G.planos.standard.v,venc:10,login:''};
   modal({title:isNew?'Nova hípica':'Editar hípica',wide:true,
    body:'<div class="fg">'+fld('Nome fantasia','hp-n',o.fantasia,'text',null,'full')+fld('CNPJ','hp-c',o.cnpj,'text','inputmode="numeric" placeholder="00.000.000/0000-00"')+
-    fld('Plano contratado','hp-pl',o.plano,'select',[['lite','Plano Light'],['standard','Plano Standard'],['full','Plano Full'],['personalizado','Plano Personalizado']])+fld('Valor mensal (R$)','hp-v',o.valor,'number','min="0" step="1"')+fld('Dia do vencimento','hp-d',o.venc,'number','min="1" max="28" step="1"')+
+    fld('Plano contratado','hp-pl',o.plano,'select',[['lite','Instrutor'],['standard','Essencial'],['full','Completo'],['signature','Signature'],['personalizado','Personalizado']])+fld('Valor mensal (R$)','hp-v',o.valor,'number','min="0" step="1"')+fld('Dia do vencimento','hp-d',o.venc,'number','min="1" max="28" step="1"')+
     fld('Celular / WhatsApp','hp-t',o.tel||'','tel','inputmode="tel" placeholder="(61) 99999-9999"')+fld('E-mail do administrador da hípica','hp-l',o.login,'email','autocapitalize="none"')+'</div><div class="fg" id="hp-lim" style="margin-top:6px;'+(o.plano==='personalizado'?'':'display:none')+'">'+fld('Máximo de alunos (plano personalizado)','hp-la',o.limA||100,'number','min="1" step="1"')+fld('Máximo de cavalos (plano personalizado)','hp-lc',o.limC||100,'number','min="1" step="1"')+'</div><p class="muted sm" id="hp-limtx" style="margin:6px 0 0"></p>'+
     '<p class="muted sm" style="margin-top:8px">O administrador da hípica entra com esse e-mail. A senha é criada pelo EquiAltaris e enviada a ele; ninguém guarda senha dentro do sistema.</p><div class="err" id="hp-err" role="alert"></div>',
    save:()=>{
@@ -2991,7 +3002,9 @@ function hipModal(h){
      else{Object.assign(h,v);G.tenants[h.id].staff={email:v.login,name:'Administrador'}}}});
 hpLimUi();
 }
-function hpLimUi(){const pl=V('hp-pl'),box=$('#hp-lim'),tx=$('#hp-limtx');if(!box)return;box.style.display=pl==='personalizado'?'':'none';tx.textContent=pl==='personalizado'?'':'Limite do plano: até '+PLIM[pl]+' alunos e '+PLIM[pl]+' cavalos.'}
+function limTxt(k){const L=PLIM[k];if(!L)return '';
+  return L.a>=9999?'Sem limite de alunos e cavalos.':'Limite do plano: até '+L.a+' alunos e '+L.c+' cavalos.'}
+function hpLimUi(){const pl=V('hp-pl'),box=$('#hp-lim'),tx=$('#hp-limtx');if(!box)return;box.style.display=pl==='personalizado'?'':'none';tx.textContent=pl==='personalizado'?'':limTxt(pl)}
 function cobMsg(c){const h=hipOf(c.hip);return 'Olá, '+h.fantasia+'! A mensalidade do EquiAltaris (plano '+(PLN[h.plano]||'Personalizado')+') referente a '+monthLabel(c.ref)+', no valor de '+brl(c.valor)+', '+(c.venc<TODAY?'venceu':'vence')+' em '+fmtD(c.venc)+'.\nChave PIX: '+G.owner.pix+'\nDepois de pagar, entre no sistema, abra "Meu plano" e informe o pagamento anexando o comprovante.'}
 views.o_cob=function(){
   const tabs=[['aberto','Em aberto',G.cob.filter(c=>c.status==='pendente'||c.status==='recusado')],['conf','A conferir',G.cob.filter(c=>c.status==='enviado')],['pagas','Pagas',G.cob.filter(c=>c.status==='pago')],['todas','Todas',G.cob]];
@@ -3009,7 +3022,7 @@ views.o_cob=function(){
 function cfgOwnerHTML(){
   return '<div class="grid g2"><div class="card"><h3>Chave PIX da plataforma</h3><p class="muted">Aparece para as hípicas na área Meu plano.</p><input id="ow-pix" value="'+esc(G.owner.pix)+'" aria-label="Chave PIX"><label class="f" style="margin-top:10px">Seu celular / WhatsApp (as hípicas veem no Suporte)<input id="ow-tel" type="tel" value="'+esc(G.owner.tel)+'" placeholder="(61) 99999-9999"></label></div>'+
    '<div class="card"><h3>Valores padrão dos planos</h3><p class="muted">Usados como sugestão ao cadastrar uma hípica. O valor de cada cliente pode ser ajustado na ficha dele.</p>'+
-   Object.keys(G.planos).map(k=>'<label class="f">'+esc(G.planos[k].n)+' (R$ por mês)<input id="pl-'+k+'" type="number" min="0" step="1" value="'+G.planos[k].v+'"></label>').join('')+'<p class="muted sm">Personalizado: valor e limites de alunos e cavalos combinados caso a caso.</p><p class="muted sm">Limites: Light 30 · Standard 60 · Full 80 alunos e cavalos.</p></div>'+
+   Object.keys(G.planos).map(k=>'<label class="f">'+esc(G.planos[k].n)+' (R$ por mês)<input id="pl-'+k+'" type="number" min="0" step="1" value="'+G.planos[k].v+'"></label>').join('')+'<p class="muted sm">Personalizado: valor e limites combinados caso a caso.</p><p class="muted sm">Limites — Instrutor: 30 alunos e 15 cavalos · Essencial: 60 e 40 · Completo: 150 e 90 · Signature: sem limite.</p></div>'+
    '<div class="card"><h3>Dados da empresa nos documentos</h3><p class="muted">Aparecem nos Termos de Uso e na Política de Privacidade. Preencha quando o CNPJ sair.</p>'+
    '<label class="f">Razão social<input id="ow-rz" value="'+esc(G.owner.razao||'')+'" placeholder="EquiAltaris Tecnologia LTDA"></label>'+
    '<label class="f">CNPJ<input id="ow-cn" value="'+esc(G.owner.cnpj||'')+'" placeholder="00.000.000/0001-00"></label>'+
@@ -3021,7 +3034,7 @@ function cfgOwnerHTML(){
 views.plano=function(){
   const h=HIP(),cs=hipCobs(h.id).slice().sort((a,b)=>b.venc.localeCompare(a.venc)),blk=h.status==='bloqueada';
   const banner=blk?'<div class="note bad" style="margin-bottom:16px"><b>Acesso bloqueado por falta de pagamento.</b> Pague pela chave PIX abaixo e informe o pagamento com o comprovante. O sistema volta a funcionar assim que o pagamento for informado.</div>':hipDebt(h.id).length?'<div class="note bad" style="margin-bottom:16px">Há mensalidade vencida. Informe o pagamento para evitar o bloqueio do sistema.</div>':'';
-  return banner+'<div class="grid g2" style="margin-bottom:16px"><div class="card"><h3>Plano contratado</h3><p style="font-size:20px;margin:4px 0"><b>'+esc(PLN[h.plano]||'Personalizado')+'</b></p><p>'+brl(h.valor)+' por mês · vence todo dia '+h.venc+'</p><p>'+hipPill(h)+'</p><p class="muted sm">'+esc(h.fantasia)+' · CNPJ '+esc(h.cnpj)+'</p><p class="muted sm" style="margin-top:10px">Uso do plano</p><p>Alunos '+limChip(S.students.length,hipLim(h).a)+' Cavalos '+limChip(S.horses.length,hipLim(h).c)+'</p></div>'+
+  return banner+'<div class="grid g2" style="margin-bottom:16px"><div class="card"><h3>Plano contratado</h3><p style="font-size:20px;margin:4px 0"><b>'+esc(PLN[h.plano]||'Personalizado')+'</b></p><p class="muted">Vencimento todo dia '+h.venc+'</p><p>'+hipPill(h)+'</p><p class="muted sm">'+esc(h.fantasia)+' · CNPJ '+esc(h.cnpj)+'</p><p class="muted sm" style="margin-top:10px">Uso do plano</p><p>Alunos '+limChip(S.students.length,hipLim(h).a)+' Cavalos '+limChip(S.horses.length,hipLim(h).c)+'</p></div>'+
    '<div class="card"><h3>Pagar por PIX</h3><div class="pixbox"><div><span>Chave PIX do EquiAltaris</span><br><code>'+esc(G.owner.pix)+'</code></div><button class="btn brass" data-act="opixcopy">Copiar chave</button></div></div></div>'+
    '<h3 style="margin:8px 0">Cobranças</h3>'+(cs.length?'<div class="tw"><table><thead><tr><th>Referência</th><th class="n">Valor</th><th>Vencimento</th><th>Situação</th><th></th></tr></thead><tbody>'+cs.map(c=>'<tr><td>'+monthLabel(c.ref)+'</td><td class="n">'+brl(c.valor)+'</td><td>'+fmtD(c.venc)+'</td><td>'+cobPill(c)+(c.status==='recusado'&&c.motivo?'<br><span class="muted sm">'+esc(c.motivo)+'</span>':'')+'</td><td class="n" style="white-space:nowrap">'+(c.status==='pendente'||c.status==='recusado'?'<button class="btn sm pri" data-act="hinfo" data-id="'+c.id+'">Informar pagamento</button>':(c.fileId?'<button class="btn sm" data-act="viewfile" data-id="'+c.fileId+'">Comprovante</button>':''))+'</td></tr>').join('')+'</tbody></table></div>':empty('Nenhuma cobrança gerada ainda.'));
 };
@@ -3768,6 +3781,8 @@ const act={
   lgesq:()=>{UI.lgMode='esqueci';RECMSG='';showLogin()},
   lgvolta:()=>{UI.lgMode='';RECTOK=null;RECMSG='';showLogin()},
   nav:d=>{if(d.v==='logout'){logout();return}if(d.v==='senha'){senhaModal();return}
+    if(d.v==='fin'){UI.navFin=!(UI.view==='fin'&&UI.navFin);UI.view='fin';render();return}
+    if(GRUPO_FIN.indexOf(d.v)>=0){UI.navFin=true}else if(d.v!=='fin'){UI.navFin=false}
     if(d.v==='conta'){UI.view='conta';SENHAOK='';render();return}
     if(d.v==='provas'||d.v==='s_provas'){UI.view=d.v;if(EVST!=='ok')EVST='carregando';render();
       loadEventos().then(function(){if(UI.view===d.v)render()});return}
@@ -3843,7 +3858,10 @@ const act={
   perfedit:()=>perfilModal(),
   relprint:()=>{try{window.print()}catch(e){}},
   acetab:d=>{ACETAB=d.k;ACEERR='';telaAceite()},
-  contab:d=>{CONTAB=d.k;SENHAOK='';render()},
+  contab:d=>{CONTAB=d.k;SENHAOK='';
+    if(d.k==='perfil'){PERFVER=meuUid();PERFST='';PERFPOSTS=[];render();
+      loadPerfilView(PERFVER).then(function(){if(UI.view==='conta'&&CONTAB==='perfil')render()});return}
+    render()},
   tmenu:()=>{UI.menu=!UI.menu;render()},
   ievrm:()=>{IEF='';const p=document.getElementById('ie-prev');if(p)p.innerHTML='<span class="muted sm">sem foto</span>'},
   evcont:d=>{const e=EVPUB.find(x=>String(x.id)===String(d.id));if(!e)return;
