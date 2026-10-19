@@ -36,7 +36,7 @@
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
 button,input,select,textarea{font:inherit;color:inherit}
 h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
-#app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+#app{display:grid;grid-template-columns:var(--sw,232px) minmax(0,1fr);min-height:100vh}
 #side{background:var(--side);color:var(--side-ink);padding:20px 12px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh;align-self:start}
 .brand{display:flex;align-items:center;gap:10px;padding:0 8px;color:var(--side-on)}
 .brand svg{width:34px;height:34px;flex:none}
@@ -67,6 +67,31 @@ nav button:hover{background:#ffffff12}
 nav button[aria-current="page"]{background:var(--accent);color:#1a1405;font-weight:700}
 .trial{margin-top:auto;padding:10px 12px;border-radius:8px;background:#ffffff10;font-size:12px}
 .trial b{color:var(--side-on)}
+/* menu encolhido: só os ícones, abre ao passar o mouse */
+@media (min-width:861px){
+  #app{--sw:76px}
+  #side{width:76px;transition:width .17s ease,box-shadow .17s ease;z-index:60;overflow:visible;padding:18px 10px;gap:14px}
+  #side:hover,#side:focus-within{width:238px;box-shadow:10px 0 34px rgba(5,9,18,.42)}
+  #side nav{overflow-x:hidden}
+  nav button{gap:0;padding:10px 9px;position:relative}
+  #side:hover nav button,#side:focus-within nav button{gap:10px}
+  nav button .rot{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width .17s ease,opacity .13s ease}
+  #side:hover nav button .rot,#side:focus-within nav button .rot{max-width:170px;opacity:1}
+  nav button .chev{opacity:0;transition:opacity .13s ease}
+  #side:hover nav button .chev,#side:focus-within nav button .chev{opacity:1}
+  nav button .badge{position:absolute;top:3px;right:3px;min-width:7px;height:7px;padding:0;font-size:0;line-height:0;border-radius:99px;transition:none}
+  #side:hover nav button .badge,#side:focus-within nav button .badge{position:static;min-width:18px;height:auto;padding:1px 6px;font-size:10.5px;line-height:1.5;margin-left:auto}
+  #side nav button.nsub{padding-left:9px}
+  #side:hover nav button.nsub,#side:focus-within nav button.nsub{padding-left:30px}
+  .brand.logo{overflow:hidden}
+  .flip{width:52px;height:42px;transition:width .17s ease,height .17s ease}
+  #side:hover .flip,#side:focus-within .flip{width:150px;height:119px}
+  .stable,.trial{opacity:0;max-height:0;padding-top:0;padding-bottom:0;margin-top:0;border-width:0;overflow:hidden;transition:opacity .13s ease,max-height .17s ease}
+  .trial{margin-top:auto}
+  #side:hover .stable,#side:focus-within .stable{opacity:1;max-height:90px;padding:9px 11px;border-width:1px}
+  #side:hover .trial,#side:focus-within .trial{opacity:1;max-height:90px;padding:10px 12px}
+}
+@media (prefers-reduced-motion:reduce){#side,#side *{transition:none!important}}
 main{padding:24px clamp(16px,3vw,36px) 48px;min-width:0}
 .top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:20px}
 .top h1{font-size:28px}
@@ -678,7 +703,7 @@ const INSUMOS=['Utilização do ambiente','Baia','Piquete','Feno','Tratador','Ra
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261020-0330';
+const APPV='20261020-0540';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -1219,7 +1244,7 @@ function render(){
   const pbadge=st?0:S.inscPed.filter(x=>x.status==='pendente').length;
   const grpAberto=!!UI.navFin||GRUPO_FIN.indexOf(UI.view)>=0;
   nav=nav.filter(n=>n[3]!=='sub'||grpAberto);
-  $('#nav').innerHTML=nav.map(n=>'<button class="'+(n[3]==='sub'?'nsub':'')+'" data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='pagto'&&badge?'<span class="badge">'+badge+'</span>':'')+(n[0]==='remarc'&&rbadge?'<span class="badge">'+rbadge+'</span>':'')+(n[0]==='suporte'&&sbadge?'<span class="badge">'+sbadge+'</span>':'')+(n[0]==='provas'&&pbadge?'<span class="badge">'+pbadge+'</span>':'')+(n[0]==='feed'&&AVISOS.length?'<span class="badge">!</span>':'')+((n[0]==='chat'||n[0]==='s_chat')&&cbadge?'<span class="badge">'+cbadge+'</span>':'')+(n[0]==='fin'?'<i class="chev'+(grpAberto?' ab':'')+'" aria-hidden="true"></i>':'')+'</button>').join('');
+  $('#nav').innerHTML=nav.map(n=>'<button class="'+(n[3]==='sub'?'nsub':'')+'" data-act="nav" data-v="'+n[0]+'" title="'+esc(n[1])+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+'<span class="rot">'+n[1]+'</span>'+(n[0]==='pagto'&&badge?'<span class="badge">'+badge+'</span>':'')+(n[0]==='remarc'&&rbadge?'<span class="badge">'+rbadge+'</span>':'')+(n[0]==='suporte'&&sbadge?'<span class="badge">'+sbadge+'</span>':'')+(n[0]==='provas'&&pbadge?'<span class="badge">'+pbadge+'</span>':'')+(n[0]==='feed'&&AVISOS.length?'<span class="badge">!</span>':'')+((n[0]==='chat'||n[0]==='s_chat')&&cbadge?'<span class="badge">'+cbadge+'</span>':'')+(n[0]==='fin'?'<i class="chev'+(grpAberto?' ab':'')+'" aria-hidden="true"></i>':'')+'</button>').join('');
   $('#st1').textContent=st?'Aluno':'Centro';$('#st2').textContent=st?stu.name:hip.fantasia;
   $('#who').innerHTML=st?'<b>Portal do aluno</b><br>Dúvidas? Fale com a hípica.':(inst?'<b>'+esc(IN(UI.user.id).name)+'</b><br>Área do instrutor.':'<b>Plano '+esc(PLN[hip.plano]||'Personalizado')+'</b><br>'+esc(hip.fantasia));
   const m=meta[UI.view];$('#ttl').textContent=m[0];$('#sub').textContent=m[1];
@@ -2366,7 +2391,7 @@ views.conta=function(){
   if(!l.some(x=>x[0]===CONTAB))CONTAB=l[0][0];
   const abas='<div class="tabs" role="tablist">'+l.map(x=>
     '<button role="tab" aria-selected="'+(CONTAB===x[0])+'" data-act="contab" data-k="'+x[0]+'">'+esc(x[1])+'</button>').join('')+'</div>';
-  const topo='<div class="grid g2" style="margin-bottom:16px">'+cardIdioma()+(UI.user.role==='staff'?cardMoeda():'')+'</div>';
+  const topo='<div style="margin-bottom:16px;max-width:420px">'+cardIdioma()+'</div>';
   if(CONTAB==='senha')return topo+abas+senhaHTML();
   if(CONTAB==='docs')return topo+abas+
     (LANG==='en'?'<div class="note" style="margin:12px 0">The documents stay in Portuguese because they follow Brazilian law.</div>':'')+docsHTML();
@@ -2696,7 +2721,7 @@ function renderOwner(){
   markRead();
   const conf=G.cob.filter(c=>c.status==='enviado').length,oun=G.chat.filter(m=>m.from==='hip'&&!m.read).length;
   const nav=[['o_dash','Dashboard','painel'],['o_feed','Comunidade','chat'],['o_hip','Hípicas','pess'],['o_uso','Uso e parcerias','painel'],['o_rel','Relatório mensal','prop'],['o_chat','Mensagens','chat'],['o_cob','Cobranças','fin'],['o_parc','Parcerias','prop'],['conta','Minha conta','conta'],['logout','Sair','sair']];
-  $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+n[1]+(n[0]==='o_cob'&&conf?'<span class="badge">'+conf+'</span>':'')+(n[0]==='o_chat'&&oun?'<span class="badge">'+oun+'</span>':'')+'</button>').join('');
+  $('#nav').innerHTML=nav.map(n=>'<button data-act="nav" data-v="'+n[0]+'" title="'+esc(n[1])+'"'+(UI.view===n[0]?' aria-current="page"':'')+'>'+(n[2]==='cav'?'<i class="hico" aria-hidden="true"></i>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n[2]]+'</svg>')+'<span class="rot">'+n[1]+'</span>'+(n[0]==='o_cob'&&conf?'<span class="badge">'+conf+'</span>':'')+(n[0]==='o_chat'&&oun?'<span class="badge">'+oun+'</span>':'')+'</button>').join('');
   $('#st1').textContent='Plataforma';$('#st2').textContent=G.owner.nome;
   $('#who').innerHTML='<b>Administração</b><br>Gestão das hípicas clientes.';
   const m=meta[UI.view];$('#ttl').textContent=m[0];$('#sub').textContent=m[1];
@@ -3161,14 +3186,15 @@ views.o_hip=function(){
    fl.map(h=>{const o=hipOwe(h.id);return '<tr><td><b>'+esc(h.fantasia)+'</b>'+bolinha(h.id)+'<br><span class="muted sm">Vence todo dia '+h.venc+' · cliente desde '+fmtD(h.criada)+'</span></td><td class="sm">'+esc(h.cnpj)+'</td><td class="sm">'+(h.tel?esc(telFmt(h.tel))+'<br>'+telLinks(h.tel,'Olá! Aqui é do EquiAltaris.'):'<span class="muted">—</span>')+'</td><td>'+esc(PLN[h.plano]||'Personalizado')+'<br><span class="muted sm">'+brl(h.valor)+'/mês</span></td><td>'+hipPill(h)+(h.status==='bloqueada'&&h.bloqEm?'<br><span class="muted sm">desde '+fmtD(h.bloqEm)+'</span>':'')+'</td><td class="n">'+(o?'<b style="color:var(--bad)">'+brl(o)+'</b>':'—')+'</td><td class="sm"><code>'+esc(h.login||'—')+'</code><br>'+chipAcesso(h.login)+' <button class="btn sm" data-act="acesso" data-e="'+esc(h.login||'')+'" data-n="'+esc(h.fantasia)+'" data-p="staff" data-h="'+h.id+'">Acesso</button></td><td class="n" style="white-space:nowrap"><button class="btn sm" data-act="hpedit" data-id="'+h.id+'">Editar</button> '+(h.status==='bloqueada'?'<button class="btn sm pri" data-act="hplib" data-id="'+h.id+'">Liberar</button>':'<button class="btn sm danger" data-act="hpbloq" data-id="'+h.id+'">Bloquear</button>')+' <button class="btn sm danger" data-act="hpdel" data-id="'+h.id+'">Remover</button></td></tr>'}).join('')+'</tbody></table></div>';
 };
 function hipModal(h){
-  const isNew=!h;const o=h||{fantasia:'',cnpj:'',plano:'standard',valor:G.planos.standard.v,venc:10,login:''};
+  const isNew=!h;const o=h||{fantasia:'',cnpj:'',plano:'standard',moeda:'BRL',valor:G.planos.standard.v,venc:10,login:''};
   modal({title:isNew?'Nova hípica':'Editar hípica',wide:true,
    body:'<div class="fg">'+fld('Nome fantasia','hp-n',o.fantasia,'text',null,'full')+fld('CNPJ','hp-c',o.cnpj,'text','inputmode="numeric" placeholder="00.000.000/0000-00"')+
     fld('Plano contratado','hp-pl',o.plano,'select',[['lite','Instrutor'],['standard','Essencial'],['full','Completo'],['signature','Signature'],['personalizado','Personalizado']])+fld('Valor mensal (R$)','hp-v',o.valor,'number','min="0" step="1"')+fld('Dia do vencimento','hp-d',o.venc,'number','min="1" max="28" step="1"')+
+    fld('Moeda da cobrança','hp-mo',o.moeda||'BRL','select',[['BRL','Real (R$)'],['EUR','Euro (€)'],['USD','Dólar (US$)']])+
     fld('Celular / WhatsApp','hp-t',o.tel||'','tel','inputmode="tel" placeholder="(61) 99999-9999"')+fld('E-mail do administrador da hípica','hp-l',o.login,'email','autocapitalize="none"')+'</div><div class="fg" id="hp-lim" style="margin-top:6px;'+(o.plano==='personalizado'?'':'display:none')+'">'+fld('Máximo de alunos (plano personalizado)','hp-la',o.limA||100,'number','min="1" step="1"')+fld('Máximo de cavalos (plano personalizado)','hp-lc',o.limC||100,'number','min="1" step="1"')+'</div><p class="muted sm" id="hp-limtx" style="margin:6px 0 0"></p>'+
     '<p class="muted sm" style="margin-top:8px">O administrador da hípica entra com esse e-mail. A senha é criada pelo EquiAltaris e enviada a ele; ninguém guarda senha dentro do sistema.</p><div class="err" id="hp-err" role="alert"></div>',
    save:()=>{
-     const v={fantasia:V('hp-n').trim(),cnpj:V('hp-c').replace(/\D/g,''),tel:telFmt(V('hp-t').trim()),plano:V('hp-pl'),valor:+V('hp-v')||0,limA:Math.max(1,Math.round(+V('hp-la')||100)),limC:Math.max(1,Math.round(+V('hp-lc')||100)),venc:Math.min(28,Math.max(1,+V('hp-d')||10)),login:V('hp-l').trim().toLowerCase()};
+     const v={fantasia:V('hp-n').trim(),cnpj:V('hp-c').replace(/\D/g,''),tel:telFmt(V('hp-t').trim()),plano:V('hp-pl'),moeda:V('hp-mo')||'BRL',valor:+V('hp-v')||0,limA:Math.max(1,Math.round(+V('hp-la')||100)),limC:Math.max(1,Math.round(+V('hp-lc')||100)),venc:Math.min(28,Math.max(1,+V('hp-d')||10)),login:V('hp-l').trim().toLowerCase()};
      const err=m=>{$('#hp-err').textContent=m;return false};
      if(!v.fantasia)return err('Informe o nome fantasia.');
      if(v.cnpj.length!==14)return err('O CNPJ precisa ter 14 números.');
