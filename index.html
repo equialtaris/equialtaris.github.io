@@ -501,7 +501,7 @@ const INSUMOS=['Utilização do ambiente','Baia','Piquete','Feno','Tratador','Ra
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261019-1720';
+const APPV='20261019-1810';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -834,7 +834,13 @@ const R=id=>S.students.find(x=>x.id===id);
 const CQ=id=>S.croquis.find(c=>c.id===id);
 const hn=id=>H(id).name;
 const total=f=>(+f.unit||0)*(+f.qtd||0);
-const owners=()=>[...new Set(S.horses.map(h=>h.owner).filter(Boolean))];
+const owners=()=>[...new Set((S.students||[]).map(a=>a.name).filter(Boolean)
+  .concat((S.horses||[]).map(h=>h.owner).filter(Boolean)))];
+function alunoPorNome(n){
+  const q=String(n||'').trim().toLowerCase();
+  if(!q)return null;
+  return (S.students||[]).find(a=>String(a.name||'').trim().toLowerCase()===q)||null;
+}
 
 const UI={com:null,lgMode:'',ocTab:'aberto',chInst:'',chStu:'',chCanal:'instrutor',gw:monOf(TODAY),alTab:'grade',user:null,lgRole:'aluno',sc:'rotina',aTab:'prox',pgTab:'conf',alFil:'',view:'painel',wk:monOf(TODAY),provTab:'cal',provHorse:'',finTab:'gastos',finHorse:'',finForn:'',
   cobOwner:'',cobMonth:TODAY.slice(0,7),repHorse:'',repMonth:TODAY.slice(0,7),cq:null,tool:'sel',sel:null,tmp:[],hover:null,showDist:true,zoom:1};
@@ -3821,12 +3827,13 @@ function lerMens(){
 function horseModal(h){const isNew=!h;const o=h||{name:'',owner:'',nasc:'',salto:'',cm:'',part:false,baia:0};
   modal({title:isNew?'Novo cavalo':'Editar cavalo',wide:true,
    body:'<div class="fg">'+fld('Nome','h-n',o.name,'text',null,'full')+fld('Proprietário','h-o',o.owner,'list',owners(),'full')+
+    '<p class="muted sm" style="margin:-6px 0 10px;grid-column:1/-1">Comece a digitar: os alunos já cadastrados aparecem na lista. Escolhendo um aluno, o cavalo entra como o cavalo próprio dele e abre o painel do cavalo no portal.</p>'+
     fld('Ano de nascimento','h-an',o.nasc||'','number','min="1950" max="'+new Date().getFullYear()+'" step="1" placeholder="2017"')+
     fld('Altura que salta','h-s',o.salto||'','text','placeholder="1,20 m"')+
     fld('Altura do cavalo (cm)','h-a',o.cm||'','number','min="80" max="200" step="1" placeholder="168"')+
     fld('Peso (kg)','h-p',pesoAtual(o),'number','min="100" max="1200" step="1" placeholder="520"')+
     '</div>'+
-    '<label class="chk"><input type="checkbox" id="h-part"'+(o.part?' checked':'')+'><span><b>Cavalo particular do proprietário.</b> Ele passa a aparecer na área Proprietários, com a conta do mês: baia, feno, ração, remédio e o que mais for lançado.</span></label>'+
+    '<label class="chk"><input type="checkbox" id="h-part"'+(o.part?' checked':'')+'><span><b>Cavalo particular do proprietário.</b> Ele passa a aparecer na área Proprietários, com a conta do mês: a mensalidade abaixo mais os adicionais lançados no Financeiro.</span></label>'+
     '<div id="h-pbox"'+(o.part?'':' hidden')+'>'+tabelaMens(o)+'</div>'+
     '<div class="fg">'+
     '</div><p class="muted sm">A idade é calculada pelo ano de nascimento, então não envelhece errado com o tempo. O peso entra no histórico com a data de hoje; para acompanhar a evolução, use Registrar peso na ficha.</p><div class="err" id="lm-err" role="alert"></div>',del:isNew?null:()=>{S.horses=S.horses.filter(x=>x!==h);S.treinos=S.treinos.filter(t=>t.horse!==h.id)},
@@ -3836,6 +3843,14 @@ function horseModal(h){const isNew=!h;const o=h||{name:'',owner:'',nasc:'',salto
    save:()=>{const n=V('h-n').trim();if(!n)return false;if(isNew){const L=hipLim(HIP());if(S.horses.length>=L.c){$('#lm-err').textContent='Limite do plano '+(PLN[HIP().plano]||'Personalizado')+' atingido: '+L.c+' cavalos. Fale com o EquiAltaris para ampliar.';return false}}const dados={name:n,owner:V('h-o').trim(),nasc:+V('h-an')||'',salto:V('h-s').trim(),cm:+V('h-a')||'',part:CK('h-part'),mens:CK('h-part')?lerMens():{},baia:0};
      let alvo=h;
      if(isNew){alvo=Object.assign({id:uid(),peso:[],ferr:[]},dados);S.horses.push(alvo)}else Object.assign(alvo,dados);
+     const al=alunoPorNome(dados.owner);
+     if(al){
+       S.horses.forEach(x=>{if(x!==alvo&&x.studentId===al.id)delete x.studentId});
+       alvo.studentId=al.id;
+     }else if(alvo.studentId){
+       const velho=R(alvo.studentId);
+       if(!velho||String(velho.name||'').trim().toLowerCase()!==String(dados.owner||'').trim().toLowerCase())delete alvo.studentId;
+     }
      const kg=+V('h-p')||0;
      if(kg&&kg!==pesoAtual(alvo)){alvo.peso=alvo.peso||[];alvo.peso.push({id:uid(),d:TODAY,kg:kg})}
    }})}
