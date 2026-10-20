@@ -753,7 +753,7 @@ const INSUMOS=['Utilização do ambiente','Baia','Piquete','Feno','Tratador','Ra
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261020-1420';
+const APPV='20261020-1610';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -868,7 +868,7 @@ const myInst=()=>UI.user&&UI.user.role==='instrutor'?UI.user.id:(UI.chInst&&IN(U
 function save(){G.rev=Date.now();try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}syncPushSoon()}
 /* ---------- sincronização entre aparelhos (Supabase) ---------- */
 const SB_URL='https://dqazntahnkwookpbsamj.supabase.co',SB_KEY='sb_publishable_SFRVvZtlbJfW35Buj3mhMQ_ltHEpynM';
-const SYNC={ready:false,t:0,busy:false,rt:0,pend:false,rev:0};
+const SYNC={ready:false,t:0,busy:false,rt:0,pend:false,rev:0,prox:0};
 function sbH(){const h={apikey:SB_KEY,'Content-Type':'application/json'};if(AUTH.tok)h.Authorization='Bearer '+AUTH.tok;return h}
 /* ---------- autenticação (Supabase Auth) ---------- */
 const AKEY='equialtaris.auth';
@@ -1009,16 +1009,26 @@ async function pushTenants(){
   return !erro;
 }
 /* so baixa a hipica inteira quando ela realmente mudou no servidor */
-async function tenantMudou(){
-  if(ehDono()||ehAluno())return true;
-  const h=minhaHip();if(!h)return true;
+async function revServidor(){
   try{
+    if(ehAluno()){
+      const r=await fetch(SB_URL+'/rest/v1/rpc/minha_rev',{method:'POST',headers:sbH(),body:'{}'});
+      if(!r.ok)return 0;
+      return +(await r.json())||0;
+    }
+    const h=minhaHip();if(!h)return 0;
     const r=await fetch(SB_URL+'/rest/v1/tenant_data?select=rev&hipica_id=eq.'+encodeURIComponent(h),{headers:sbH()});
-    if(!r.ok)return true;
-    const j=await r.json(),rev=+((j[0]&&j[0].rev)||0);
-    if(rev&&rev===SYNC.rev)return false;
-    return true;
-  }catch(e){return true}
+    if(!r.ok)return 0;
+    const j=await r.json();
+    return +((j[0]&&j[0].rev)||0);
+  }catch(e){return 0}
+}
+async function tenantMudou(){
+  if(ehDono())return true;
+  const rev=await revServidor();
+  if(rev&&rev===SYNC.rev)return false;
+  SYNC.prox=rev;
+  return true;
 }
 snapReset();
 function papel(){return (AUTH.perfil&&AUTH.perfil.papel)||''}
@@ -1095,7 +1105,7 @@ async function pushAluno(){
   try{
     const r=await fetch(SB_URL+'/rest/v1/rpc/aluno_merge',{method:'POST',headers:sbH(),body:JSON.stringify({patch:patch})});
     if(!r.ok)return false;
-    SNAP.__aluno=js;return true;
+    SNAP.__aluno=js;SYNC.rev=0;return true;
   }catch(e){return false}
 }
 function formAberto(){return !!document.querySelector('#modal .md')}
@@ -1112,6 +1122,7 @@ async function syncPull(){
     SYNC.ready=true;
     if(r.vazio&&ehDono()){ /* primeiro uso: sobe a base inicial */ G=seedG();normAll();await pushDirty();return true}
     G=r.g;normAll();
+    if(SYNC.prox){SYNC.rev=SYNC.prox;SYNC.prox=0}
     try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}
     S=UI.user&&UI.user.hid?(G.tenants[UI.user.hid]||null):null;
     const mexendo=document.querySelector('#modal .md')||/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');
