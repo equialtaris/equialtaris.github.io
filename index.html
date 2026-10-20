@@ -753,7 +753,7 @@ const INSUMOS=['Utilização do ambiente','Baia','Piquete','Feno','Tratador','Ra
 
 /* ---------- dados ---------- */
 const KEY='equialtaris.v5',SKEY='equialtaris.session';
-const APPV='20261021-0940';
+const APPV='20261022-1100';
 const GKEY='equialtaris.g1';
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 let S=null,G=null;
@@ -866,7 +866,7 @@ const mi=m=>m.inst||(S.instrs[0]||{}).id;
 const IN=id=>S.instrs.find(x=>x.id===id);
 const INn=id=>(IN(id)||{name:'o instrutor'}).name;
 const myInst=()=>UI.user&&UI.user.role==='instrutor'?UI.user.id:(UI.chInst&&IN(UI.chInst)?UI.chInst:(S.instrs[0]||{}).id);
-function save(){G.rev=Date.now();try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}syncPushSoon()}
+function save(){G.rev=Date.now();if(!UI.user||UI.user.role==='owner'){try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}}syncPushSoon()}
 /* ---------- sincronização entre aparelhos (Supabase) ---------- */
 const SB_URL='https://dqazntahnkwookpbsamj.supabase.co',SB_KEY='sb_publishable_SFRVvZtlbJfW35Buj3mhMQ_ltHEpynM';
 const SYNC={ready:false,t:0,busy:false,rt:0,pend:false,rev:0,prox:0};
@@ -938,9 +938,9 @@ function syncPushSoon(){if(!SYNC.ready)return;SYNC.pend=true;clearTimeout(SYNC.t
     if(ok){SYNC.pend=false;clearTimeout(SYNC.rt);SYNC.rt=setTimeout(()=>{if(UI.user)syncPull()},800)}
     avisoSync(!ok)}).catch(()=>avisoSync(true))},1500)}
 /* ---------- sincronização por tabela (um registro por hípica) ---------- */
-const TBL=[['plataforma','id'],['hipicas','id'],['tenant_data','hipica_id'],['cobrancas','id'],['plat_files','id'],['parcerias','id'],['chat_plataforma','id']];
+const TBL=[['plataforma','id'],['hipicas','id'],['cobrancas','id'],['plat_files','id'],['parcerias','id'],['chat_plataforma','id']];
 let SNAP={};
-function snapReset(){SNAP={};TBL.forEach(t=>SNAP[t[0]]={});snapTReset()}
+function snapReset(){SNAP={};TBL.forEach(t=>SNAP[t[0]]={})}
 /* ---------- gravacao por registro: so o que esta maquina mudou ---------- */
 const COLS_T=['horses','croquis','treinos','provas','fin','students','aulas','vagas','remarc','msgs','insc','inscPed','pag','instrs'];
 const CFG_T=['pix','seq','exp'];
@@ -1038,6 +1038,174 @@ function minhaHip(){return (AUTH.perfil&&AUTH.perfil.hipica_id)||null}
 function ehAluno(){return papel()==='aluno'}
 function ehInstr(){return papel()==='instrutor'}
 const ehStaff=()=>!!(UI.user&&UI.user.role==='staff');
+/* ---------- armazenamento por registro: cada aula, cavalo e pagamento separado ---------- */
+const COLS_IT=['horses','croquis','treinos','provas','fin','students','aulas','vagas','remarc','msgs','insc','inscPed','pag','instrs'];
+const JANELA_DIAS={aulas:90,treinos:60,msgs:90,provas:400,pag:400,fin:400};
+const ITC={desde:null,snap:{},carregadoDe:{},fila:[],histBusy:false,recarregar:false,recEm:0};
+async function rpcJ(fn,corpo){
+  const r=await fetch(SB_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:sbH(),body:JSON.stringify(corpo||{})});
+  if(!r.ok)throw new Error(fn+' '+r.status);
+  return await r.json();
+}
+/* o banco devolve as chaves em outra ordem: compara pelo conteudo */
+function estavel(o){
+  if(o===null||typeof o!=='object')return JSON.stringify(o===undefined?null:o);
+  if(Array.isArray(o))return '['+o.map(estavel).join(',')+']';
+  return '{'+Object.keys(o).filter(k=>o[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+estavel(o[k])).join(',')+'}';
+}
+function janelasISO(){
+  if(ehAluno())return {};
+  const o={};Object.keys(JANELA_DIAS).forEach(c=>{o[c]=addDays(TODAY,-JANELA_DIAS[c])});return o;
+}
+function podeGravar(c){
+  if(ehAluno())return ['pag','msgs','remarc','inscPed'].indexOf(c)>=0;
+  if(ehInstr())return ['fin','pag','cfg'].indexOf(c)<0;
+  return true;
+}
+const cfgDe=T=>({pix:T.pix,seq:T.seq,exp:T.exp});
+const TT=()=>{const h=minhaHip();return (h&&G&&G.tenants&&G.tenants[h])||null};
+function substitui(alvo,novo){Object.keys(alvo).forEach(k=>{delete alvo[k]});Object.assign(alvo,novo);return alvo}
+/* foto do que o servidor tem, tirada DEPOIS de normalizar */
+function snapItens(T){
+  ITC.snap={};
+  if(!T)return;
+  COLS_IT.forEach(c=>(T[c]||[]).forEach(o=>{if(o&&o.id)ITC.snap[c+'|'+o.id]=JSON.stringify(o)}));
+  ITC.snap['cfg|cfg']=JSON.stringify(cfgDe(T));
+}
+async function itensCarregar(){
+  const r=await rpcJ('itens_desde',{desde:null,janelas:janelasISO()});
+  if(!r||!Array.isArray(r.linhas))return null;
+  const T={files:{}};
+  COLS_IT.forEach(c=>{T[c]=[]});
+  r.linhas.forEach(l=>{
+    if(l.x||!l.d)return;
+    if(l.c==='cfg'){['pix','seq','exp'].forEach(k=>{if(l.d[k]!==undefined)T[k]=l.d[k]});return}
+    if(Array.isArray(T[l.c]))T[l.c].push(l.d);
+  });
+  ITC.desde=r.agora;ITC.carregadoDe={};
+  const j=janelasISO();Object.keys(j).forEach(c=>{ITC.carregadoDe[c]=j[c]});
+  return {T:T,hip:r.hip||null};
+}
+/* ciclo leve: so o que mudou desde a ultima vez */
+async function itensPuxar(){
+  const S=TT();
+  if(!S||!ITC.desde)return false;
+  const r=await rpcJ('itens_desde',{desde:ITC.desde,janelas:{}});
+  if(!r||!Array.isArray(r.linhas))return false;
+  let mudou=false;
+  r.linhas.forEach(l=>{
+    const k=l.c+'|'+l.i;
+    if(l.c==='cfg'){
+      if(l.x||!l.d)return;
+      let m=false;
+      ['pix','seq','exp'].forEach(f=>{if(l.d[f]!==undefined&&estavel(S[f])!==estavel(l.d[f])){S[f]=l.d[f];m=true}});
+      if(m){S.exp=expCfg(S);mudou=true}
+      ITC.snap[k]=JSON.stringify(cfgDe(S));
+      return;
+    }
+    const L=S[l.c];if(!Array.isArray(L))return;
+    const pos=L.findIndex(o=>o&&o.id===l.i);
+    if(l.x){if(pos>=0){L.splice(pos,1);mudou=true}delete ITC.snap[k];return}
+    if(!l.d)return;
+    if(pos>=0){
+      if(estavel(L[pos])===estavel(l.d)){ITC.snap[k]=JSON.stringify(L[pos]);return}
+      substitui(L[pos],l.d);ITC.snap[k]=JSON.stringify(L[pos]);
+    }else{L.push(l.d);ITC.snap[k]=JSON.stringify(l.d)}
+    mudou=true;
+  });
+  ITC.desde=r.agora;
+  return mudou;
+}
+/* envia so os registros que mudaram aqui */
+async function itensEmpurrar(){
+  const S=TT();
+  if(!S)return true;
+  const linhas=[],vistos={};
+  COLS_IT.forEach(c=>{
+    if(!podeGravar(c))return;
+    (S[c]||[]).forEach(o=>{
+      if(!o||!o.id)return;
+      const k=c+'|'+o.id;vistos[k]=1;
+      const js=JSON.stringify(o);
+      if(ITC.snap[k]!==js)linhas.push({c:c,i:String(o.id),d:o,_k:k,_js:js});
+    });
+  });
+  Object.keys(ITC.snap).forEach(k=>{
+    const p=k.indexOf('|'),c=k.slice(0,p),i=k.slice(p+1);
+    if(c==='cfg'||vistos[k]||!podeGravar(c))return;
+    linhas.push({c:c,i:i,x:true,_k:k});
+  });
+  if(podeGravar('cfg')){
+    const cf=cfgDe(S),js=JSON.stringify(cf);
+    if(ITC.snap['cfg|cfg']!==js)linhas.push({c:'cfg',i:'cfg',d:cf,_k:'cfg|cfg',_js:js});
+  }
+  ITC.fila.splice(0).forEach(f=>linhas.push(f));
+  if(!linhas.length)return true;
+  let erro=false,recusa=0;
+  for(let i=0;i<linhas.length;i+=200){
+    const lote=linhas.slice(i,i+200);
+    try{
+      const r=await rpcJ('itens_gravar',{linhas:lote.map(l=>{const o={c:l.c,i:l.i};if(l.x)o.x=true;else o.d=l.d;if(l.dono)o.dono=l.dono;return o})});
+      recusa+=(r&&r.recusa)||0;
+      lote.forEach(l=>{if(!l._k)return;if(l.x)delete ITC.snap[l._k];else ITC.snap[l._k]=l._js});
+    }catch(e){erro=true;lote.forEach(l=>{if(!l._k)ITC.fila.push(l)})}
+  }
+  /* o servidor recusou algo: na proxima volta recarrega tudo para ficar igual ao servidor */
+  if(recusa&&Date.now()-ITC.recEm>120000){ITC.recarregar=true;ITC.recEm=Date.now()}
+  return !erro;
+}
+/* historico mais antigo que a janela: so quando a tela pede */
+function histNecessario(){
+  const ds=[UI.wk,UI.gw,(UI.repMonth||'')+'-01',(UI.fecMes||'')+'-01',(UI.cobMonth||'')+'-01']
+    .filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(String(x||'')));
+  return ds.length?ds.sort()[0]:null;
+}
+async function carregarPeriodo(de){
+  const T=TT();if(!T)return 0;
+  const cols=Object.keys(ITC.carregadoDe).filter(c=>ITC.carregadoDe[c]&&de<ITC.carregadoDe[c]);
+  if(!cols.length)return 0;
+  const ate=cols.map(c=>ITC.carregadoDe[c]).sort().pop();
+  const linhas=await rpcJ('itens_periodo',{cols:cols,de:de,ate:ate});
+  let n=0;
+  (linhas||[]).forEach(l=>{
+    const k=l.c+'|'+l.i;
+    if(!l.d||ITC.snap[k]!==undefined||!Array.isArray(T[l.c]))return;
+    if(T[l.c].some(o=>o&&o.id===l.i))return;
+    T[l.c].push(l.d);ITC.snap[k]=JSON.stringify(l.d);n++;
+  });
+  cols.forEach(c=>{ITC.carregadoDe[c]=de});
+  return n;
+}
+async function garantirHist(){
+  if(!SYNC.ready||ITC.histBusy||!UI.user||UI.user.role==='owner'||UI.user.role==='aluno')return;
+  const de=histNecessario();if(!de)return;
+  ITC.histBusy=true;
+  try{const n=await carregarPeriodo(de);if(n&&!formAberto())render()}catch(e){}finally{ITC.histBusy=false}
+}
+/* tudo: historico inteiro e os comprovantes que ainda estao no sistema (copia de seguranca) */
+async function carregarTudo(){
+  if(!SYNC.ready||!TT())return;
+  await carregarPeriodo('1900-01-01');
+  const ids=new Set();
+  JSON.stringify(TT(),(k,v)=>{if((k==='fileId'||k==='file')&&typeof v==='string'&&v)ids.add(v);return v});
+  await arquivosCarregar([...ids]);
+}
+/* comprovantes: ficam no servidor e so descem quando alguem abre */
+function addFile(name,data){const id=uid();const f={name:name,data:data,at:TODAY};S.files[id]=f;ITC.fila.push({c:'files',i:id,d:f});return id}
+function delFile(id){if(!id||!S)return;delete S.files[id];ITC.fila.push({c:'files',i:id,x:true})}
+async function arquivosCarregar(ids){
+  if(!S||!SYNC.ready||!UI.user||UI.user.role==='owner')return;
+  const falta=[...new Set((ids||[]).filter(i=>i&&!S.files[i]))];
+  for(let k=0;k<falta.length;k+=40){
+    try{const r=await rpcJ('arquivos',{ids:falta.slice(k,k+40)});Object.keys(r||{}).forEach(i=>{S.files[i]=r[i]})}catch(e){}
+  }
+}
+/* dono da plataforma: so as contagens, sem baixar as hipicas */
+let CONTAG=null;
+async function carregarContagens(){
+  try{CONTAG=await rpcJ('contagens',{});if(UI.user&&UI.user.role==='owner'&&!formAberto())render()}catch(e){}
+}
+
 function podeEscrever(t){
   if(t==='tenant_data')return false;   /* vai pelo staff_merge, registro a registro */
   if(ehDono())return true;
@@ -1063,7 +1231,7 @@ function linhasLocais(t){
 }
 async function fetchAll(){
   const q=async t=>{try{const r=await fetch(SB_URL+'/rest/v1/'+t+'?select=*',{headers:sbH()});if(!r.ok)return null;return await r.json()}catch(e){return null}};
-  const LIST=ehInstr()?TBL.filter(t=>t[0]!=='tenant_data'):TBL;
+  const LIST=TBL;
   const res=await Promise.all(LIST.map(t=>q(t[0])));
   if(res.some(x=>x===null))return null;
   const m={};LIST.forEach((t,i)=>m[t[0]]=res[i]);
@@ -1071,15 +1239,6 @@ async function fetchAll(){
   const cfg=(m.plataforma||[]).find(r=>r.id==='cfg');
   if(cfg&&cfg.data){if(cfg.data.owner)g.owner=cfg.data.owner;if(cfg.data.planos)g.planos=cfg.data.planos}
   g.hips=(m.hipicas||[]).map(r=>r.data).filter(Boolean);
-  if(ehInstr()){
-    try{
-      const r=await fetch(SB_URL+'/rest/v1/rpc/meu_tenant_instr',{method:'POST',headers:sbH(),body:'{}'});
-      if(!r.ok)return null;
-      const t=await r.json();
-      if(!t||typeof t!=='object')return null;
-      g.tenants[minhaHip()]=t;
-    }catch(e){return null}
-  }else (m.tenant_data||[]).forEach(r=>{g.tenants[r.hipica_id]=r.data;if(r.hipica_id===minhaHip())SYNC.rev=+r.rev||0});
   g.cob=(m.cobrancas||[]).map(r=>r.data).filter(Boolean);
   (m.plat_files||[]).forEach(r=>{g.files[r.id]=r.data});
   g.parc=(m.parcerias||[]).map(r=>r.data).filter(Boolean);
@@ -1091,14 +1250,7 @@ async function fetchAll(){
 /* aluno: recebe do servidor apenas a fatia dele */
 async function fetchAluno(){
   try{
-    const r=await fetch(SB_URL+'/rest/v1/rpc/meu_tenant',{method:'POST',headers:sbH(),body:'{}'});
-    if(!r.ok)return null;
-    const t=await r.json();
-    if(!t||typeof t!=='object')return null;
     const g=emptyG();
-    const hp=t._hip||{id:minhaHip(),fantasia:'Hípica',status:'ativa',plano:'standard',venc:10,valor:0,cnpj:'',tel:'',login:'',criada:TODAY};
-    delete t._hip;
-    g.hips=[hp];g.tenants[hp.id]=t;
     try{const p=await fetch(SB_URL+'/rest/v1/plataforma?select=*&id=eq.cfg',{headers:sbH()});
       if(p.ok){const rows=await p.json(),cfg=rows[0];
         if(cfg&&cfg.data){if(cfg.data.owner)g.owner=cfg.data.owner;if(cfg.data.planos)g.planos=cfg.data.planos}}}catch(e){}
@@ -1126,27 +1278,51 @@ async function syncPull(){
   if(SYNC.pend)return false;   /* tem coisa daqui esperando subir: nao sobrescreve */
   if(formAberto()){clearTimeout(SYNC.rt);SYNC.rt=setTimeout(()=>{if(UI.user)syncPull()},15000);return false}
   if(!await authOk())return false;
-  if(!await tenantMudou())return true;
   SYNC.busy=true;
+  const repinta=()=>{const mexendo=document.querySelector('#modal .md')||/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');if(!mexendo&&UI.user)render()};
   try{
-    const r=ehAluno()?await fetchAluno():await fetchAll();
-    if(!r)return false;
-    SYNC.ready=true;
-    if(r.vazio&&ehDono()){ /* primeiro uso: sobe a base inicial */ G=seedG();normAll();await pushDirty();return true}
-    G=r.g;normAll();
-    if(SYNC.prox){SYNC.rev=SYNC.prox;SYNC.prox=0}
-    try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}
-    S=UI.user&&UI.user.hid?(G.tenants[UI.user.hid]||null):null;
-    const mexendo=document.querySelector('#modal .md')||/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'');
-    if(!mexendo&&UI.user)render();
+    if(!SYNC.ready||ITC.recarregar||(!S&&!ehDono())){
+      const r=ehAluno()?await fetchAluno():await fetchAll();
+      if(!r)return false;
+      let it=null;
+      if(!ehDono()){it=await itensCarregar();if(!it)return false}
+      ITC.recarregar=false;SYNC.ready=true;SYNC.platEm=Date.now();
+      if(r.vazio&&ehDono()){G=seedG();normAll();await pushDirty();return true}
+      G=r.g;
+      if(it){
+        if(it.hip&&it.hip.id){G.hips=G.hips.filter(h=>h.id!==it.hip.id);G.hips.push(it.hip)}
+        G.tenants[minhaHip()]=it.T;
+      }
+      normAll();
+      S=UI.user&&UI.user.hid?(G.tenants[UI.user.hid]||null):null;
+      snapItens(ehDono()?null:TT());
+      if(ehDono()){try{localStorage.setItem(GKEY,JSON.stringify(G))}catch(e){}carregarContagens()}
+      else{try{localStorage.removeItem(GKEY)}catch(e){}}
+      repinta();
+      return true;
+    }
+    let mudou=false;
+    if(!ehDono())mudou=await itensPuxar();
+    const plat=(UI.view==='suporte'||UI.view==='o_chat')?15000:(ehDono()?60000:300000);
+    if(Date.now()-(SYNC.platEm||0)>plat){
+      const r=ehAluno()?await fetchAluno():await fetchAll();
+      if(r){
+        ['owner','planos','cob','files','parc','chat'].forEach(k=>{if(r.g[k]!==undefined)G[k]=r.g[k]});
+        if(!ehAluno())G.hips=r.g.hips;
+        normAll();SYNC.platEm=Date.now();mudou=true;
+        if(ehDono())carregarContagens();
+      }
+    }
+    if(mudou)repinta();
     return true;
   }catch(e){return false}finally{SYNC.busy=false}
 }
 async function pushDirty(){
   if(!SYNC.ready)return false;if(!await authOk())return false;
-  if(ehAluno())return await pushAluno();
-  const agora=Date.now();let erro=false;
-  if(!await pushTenants())erro=true;
+  let erro=false;
+  if(!ehDono()){try{if(!await itensEmpurrar())erro=true}catch(e){erro=true}}
+  if(ehAluno())return !erro;
+  const agora=Date.now();
   for(const [t,chave] of TBL){
     if(!podeEscrever(t))continue;
     const locais=linhasLocais(t),vistos={};
@@ -1437,6 +1613,7 @@ function mostrarView(){
   }
   traduzirDOM(document.getElementById('app'));
   traduzirDOM(document.getElementById('aviso'));
+  garantirHist();
 }
 function pillFer(h){
   const f=(h.ferr||[]).slice().sort((a,b)=>a.d.localeCompare(b.d)).pop();if(!f)return '<span class="pill">Sem registro</span>';
@@ -2957,13 +3134,13 @@ async function doLogin(){
 }
 
 /* ---------- arquivos (comprovantes e exames) ---------- */
-function addFile(name,data){const id=uid();S.files[id]={name:name,data:data,at:TODAY};return id}
 function readImage(file){return new Promise((res,rej)=>{
   if(!/^image\//.test(file.type))return rej('Envie uma imagem (JPG ou PNG).');
   const fr=new FileReader();
   fr.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1100/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.72))};im.onerror=()=>rej('Não foi possível ler a imagem.');im.src=fr.result};
   fr.onerror=()=>rej('Falha ao ler o arquivo.');fr.readAsDataURL(file)})}
-function viewFile(id){const f=(S&&S.files[id])||G.files[id];
+async function viewFile(id){let f=(S&&S.files&&S.files[id])||G.files[id];
+  if(!f&&id&&S&&SYNC.ready){modal({title:'Comprovante',body:'<p class="muted">Carregando o comprovante…</p>'});await arquivosCarregar([id]);f=S.files[id]}
   if(!f){modal({title:'Comprovante',body:'<div class="note"><b>Este comprovante foi arquivado.</b><br>A imagem saiu do sistema para liberar espaço e está no arquivo XML do mês, guardado pela hípica.</div>'});return}modal({title:'Comprovante',wide:true,body:'<img class="rcp" src="'+f.data+'" alt="'+esc(f.name)+'"><p class="muted sm">'+esc(f.name)+'</p>'})}
 
 /* ---------- helpers do portal ---------- */
@@ -3027,7 +3204,7 @@ function enviarModal(p){
     '<div class="fg">'+fld('Data do pagamento','u-d',TODAY,'date')+fld('Comprovante (print ou foto)','u-f','','file','accept="image/*"','full')+fld('Observação (opcional)','u-n','','textarea',null,'full')+'</div><div id="u-prev"></div><div class="err" id="u-err" role="alert"></div>',
    after:()=>{const fi=$('#u-f');fi.onchange=()=>{const f=fi.files[0];if(!f)return;readImage(f).then(d=>{pf={name:f.name,data:d};$('#u-prev').innerHTML='<img class="rcp" style="max-height:240px" src="'+d+'" alt="Pré-visualização do comprovante">';$('#u-err').textContent=''}).catch(m=>{pf=null;$('#u-prev').innerHTML='';$('#u-err').textContent=m})}},
    save:()=>{if(!pf){$('#u-err').textContent='Anexe o comprovante para enviar.';return false}
-     if(p.fileId&&S.files[p.fileId])delete S.files[p.fileId];
+     if(p.fileId)delFile(p.fileId);
      p.fileId=addFile(pf.name,pf.data);p.paidAt=V('u-d')||TODAY;p.nota=V('u-n');p.status='enviado';p.motivo=''}});
 }
 function rotinaHTML(h){
@@ -3490,7 +3667,8 @@ function mesNome(ym){
 }
 function baseHoje(){
   let al=0,cv=0;
-  Object.keys(G.tenants||{}).forEach(k=>{const T=G.tenants[k];if(!T)return;
+  if(CONTAG)Object.keys(CONTAG).forEach(k=>{if(!(G.hips||[]).some(h=>h.id===k))return;al+=+CONTAG[k].alunos||0;cv+=+CONTAG[k].cavalos||0});
+  else Object.keys(G.tenants||{}).forEach(k=>{const T=G.tenants[k];if(!T)return;
     al+=(T.students||[]).length;cv+=(T.horses||[]).length});
   return {hipicas:(G.hips||[]).length,alunos:al,cavalos:cv};
 }
@@ -4688,20 +4866,28 @@ function aulaModal(a,pre){
 /* ---------- arquivo mensal dos pagamentos (XML) ---------- */
 function tamFile(f){return (f&&f.data)?Math.round(String(f.data).length*0.75):0}
 const kbTxt=n=>n<1048576?(Math.max(1,Math.round(n/1024))+' KB'):((n/1048576).toFixed(1).replace('.',',')+' MB');
+let ARQINFO={};
+async function arqInfoCarregar(){
+  ARQINFO={};
+  const ids=(S.pag||[]).filter(p=>p.fileId&&!p.arq).map(p=>p.fileId);
+  if(!SYNC.ready){ids.forEach(i=>{if(S.files[i])ARQINFO[i]=tamFile(S.files[i])});return}
+  for(let k=0;k<ids.length;k+=500){try{Object.assign(ARQINFO,await rpcJ('arquivos_info',{ids:ids.slice(k,k+500)}))}catch(e){}}
+}
+const pesoArq=id=>ARQINFO[id]!==undefined?+ARQINFO[id]:(S.files[id]?tamFile(S.files[id]):null);
 function mesesArquivaveis(){
   const cm=TODAY.slice(0,7),m={};
   (S.pag||[]).forEach(p=>{
     if(!p.ref||p.ref>=cm||p.arq)return;
     const g=m[p.ref]||(m[p.ref]={ref:p.ref,qtd:0,comp:0,bytes:0,valor:0});
     g.qtd++;g.valor+=+p.valor||0;
-    const f=p.fileId&&S.files[p.fileId];
-    if(f){g.comp++;g.bytes+=tamFile(f)}
+    const b=p.fileId?pesoArq(p.fileId):null;
+    if(b!==null){g.comp++;g.bytes+=b}
   });
   return Object.keys(m).sort().map(k=>m[k]);
 }
 function pesoComprovantes(){
-  const f=S.files||{};let n=0,b=0;
-  Object.keys(f).forEach(k=>{n++;b+=tamFile(f[k])});
+  let n=0,b=0;
+  (S.pag||[]).forEach(p=>{if(!p.fileId||p.arq)return;const x=pesoArq(p.fileId);if(x!==null){n++;b+=x}});
   return {n:n,b:b};
 }
 function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -4742,13 +4928,20 @@ function xmlMes(ref){
 }
 async function baixarBackup(){
   const h=HIP();
+  if(SYNC.ready){
+    modal({title:'Cópia de segurança',body:'<p class="muted">Juntando todo o histórico da hípica e os comprovantes… isso pode levar alguns segundos numa hípica grande.</p>'});
+    try{await carregarTudo()}catch(e){}
+    const m=document.getElementById('modal');if(m)m.innerHTML='';
+  }
   const corpo={gerado:new Date().toISOString(),sistema:'EquiAltaris',versao:APPV,
     hipica:{id:h.id,fantasia:h.fantasia,cnpj:h.cnpj||'',plano:h.plano,criada:h.criada||''},
     dados:S};
   const nome='EquiAltaris - copia de seguranca '+slug(h.fantasia)+' '+TODAY+'.json';
   await saveBlob(new Blob([JSON.stringify(corpo,null,1)],{type:'application/json'}),nome);
 }
-function arquivoModal(){
+async function arquivoModal(){
+  modal({title:'Arquivo dos pagamentos',body:'<p class="muted">Conferindo o espaço ocupado…</p>'});
+  await arqInfoCarregar();
   const l=mesesArquivaveis(),pc=pesoComprovantes();
   modal({title:'Arquivo dos pagamentos',wide:true,noFocus:true,
    body:'<p class="muted sm">No fim de cada mês você baixa um arquivo XML com os pagamentos daquele mês e as imagens dos comprovantes dentro dele, e guarda no computador da hípica. Depois de baixar, o sistema apaga só as imagens e libera espaço: os pagamentos continuam aqui, com valor, vencimento e situação.</p>'+
@@ -4762,6 +4955,7 @@ async function arqBaixar(ref){
   const box=document.getElementById('arq-st');
   if(box)box.innerHTML='<p class="muted" style="margin-top:12px">Montando o arquivo…</p>';
   try{
+    await arquivosCarregar((S.pag||[]).filter(p=>p.ref===ref&&!p.arq&&p.fileId).map(p=>p.fileId));
     await saveBlob(new Blob([xmlMes(ref)],{type:'application/xml'}),'EquiAltaris - pagamentos '+ref+'.xml');
   }catch(e){if(box)box.innerHTML='<div class="note bad" style="margin-top:12px">Não consegui gerar o arquivo agora.</div>';return}
   if(box)box.innerHTML='<div class="note" style="margin-top:12px"><b>Arquivo de '+monthLabel(ref)+' baixado.</b><br>Confira se o arquivo abriu e guarde em lugar seguro antes de continuar. Ao liberar o espaço, as imagens dos comprovantes desse mês saem do sistema e passam a existir só dentro do XML.<div class="row" style="margin-top:10px"><button type="button" class="btn danger" data-act="arqlimpa" data-r="'+esc(ref)+'">Já guardei, pode liberar o espaço</button></div></div>';
@@ -4770,8 +4964,9 @@ function arqLimpar(ref){
   let n=0,bytes=0;
   (S.pag||[]).forEach(p=>{
     if(p.ref!==ref||p.arq)return;
-    const f=p.fileId&&S.files[p.fileId];
-    if(f){bytes+=tamFile(f);delete S.files[p.fileId];n++}
+    const b=p.fileId?pesoArq(p.fileId):null;
+    if(b!==null){bytes+=b;n++}
+    if(p.fileId)delFile(p.fileId);
     p.arq=TODAY;
   });
   save();render();
@@ -4795,10 +4990,12 @@ function conferirModal(p){
   modal({title:'Conferir pagamento',wide:true,
    body:'<div class="stat" style="margin-bottom:12px"><div><small>Aluno</small><b>'+esc(stu.name)+'</b></div><div><small>Referência</small><b>'+monthLabel(p.ref)+'</b></div><div><small>Valor</small><b>'+brl(p.valor)+'</b></div><div><small>Situação</small>'+payPill(p)+'</div></div>'+
     (p.paidAt?'<p class="muted sm">Pagamento informado em '+fmtD(p.paidAt)+(p.nota?' · “'+esc(p.nota)+'”':'')+'</p>':'')+
-    (f?'<img class="rcp" style="max-height:340px" src="'+f.data+'" alt="Comprovante enviado pelo aluno">':(p.arq?'<div class="note"><b><span>Comprovante arquivado em '+fmtD(p.arq)+'.</span></b><br><span>A imagem saiu do sistema e está no arquivo XML de '+monthLabel(p.ref)+' que a hípica guardou.</span></div>':'<p class="muted">Nenhum comprovante anexado.</p>'))+
+    (f?'<img class="rcp" style="max-height:340px" src="'+f.data+'" alt="Comprovante enviado pelo aluno">':(p.fileId&&!p.arq&&SYNC.ready?'<div id="c-img"><p class="muted">Carregando o comprovante…</p></div>':p.arq?'<div class="note"><b><span>Comprovante arquivado em '+fmtD(p.arq)+'.</span></b><br><span>A imagem saiu do sistema e está no arquivo XML de '+monthLabel(p.ref)+' que a hípica guardou.</span></div>':'<p class="muted">Nenhum comprovante anexado.</p>'))+
     '<label class="f">Motivo da recusa (obrigatório para recusar)<textarea id="c-m">'+esc(p.motivo||'')+'</textarea></label><div class="err" id="c-err" role="alert"></div>',
    extra:'<button class="btn danger" id="c-no">Recusar</button><button class="btn pri" id="c-ok">Confirmar pagamento</button>',
    after:close=>{
+     if(!f&&p.fileId&&!p.arq&&SYNC.ready)arquivosCarregar([p.fileId]).then(()=>{const b=document.getElementById('c-img');if(!b)return;const g=S.files[p.fileId];
+       b.innerHTML=g?'<img class="rcp" style="max-height:340px" src="'+g.data+'" alt="Comprovante enviado pelo aluno">':'<p class="muted">Nenhum comprovante anexado.</p>'});
      $('#c-ok').onclick=()=>{p.status='confirmado';p.motivo='';p.conferido={by:'Instrutor Demo',at:TODAY};close();save();render()};
      $('#c-no').onclick=()=>{const m=V('c-m').trim();if(!m){$('#c-err').textContent='Explique o motivo para o aluno corrigir.';return}p.status='recusado';p.motivo=m;close();save();render()}}});
 }
@@ -4859,7 +5056,8 @@ const act={
   ipno:d=>{const x=S.inscPed.find(y=>y.id===d.id);modal({title:'Recusar inscrição',body:'<p class="muted" style="margin-top:-6px">'+esc(stName(x.student))+' · '+esc(x.cat)+'</p>'+fld('Motivo (o aluno vê)','ip-m','','textarea'),label:'Recusar pedido',save:()=>{x.status='recusada';x.motivo=V('ip-m').trim()||'Inscrição não aprovada.'}})},
   pcclr:d=>{const m={img:['#pc-prev',()=>PCF=null],ba:['#pc-bprev',()=>PCB=null],bc:['#pc-cprev',()=>PCC=null]}[d.s];$(m[0]).innerHTML='';m[1]()},pcnew:()=>parcModal(),pcedit:d=>parcModal(G.parc.find(x=>x.id===d.id)),
   ochip:d=>{UI.ochHip=d.id;render()},hpnew:()=>hipModal(),hpedit:d=>hipModal(G.hips.find(x=>x.id===d.id)),octab:d=>{UI.ocTab=d.t;render()},
-  hpdel:d=>{const h=G.hips.find(x=>x.id===d.id);modal({title:'Remover '+h.fantasia+'?',body:'<p>A hípica e todos os dados dela (alunos, cavalos, aulas, cobranças) serão apagados e não podem ser recuperados.</p>',label:'Remover',save:()=>{(G.del=G.del||[]).push(h.id);G.hips=G.hips.filter(x=>x!==h);delete G.tenants[h.id];G.cob=G.cob.filter(c=>c.hip!==h.id);if(UI.ochHip===h.id)UI.ochHip=null}})},
+  hpdel:d=>{const h=G.hips.find(x=>x.id===d.id);modal({title:'Remover '+h.fantasia+'?',body:'<p>A hípica e todos os dados dela (alunos, cavalos, aulas, cobranças) serão apagados e não podem ser recuperados.</p>',label:'Remover',save:()=>{(G.del=G.del||[]).push(h.id);G.hips=G.hips.filter(x=>x!==h);delete G.tenants[h.id];
+      if(SYNC.ready){rpcJ('hipica_apagar_dados',{hip:h.id}).catch(()=>{});fetch(SB_URL+'/rest/v1/tenant_data?hipica_id=eq.'+encodeURIComponent(h.id),{method:'DELETE',headers:sbH()}).catch(()=>{})}G.cob=G.cob.filter(c=>c.hip!==h.id);if(UI.ochHip===h.id)UI.ochHip=null}})},
   hpbloq:d=>{const h=G.hips.find(x=>x.id===d.id);modal({title:'Bloquear '+h.fantasia+'?',body:'<p>Administrador, instrutores e alunos perdem o acesso ao sistema. O administrador da hípica continua vendo a área Meu plano para pagar e informar o pagamento.</p>',label:'Bloquear',save:()=>{h.status='bloqueada';h.bloqEm=TODAY}})},
   hplib:d=>{const h=G.hips.find(x=>x.id===d.id);modal({title:'Liberar '+h.fantasia+'?',body:'<p>O acesso volta imediatamente para todos os usuários desta hípica.</p>',label:'Liberar',save:()=>{h.status='ativa';delete h.bloqEm}})},
   cgen:()=>{const cm=TODAY.slice(0,7);let n=0;G.hips.forEach(h=>{if(!G.cob.some(c=>c.hip===h.id&&c.ref===cm)){let vv=cobVenc(h,cm);if(vv<TODAY&&h.criada.slice(0,7)===cm)vv=addDays(TODAY,7);G.cob.push({id:uid(),hip:h.id,ref:cm,valor:h.valor,venc:vv,status:'pendente',fileId:'',paidAt:'',nota:'',motivo:''});n++}});save();render();modal({title:'Cobranças do mês',body:'<p>'+(n?n+' cobrança(s) de '+monthLabel(cm)+' gerada(s).':'Todas as hípicas já têm cobrança de '+monthLabel(cm)+'.')+'</p>'})},
@@ -4897,7 +5095,7 @@ const act={
   ipsend:()=>{const st=me(),cm=TODAY.slice(0,7);if(!IPF){$('#ip-err').textContent='Anexe o comprovante do mês para enviar.';return}
     let c=S.pag.find(p=>p.student===st.id&&p.ref===cm);
     if(!c){c={id:uid(),student:st.id,ref:cm,desc:'Mensalidade',valor:st.valor,venc:cm+'-20',status:'pendente',fileId:'',paidAt:'',nota:'',motivo:''};S.pag.push(c)}
-    if(c.fileId&&S.files[c.fileId])delete S.files[c.fileId];
+    if(c.fileId)delFile(c.fileId);
     c.fileId=addFile(IPF.name,IPF.data);c.paidAt=V('ip-d')||TODAY;c.status='enviado';c.motivo='';IPF=null;save();render()},
   atab:d=>{UI.aTab=d.t;render()},sctab:d=>{UI.sc=d.t;render()},pgtab:d=>{UI.pgTab=d.t;render()},
   acancel:d=>{const a=S.aulas.find(x=>x.id===d.id);modal({title:'Cancelar aula?',body:'<p>'+esc(a.tipo)+' em '+whenTxt(a)+'. A hípica será avisada pela agenda.</p>',label:'Cancelar aula',save:()=>{a.status='cancelada'}})},
